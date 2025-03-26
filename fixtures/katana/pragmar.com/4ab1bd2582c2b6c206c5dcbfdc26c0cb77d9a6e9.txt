@@ -1,0 +1,37 @@
+https://pragmar.com/media/static/scripts/js/appstat.min.js?202503110208
+
+
+GET /media/static/scripts/js/appstat.min.js?202503110208 HTTP/1.1
+Host: pragmar.com
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36
+Accept-Encoding: gzip
+
+
+
+HTTP/1.1 200 OK
+Transfer-Encoding: chunked
+Cache-Control: max-age=315360000
+Connection: keep-alive
+Content-Security-Policy: default-src 'self'; script-src 'self' https://stats.pragmar.com https://*.youtube.com https://*.ytimg.com; img-src 'self' https://*.pragmar.com https://*.youtube.com https://*.ytimg.com; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-src https://*.youtube.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+Content-Type: application/javascript
+Date: Sun, 23 Mar 2025 00:54:21 GMT
+Etag: W/"67c70149-1456"
+Expires: Thu, 31 Dec 2037 23:55:55 GMT
+Last-Modified: Tue, 04 Mar 2025 13:34:01 GMT
+Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+Server: nginx
+Vary: Accept-Encoding
+
+1456
+!function(t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define([],t):("undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof self?self:this).appstat=t()}(function(){return function s(a,n,r){function o(e,t){if(!n[e]){if(!a[e]){var i="function"==typeof require&&require;if(!t&&i)return i(e,!0);if(h)return h(e,!0);throw(t=new Error("Cannot find module '"+e+"'")).code="MODULE_NOT_FOUND",t}i=n[e]={exports:{}},a[e][0].call(i.exports,function(t){return o(a[e][1][t]||t)},i,i.exports,s,a,n,r)}return n[e].exports}for(var h="function"==typeof require&&require,t=0;t<r.length;t++)o(r[t]);return o}({1:[function(t,e,i){"use strict";Object.defineProperty(i,"__esModule",{value:!0});class n{constructor(){this.maxPoints=50,this.points=[],this.lastTime=0,this.data=[],this.currentDataIndex=0,this.tickMarks=[],this.nextTickId=0,this.tickInterval=10,this.secondsElapsed=0,this.maxCpuValue=0,this.points=new Array(this.maxPoints).fill(0)}initialize(){this.svg=document.getElementById("graph"),this.path=document.getElementById("line"),this.svg&&this.path&&(this.addGradientDef(),this.path.setAttribute("d",this.getPathString()),window.addEventListener("resize",()=>this.updateSize()),this.updateSize(),this.setupVisibilityHandling(),this.fetchData(),this.lastTime=performance.now(),requestAnimationFrame(t=>this.animate(t)))}addGradientDef(){var t=this.svg.querySelector("defs"),t=(t&&t.remove(),document.createElementNS("http://www.w3.org/2000/svg","defs"));t.innerHTML=`
+            <linearGradient id="tickGradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="100%">
+                <stop offset="0" style="stop-color:#000000;stop-opacity:0"/>
+                <stop offset="0.25" style="stop-color:#000000;stop-opacity:0.4"/>
+                <stop offset="0.5" style="stop-color:#000000;stop-opacity:0.5"/>
+                <stop offset="0.75" style="stop-color:#000000;stop-opacity:0.4"/>
+                <stop offset="1" style="stop-color:#000000;stop-opacity:0"/>
+            </linearGradient>
+        `,this.svg.insertBefore(t,this.svg.firstChild)}async fetchData(){try{var t=await(await fetch("/media/static/images/appstat/devenv_20250302_181803.csv")).text();this.data=this.parseCSV(t),this.calculateMaxCpuValue()}catch(t){console.error("Error fetching data:",t)}}calculateMaxCpuValue(){0!==this.data.length&&(this.maxCpuValue=Math.max(...this.data.map(t=>t["CPU%"])),this.maxCpuValue=1.1*this.maxCpuValue)}parseCSV(t){t=t.trim().split("\n");const e=t[0].split(",");return t.slice(1).map(t=>{const i=t.split(","),s={};return e.forEach((t,e)=>{e=i[e];s[t]="CPU%"===t||"UserTime"===t||"SystemTime"===t||"WorkingSetMB"===t||"DiskReadMB/s"===t||"DiskWriteMB/s"===t?parseFloat(e):"Threads"===t||"Handles"===t?parseInt(e):e}),s})}getPathString(){var t=this.svg.clientWidth;const s=this.svg.clientHeight,a=t/(this.maxPoints-1);return this.points.map((t,e)=>{var i=e*a,t=0<this.maxCpuValue?t/this.maxCpuValue:0,t=.05+.95*Math.max(0,Math.min(1,t));return`${0===e?"M":"L"} ${i} `+(s-t*s)}).join(" ")}updateSize(){var t=this.svg.clientWidth,e=this.svg.clientHeight;this.svg.setAttribute("viewBox",`0 0 ${t} `+e),this.path.setAttribute("d",this.getPathString())}updateTickMarks(){this.svg.querySelectorAll(".tick-mark").forEach(t=>{const e=parseInt(t.getAttribute("data-id")||"-1");this.tickMarks.some(t=>t.id===e)||t.remove()});var t=this.svg.clientWidth;const i=t/(this.maxPoints-1);this.tickMarks.forEach(t=>{let e=this.svg.querySelector(`.tick-mark[data-id="${t.id}"]`);e||((e=document.createElementNS("http://www.w3.org/2000/svg","line")).classList.add("tick-mark"),e.setAttribute("data-id",t.id.toString()),e.setAttribute("stroke","url(#tickGradient)"),e.setAttribute("stroke-width","1"),this.svg.appendChild(e));t=(this.maxPoints-t.position)*i;e.setAttribute("x1",t.toString()),e.setAttribute("y1","0"),e.setAttribute("x2",t.toString()),e.setAttribute("y2",this.svg.clientHeight.toString())})}animate(t){1e3<Math.min(t-this.lastTime,5e3)&&(this.lastTime=t,this.secondsElapsed++,0<this.data.length)&&(t=this.data[this.currentDataIndex]["CPU%"],this.points.shift(),this.points.push(t),this.path.setAttribute("d",this.getPathString()),this.tickMarks=this.tickMarks.map(t=>({...t,position:t.position+.5})).filter(t=>t.position<this.maxPoints),this.secondsElapsed%this.tickInterval==0&&this.tickMarks.push({id:this.nextTickId++,position:0}),this.currentDataIndex=(this.currentDataIndex+1)%this.data.length),requestAnimationFrame(t=>this.animate(t))}setupVisibilityHandling(){document.addEventListener("visibilitychange",()=>{"visible"===document.visibilityState&&(console.log("Tab became visible, resetting animation timer"),this.lastTime=performance.now())})}}document.addEventListener("DOMContentLoaded",()=>{const e=document.querySelector("video"),t=new n;if(e){const i=()=>{t.initialize()};if(3<=e.readyState)i();else{const s=["loadeddata"];let t=!1;const a=()=>{t||(t=!0,s.forEach(t=>{e.removeEventListener(t,a)}),i())};s.forEach(t=>{e.addEventListener(t,a)}),setTimeout(()=>{t||a()},5e3)}}else console.log("No video element found, initializing animator directly"),t.initialize()},!1)},{}]},{},[1])(1)});
+0
+
+

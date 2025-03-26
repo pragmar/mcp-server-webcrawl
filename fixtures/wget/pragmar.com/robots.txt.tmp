@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /media/static/images
+Allow: /media/static/scripts/js
+Allow: /media/static/styles/css
+Disallow: /media/static
+Disallow: /appstat/download/
+Disallow: /moffitor/download/
+Disallow: /qbit/download/

@@ -1,0 +1,129 @@
+https://pragmar.com/moffitor/privacy/
+
+
+GET /moffitor/privacy/ HTTP/1.1
+Host: pragmar.com
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36
+Accept-Encoding: gzip
+
+
+
+HTTP/1.1 200 OK
+Transfer-Encoding: chunked
+Connection: keep-alive
+Content-Security-Policy: default-src 'self'; script-src 'self' https://stats.pragmar.com https://*.youtube.com https://*.ytimg.com; img-src 'self' https://*.pragmar.com https://*.youtube.com https://*.ytimg.com; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-src https://*.youtube.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+Content-Type: text/html; charset=utf-8
+Cross-Origin-Opener-Policy: same-origin
+Date: Sun, 23 Mar 2025 00:54:22 GMT
+Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+Referrer-Policy: same-origin
+Server: nginx
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+
+11c2
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Moffitor | Privacy Statement</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="description" content="The Moffitor application neither stores, nor transmits any data (personal or otherwise)..." />
+        <link rel="shortcut icon" href="/media/static/images/moffitor/monitor.svgz?202503110208"/>
+        <link type="text/css" rel="stylesheet" href="/media/static/styles/css/moffitor.min.css?202503110208" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="og:image" content="https://pragmar.com/media/static/images/moffitor/og-summary.png?202503012128?202503110208" />
+        <meta name="og:description" content="The Moffitor application neither stores, nor transmits any data (personal or otherwise)..." />
+        <meta name="og:title" content="Moffitor | Privacy Statement" />
+        <meta name="twitter:card" content="summary" />
+    </head>
+    <body>
+
+<header>
+    <div class="rgb">
+        <div class="rgb__background"></div>
+        
+    </div>
+    <div class="constrain">
+        <h1>
+            <a href="/moffitor/">
+                <span class="accessible">Moffitor</span>
+                <img src="/media/static/images/moffitor/moffitor.svgz?202503110208" height="60" alt="Moffitor icon"/>
+            </a>
+        </h1>
+        <div>
+            <nav class="links constrain">
+                <a href="/">Home</a>
+                <a href="/moffitor/privacy/">Privacy</a>
+                <a href="/moffitor/support/">Support</a>                            
+            </nav>
+        </div>
+    </div>
+</header>
+
+<main>
+    <div class="constrain">
+        <h2>Moffitor Privacy Statement</h2>
+        <div class="summary">
+            <div>
+                <h3>Information Collected</h3>
+                <p>
+                    The Moffitor application neither stores, nor transmits any data (personal or otherwise).
+                </p>
+                <p>
+                    The pragmar.com website, as opposed to the Moffitor application, tracks usage analytics using Matomos, a self hosted analytics platform. The statistics collected include pages vistited, time on page, browser version, and more. 
+                </p>
+                <h3>Updates to this Privacy Statement</h3>
+                <p>
+                    The developer may make changes to this privacy statement at any time. If, in the future, Moffitor were to store or transmit data, the version number for the application would be be changed, and this privacy policy updated. 
+                </p>
+                <p>
+                    Ben Caulfield<br>
+                    January 2, 2022
+
+                </p>
+            </div>
+            <div>
+                <img class="summary__source" src="/media/static/images/moffitor/monitor.svgz?202503110208" alt="icon of 2x1"/>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <nav class="pragmar">
+        <div class="pragmar__also">Software by <a href="/">Pragmar</a></div>
+        <div class="pragmar__products__wrap">
+            <div class="pragmar__products">
+            <a class="pragmar__product interrobot" href="https://interro.bot?utm_source=pragmar.com">
+                <img src="/media/static/images/home/interrobot.png?202503110208" alt="InterroBo icon"/>
+                <div><strong>InterroBot</strong>.
+                      Web crawler and analyzer. Free/paid.</div>
+            </a>
+            <a class="pragmar__product appstat" href="/appstat/">
+                <img src="/media/static/images/home/appstat.png?202503110208" alt="appstat icon"/>
+                <div><strong>appstat</strong>.
+                     Windows process monitor. Freeware.</div>
+            </a>
+            <a class="pragmar__product moffitor" href="/moffitor/">
+                <img src="/media/static/images/home/moffitor.png?202503110208" alt="Moffitor icon"/>
+                <div><strong>Moffitor</strong>.
+                     One-click monitor sleep. Freeware.</div>
+            </a>
+            <a class="pragmar__product qbit" href="/qbit/">
+                <img src="/media/static/images/home/qbit.png?202503110208" alt="qbit icon"/>
+                <div><strong>Qbit</strong>.
+                     Skybox generator for game devs. Freeware.</div>
+            </a>
+            </div>
+        </div>
+    </nav>
+</footer>
+<script src="/media/static/scripts/js/main.min.js?202503110208"></script>
+
+    </body>
+</html>
+0
+
+
