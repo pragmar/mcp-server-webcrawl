@@ -27,11 +27,15 @@ dynamic = ["version"]
 mcp-server-webcrawl = "mcp_server_webcrawl:main"
 
 [project.urls]
-Homepage = "https://github.com/pragmar/mcp-server-webcrawl"
+Homepage = "https://github.com/pragmar/mcp_server_webcrawl"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["mcp_server_webcrawl"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["mcp_server_webcrawl*"]
+exclude = ["*settings_local*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "mcp_server_webcrawl.__version__"}

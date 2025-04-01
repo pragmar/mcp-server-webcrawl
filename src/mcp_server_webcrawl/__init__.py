@@ -16,7 +16,7 @@ from mcp_server_webcrawl.crawlers.base.crawler import BaseCrawler
 from mcp_server_webcrawl.utils.cli import get_help_short_message, get_help_long_message
 from mcp_server_webcrawl.settings import DEBUG
 from mcp_server_webcrawl.crawlers import get_fixture_directory
-__version__: str = "0.7.1"
+__version__: str = "0.7.2"
 __name__: str = "mcp-server-webcrawl"
 
 if DEBUG:
