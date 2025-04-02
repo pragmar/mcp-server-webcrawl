@@ -16,7 +16,7 @@ class WgetCrawler(IndexedCrawler):
     Provides functionality for accessing and searching web content from wget captures.
     """
 
-    def __init__(self, datasrc: Path) -> None:
+    def __init__(self, datasrc: Path):
         """
         Initialize the wget crawler with a data source directory.
         
@@ -26,7 +26,10 @@ class WgetCrawler(IndexedCrawler):
         """
         assert datasrc is not None, f"WgetCrawler needs a datasrc, regardless of action"
         assert datasrc.is_dir(), "WgetCrawler datasrc must be a directory"
+        
         super().__init__(datasrc)
+        # used to produce LLM search manual
+        self._indexed_get_sites = get_sites
 
     def get_sites_api(
             self,

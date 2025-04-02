@@ -30,7 +30,7 @@ class InterroBotCrawler(BaseCrawler):
     Provides functionality for accessing and searching web content from InterroBot.
     """
 
-    def __init__(self, datasrc) -> None:
+    def __init__(self, datasrc):
         """
         Initialize the InterroBotCrawler with a data source path.
 

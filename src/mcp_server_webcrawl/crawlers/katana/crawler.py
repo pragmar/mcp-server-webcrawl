@@ -17,7 +17,7 @@ class KatanaCrawler(IndexedCrawler):
     Provides functionality for accessing and searching web content from captured HTTP exchanges.
     """
 
-    def __init__(self, datasrc: Path) -> None:
+    def __init__(self, datasrc: Path):
         """
         Initialize the HTTP text crawler with a data source directory.
         
@@ -26,7 +26,8 @@ class KatanaCrawler(IndexedCrawler):
                     subdirectories with HTTP text files
         """
         super().__init__(datasrc)
-        
+        # used to produce LLM search manual
+        self._indexed_get_sites = get_sites
 
     def get_sites_api(
             self,

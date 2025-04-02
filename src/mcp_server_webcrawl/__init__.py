@@ -15,8 +15,8 @@ from mcp_server_webcrawl.crawlers.katana.crawler import KatanaCrawler
 from mcp_server_webcrawl.crawlers.base.crawler import BaseCrawler
 from mcp_server_webcrawl.utils.cli import get_help_short_message, get_help_long_message
 from mcp_server_webcrawl.settings import DEBUG
-from mcp_server_webcrawl.crawlers import get_fixture_directory
-__version__: str = "0.7.2"
+
+__version__: str = "0.7.3"
 __name__: str = "mcp-server-webcrawl"
 
 if DEBUG:
@@ -32,7 +32,8 @@ def main() -> None:
     """
 
     if len(sys.argv) == 1:
-        sys.stderr.write(get_help_short_message(__version__))
+        # \n parser error follows short message
+        sys.stderr.write(get_help_short_message(__version__) + "\n")
     
     parser: CustomHelpArgumentParser = CustomHelpArgumentParser(description="InterrBot MCP Server")
     parser.add_argument("-c", "--crawler", type=str, choices=["interrobot", "warc", "wget", "katana", "siteone"], 

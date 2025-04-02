@@ -78,6 +78,7 @@ class IndexedCrawler(BaseCrawler):
         super().__init__(datasrc)
         # Default resource field mapping that can be overridden by subclasses
         self.resource_field_mapping = INDEXED_RESOURCE_FIELD_MAPPING
+        self._indexed_get_sites: function = None
 
     async def mcp_call_tool(self, name: str, arguments: dict[str, Any] | None
         ) -> list[TextContent | ImageContent | EmbeddedResource]:
@@ -101,7 +102,11 @@ class IndexedCrawler(BaseCrawler):
         Returns:
             List of Tool objects
         """
-        all_sites = self.get_sites(self.datasrc)
+        if self._indexed_get_sites is None:
+            logger.error(f"_indexed_get_sites not set (function required)")
+            return []
+
+        all_sites = self._indexed_get_sites(self.datasrc)
         default_tools: list[Tool] = get_crawler_tools(sites=all_sites)
         assert len(default_tools) == 2, "expected exactly 2 Tools: sites and resources"
 

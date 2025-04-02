@@ -17,7 +17,7 @@ class WarcCrawler(IndexedCrawler):
     Provides functionality for accessing and searching web archive content.
     """
 
-    def __init__(self, datasrc: Path) -> None:
+    def __init__(self, datasrc: Path):
         """
         Initialize the WARC crawler with a data source directory.
         
@@ -28,6 +28,8 @@ class WarcCrawler(IndexedCrawler):
         assert datasrc is not None, f"WarcCrawler needs a datasrc, regardless of action"
         assert datasrc.is_dir(), "WarcCrawler datasrc must be a directory"
         super().__init__(datasrc)
+        # used to produce LLM search manual
+        self._indexed_get_sites = get_sites
 
     def get_sites_api(
             self,
