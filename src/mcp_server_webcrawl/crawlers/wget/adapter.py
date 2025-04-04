@@ -2,6 +2,7 @@ import hashlib
 import os
 import re
 import sqlite3
+import mimetypes
 
 from contextlib import closing
 from datetime import datetime
@@ -82,7 +83,7 @@ class WgetManager(BaseManager):
         # clean up the file path - strip wget artifacts
         clean_path = str(file_path)
         clean_path = clean_path.lower()
-        clean_path = re.sub(r'[\u00b7·]?\d+\.tmp|\d{12}|\.tmp', '', clean_path)
+        clean_path = re.sub(r"[\u00b7·]?\d+\.tmp|\d{12}|\.tmp", "", clean_path)
 
         # get the final extension for type mapping
         extension = Path(clean_path).suffix.lower()
@@ -95,9 +96,19 @@ class WgetManager(BaseManager):
         # read content for text files
         content = None
         if resource_type in [ResourceResultType.PAGE, ResourceResultType.TEXT,
-                    ResourceResultType.CSS, ResourceResultType.SCRIPT]:
+                    ResourceResultType.CSS, ResourceResultType.SCRIPT, ResourceResultType.OTHER]:
+            
+            # vanilla --mirror will not adjust extension (ResourceResultType.OTHER)
+            # so, need to determine the old fashioned way
+            mime_type, _ = mimetypes.guess_type(file_path)
+            if mime_type and not mime_type.startswith("text/"):
+                return
+            
+            if os.path.getsize(file_path) > 2_000_000:  # 2MB limit
+                return
+
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
             except UnicodeDecodeError:
                 logger.warning(f"Could not decode file as UTF-8: {file_path}")
@@ -163,7 +174,7 @@ def get_sites(
         selected_fields.update(SITES_FIELDS_DEFAULT)
     
     results: list[SiteResult] = []
-    site_dirs = [d for d in datasrc.iterdir() if d.is_dir() and not d.name.startswith('.')]
+    site_dirs = [d for d in datasrc.iterdir() if d.is_dir() and not d.name.startswith(".")]
 
     dir_id_map: dict[int, Path] = {WgetManager.string_to_id(d.name): d for d in site_dirs}
     
@@ -179,7 +190,7 @@ def get_sites(
         robots_path = dir_path / "robots.txt"
         if robots_path.exists():
             try:
-                with open(robots_path, 'r', encoding='utf-8') as f:
+                with open(robots_path, "r", encoding="utf-8") as f:
                     robots_content = f.read()
             except Exception as e:
                 logger.error(f"Error reading robots.txt from {robots_path}: {e}")
@@ -233,7 +244,7 @@ def get_resources(
     if not site_results:
         return [], 0
     
-    site_paths = [Path(datasrc) / site.url.split('/')[-2] for site in site_results]
+    site_paths = [Path(datasrc) / site.url.split("/")[-2] for site in site_results]
     sites_group = SitesGroup(sites, site_paths)
     connection: sqlite3.Connection = manager.get_connection(sites_group)
     if connection is None:
