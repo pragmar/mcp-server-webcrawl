@@ -17,3 +17,17 @@ build/
 settings_local.py
 *.db-shm
 *.db-wal
+
+sphinx/_build/
+sphinx/build/
+sphinx/api/
+sphinx/_static/images/generated/
+
+*.doctree
+*.pickle
+*.mo
+.doctrees/
+
+**/__pycache__/
+.coverage
+htmlcov/

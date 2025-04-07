@@ -1,0 +1,161 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mcp_server_webcrawl.utils.cli &mdash; mcp-server-webcrawl  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=888ff710"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            mcp-server-webcrawl
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">mcp_server_webcrawl</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">mcp-server-webcrawl</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">mcp_server_webcrawl.utils.cli</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mcp_server_webcrawl.utils.cli</h1><div class="highlight"><pre>
+<span></span><span class="k">def</span> <span class="nf">__cli_apply_color</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">code</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\033</span><span class="s2">[</span><span class="si">{</span><span class="n">code</span><span class="si">}</span><span class="s2">m</span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="se">\033</span><span class="s2">[0m&quot;</span>
+
+<span class="k">def</span> <span class="nf">__cli_light_gray</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">__cli_apply_color</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="s2">&quot;38;2;130;130;130&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">__cli_gold</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">__cli_apply_color</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="s2">&quot;38;2;170;120;0&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="get_help_short_message">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.cli.get_help_short_message">[docs]</a>
+<span class="k">def</span> <span class="nf">get_help_short_message</span><span class="p">(</span><span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="si">{</span><span class="n">__cli_gold</span><span class="p">(</span><span class="s1">&#39;mcp-server-webcrawl&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">__cli_light_gray</span><span class="p">(</span><span class="s2">&quot;v&quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39;, ©2025 MPL2,&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">__cli_gold</span><span class="p">(</span><span class="s1">&#39;--help&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> for more information&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="get_help_long_message">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.cli.get_help_long_message">[docs]</a>
+<span class="k">def</span> <span class="nf">get_help_long_message</span><span class="p">(</span><span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;A server to connect your web crawls/archives to an LLM via MCP (Model Context Protocol).</span>
+
+<span class="s2">Usage: </span><span class="si">{</span><span class="n">__cli_gold</span><span class="p">(</span><span class="s1">&#39;mcp-server-webcrawl&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> [-c </span><span class="se">{{</span><span class="s2">warc,wget,interrobot,katana,siteone</span><span class="se">}}</span><span class="s2">] [-d DATASRC]</span>
+
+<span class="s2">Options:</span>
+<span class="s2">  -c, --crawler  Specify which crawler to use</span>
+<span class="s2">  -d, --datasrc  Path to datasrc (required unless testing)</span>
+<span class="s2">  -h, --help     Show this help message and exit</span>
+
+<span class="s2">Where is my DATASRC?</span>
+<span class="s2">  wget           Directory containing the webroot archives</span>
+<span class="s2">  warc           Directory containing WARC files</span>
+<span class="s2">  interrobot     Path to */interrobot.v2.db</span>
+<span class="s2">  katana         Directory containing the webroot archives</span>
+<span class="s2">  siteone        Directory containing the webroot archives</span>
+<span class="s2">                   (requires archive option)</span>
+
+<span class="s2">                        [DATASRC]</span>
+<span class="s2">           ╭─────────────────────────────────╮</span>
+<span class="s2">   ✧───────────────────────✧ ✧───────────────────────✧</span>
+<span class="s2">  ╱ example.com (webroot) ╱ ╱ pragmar.com (webroot) ╱</span>
+<span class="s2"> ✧───────────────────────✧ ✧───────────────────────✧</span>
+
+<span class="s2">MCP Configuration Example:</span>
+<span class="se">{{</span><span class="s2">&quot;mcpServers&quot;: </span><span class="se">{{</span>
+<span class="s2">  &quot;wget&quot;: </span><span class="se">{{</span>
+<span class="s2">    &quot;command&quot;: &quot;mcp-server-webcrawl&quot;,</span>
+<span class="s2">      &quot;args&quot;: [&quot;--crawler&quot;, &quot;wget&quot;, &quot;--datasrc&quot;, </span>
+<span class="s2">        &quot;/path/to/archived/hosts/&quot;]</span><span class="se">}}</span><span class="s2">,</span>
+<span class="s2">  &quot;interrobot&quot;: </span><span class="se">{{</span>
+<span class="s2">    &quot;command&quot;: &quot;mcp-server-webcrawl&quot;,</span>
+<span class="s2">      &quot;args&quot;: [&quot;--crawler&quot;, &quot;interrobot&quot;, &quot;--datasrc&quot;, </span>
+<span class="s2">        &quot;/path/to/interrobot.v2.db&quot;]</span><span class="se">}}</span>
+<span class="s2">  </span><span class="se">}}</span>
+<span class="se">}}</span>
+
+<span class="si">{</span><span class="n">__cli_gold</span><span class="p">(</span><span class="s1">&#39;mcp-server-webcrawl&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">__cli_light_gray</span><span class="p">(</span><span class="s2">&quot;v&quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39;, ©2025 MPL2&#39;</span><span class="p">)</span><span class="si">}</span>
+<span class="s2">https://github.com/pragmar/mcp-server-webcrawl</span>
+<span class="s2">&quot;&quot;&quot;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, pragmar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
