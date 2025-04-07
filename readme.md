@@ -1,5 +1,3 @@
-# mcp-server-webcrawl
-
 <p align="center">
   <img src="sphinx/_static/images/mcpswc.svg" alt="MCP Server Webcrawl" width="100%">
 </p>
@@ -9,6 +7,8 @@
   <a href="https://github.com/pragmar/mcp_server_webcrawl" style="margin: 0 10px;">Github</a> |
   <a href="https://pragmar.github.io/mcp_server_webcrawl/" style="margin: 0 10px;">Docs</a>
 </p>
+
+# mcp-server-webcrawl
 
 Bridge the gap between your web crawl and AI language models using Model Context Protocol (MCP). 
 With **mcp-server-webcrawl**, your AI client filters and analyzes web content under your direction or autonomously. The server includes a full-text search interface with boolean support, resource filtering by type, HTTP status, 
