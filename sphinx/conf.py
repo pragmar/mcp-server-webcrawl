@@ -29,7 +29,7 @@ html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 html_theme_options = {
     "navigation_depth": 2,  # This is the key setting to prevent deep nesting
-    "titles_only": False
+    "titles_only": False,
 }
 # Better autodoc formatting
 autodoc_default_options = {
