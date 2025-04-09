@@ -34,6 +34,11 @@ WGET_RESOURCE_FIELD_MAPPING: Final[dict[str, str]] = INDEXED_RESOURCE_FIELD_MAPP
 WGET_SORT_MAPPING: Final[dict[str, Tuple[str, str]]] = INDEXED_SORT_MAPPING
 WGET_TYPE_MAPPING = INDEXED_TYPE_MAPPING
 
+# "http-client-cache", "result-storage" are technically SiteOne ignores
+# but this is the only modification to an otherwise clean alias of wget
+# a complete breakout of SiteOne subclassing isn't necessary yet
+WGET_IGNORE_DIRECTORIES = ("http-client-cache", "result-storage",)
+
 logger = get_logger()
 
 class WgetManager(BaseManager):
@@ -174,7 +179,7 @@ def get_sites(
         selected_fields.update(SITES_FIELDS_DEFAULT)
     
     results: list[SiteResult] = []
-    site_dirs = [d for d in datasrc.iterdir() if d.is_dir() and not d.name.startswith(".")]
+    site_dirs = [d for d in datasrc.iterdir() if d.is_dir() and not d.name.startswith(".") and d.name not in WGET_IGNORE_DIRECTORIES]
 
     dir_id_map: dict[int, Path] = {WgetManager.string_to_id(d.name): d for d in site_dirs}
     
