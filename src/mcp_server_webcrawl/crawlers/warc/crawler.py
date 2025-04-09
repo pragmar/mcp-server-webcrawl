@@ -92,16 +92,15 @@ class WarcCrawler(IndexedCrawler):
         if not site_matches:
             return BaseJsonApi("GetResources", {}).set_results([], 0, 0, limit)
 
-        typed_resource_types = None
-        if types:
-            typed_resource_types = [rt for rt in ResourceResultType if rt.value in types]
+        # convert to enums
+        resource_types = self._convert_to_resource_types(types)
 
         results, total = get_resources(
             self.datasrc,
             ids=ids,
             sites=sites,
             query=query,
-            types=typed_resource_types,
+            types=resource_types,
             fields=fields,
             statuses=statuses,
             sort=sort,

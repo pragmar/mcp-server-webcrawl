@@ -96,7 +96,7 @@ class KatanaTests(BaseCrawlerTests):
         # type filtering for HTML pages
         html_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE]
+            types=[ResourceResultType.PAGE.value]
         )
         self.assertTrue(html_resources.total > 0, "HTML filtering should return results")
         for resource in html_resources._results:
@@ -105,7 +105,7 @@ class KatanaTests(BaseCrawlerTests):
         # type filtering for multiple resource types
         mixed_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE, ResourceResultType.SCRIPT]
+            types=[ResourceResultType.PAGE.value, ResourceResultType.SCRIPT.value]
         )
         if mixed_resources.total > 0:
             types_found = {r.type for r in mixed_resources._results}
@@ -171,7 +171,7 @@ class KatanaTests(BaseCrawlerTests):
         combined_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
             query="style",
-            types=[ResourceResultType.PAGE],
+            types=[ResourceResultType.PAGE.value],
             fields=["content", "headers"],
             sort="+url",
             limit=3
@@ -188,7 +188,7 @@ class KatanaTests(BaseCrawlerTests):
         # multi-site search
         multisite_resources = crawler.get_resources_api(
             sites=[EXAMPLE_SITE_ID, PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE],
+            types=[ResourceResultType.PAGE.value],
             sort="+url",
             limit=100
         )
@@ -246,7 +246,7 @@ class KatanaTests(BaseCrawlerTests):
         # HTML content detection
         html_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE],
+            types=[ResourceResultType.PAGE.value],
             fields=["content", "headers"]
         )
         self.assertTrue(html_resources.total > 0, "Should find HTML resources")
@@ -268,7 +268,7 @@ class KatanaTests(BaseCrawlerTests):
         # script content detection
         script_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.SCRIPT],
+            types=[ResourceResultType.SCRIPT.value],
             fields=["content", "headers"]
         )
         if script_resources.total > 0:
@@ -278,7 +278,7 @@ class KatanaTests(BaseCrawlerTests):
         # css content detection
         css_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.CSS],
+            types=[ResourceResultType.CSS.value],
             fields=["content", "headers"]
         )
         if css_resources.total > 0:

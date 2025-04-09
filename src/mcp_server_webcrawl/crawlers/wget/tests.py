@@ -94,7 +94,7 @@ class WgetTests(BaseCrawlerTests):
         # type filtering
         html_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE],
+            types=[ResourceResultType.PAGE.value],
             query="html"  # Only look for HTML files explicitly
         )
         self.assertTrue(html_resources.total > 0, "HTML filtering should return results")
@@ -107,7 +107,7 @@ class WgetTests(BaseCrawlerTests):
         # multiple resource types
         mixed_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE, ResourceResultType.CSS]
+            types=[ResourceResultType.PAGE.value, ResourceResultType.CSS.value]
         )
         if mixed_resources.total > 0:
             types_found = {r.type for r in mixed_resources._results}
@@ -167,7 +167,7 @@ class WgetTests(BaseCrawlerTests):
         combined_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
             query="index",
-            types=[ResourceResultType.PAGE],
+            types=[ResourceResultType.PAGE.value],
             fields=["content", "headers"],
             sort="+url",
             limit=3
@@ -184,7 +184,7 @@ class WgetTests(BaseCrawlerTests):
         # multi-site search
         multisite_resources = crawler.get_resources_api(
             sites=[EXAMPLE_SITE_ID, PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE],
+            types=[ResourceResultType.PAGE.value],
             sort="+url",
             limit=100
         )

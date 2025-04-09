@@ -79,7 +79,10 @@ class WarcTests(BaseCrawlerTests):
             self.assertEqual(resource.site, PRAGMAR_WARC_ID)
 
         # type filtering for HTML pages
-        html_resources = crawler.get_resources_api(sites=[PRAGMAR_WARC_ID], types=[ResourceResultType.PAGE])
+        html_resources = crawler.get_resources_api(
+            sites=[PRAGMAR_WARC_ID], 
+            types=[ResourceResultType.PAGE.value]
+        )
         self.assertTrue(html_resources.total > 0, "HTML filtering should return results")
         for resource in html_resources._results:
             self.assertEqual(resource.type, ResourceResultType.PAGE)
@@ -124,7 +127,7 @@ class WarcTests(BaseCrawlerTests):
         combined_resources = crawler.get_resources_api(
             sites=[PRAGMAR_WARC_ID],
             query="privacy",
-            types=[ResourceResultType.PAGE],
+            types=[ResourceResultType.PAGE.value],
             fields=["content", "headers"],
             sort="+url",
             limit=3
@@ -141,7 +144,7 @@ class WarcTests(BaseCrawlerTests):
         # multisite
         multisite_resources = crawler.get_resources_api(
             sites=[EXAMPLE_WARC_ID, PRAGMAR_WARC_ID],
-            types=[ResourceResultType.PAGE],
+            types=[ResourceResultType.PAGE.value],
             sort="+url",
             limit=100
         )

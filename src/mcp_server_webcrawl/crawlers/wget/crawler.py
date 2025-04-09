@@ -5,7 +5,7 @@ from mcp_server_webcrawl.crawlers.base.indexed import IndexedCrawler
 from mcp_server_webcrawl.crawlers.base.api import BaseJsonApi
 from mcp_server_webcrawl.crawlers.wget.adapter import WGET_RESOURCE_FIELD_MAPPING
 from mcp_server_webcrawl.crawlers.wget.adapter import get_resources, get_sites
-from mcp_server_webcrawl.models.resources import RESOURCES_FIELDS_REQUIRED
+from mcp_server_webcrawl.models.resources import ResourceResultType, RESOURCES_FIELDS_REQUIRED
 from mcp_server_webcrawl.utils.logger import get_logger
 
 logger = get_logger()
@@ -91,12 +91,15 @@ class WgetCrawler(IndexedCrawler):
         if not site_matches:
             return BaseJsonApi("GetResources", {}).set_results([], 0, 0, limit)
         
+        # convert to enums
+        resource_types = self._convert_to_resource_types(types)
+
         results, total = get_resources(
             self.datasrc,
             ids=ids,
             sites=sites,
             query=query,
-            types=types,
+            types=resource_types,
             fields=fields,
             statuses=statuses,
             sort=sort,

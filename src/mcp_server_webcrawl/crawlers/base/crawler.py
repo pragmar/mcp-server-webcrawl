@@ -48,9 +48,19 @@ class BaseCrawler:
         self._server = Server(self._module_name)
         self._server.list_tools()(self.mcp_list_tools)
         self._server.call_tool()(self.mcp_call_tool)
-
         # untapped features: list_prompts/get_prompt | list_resources/get_resources
+        # currently focused on tools (search and retrieval)
+        self._server.list_prompts()(self.mcp_list_prompts)
+        self._server.list_resources()(self.mcp_list_resources)
 
+    async def mcp_list_prompts(self) -> list:
+        """List available prompts (currently none)."""            
+        return []
+
+    async def mcp_list_resources(self) -> list:
+        """List available resources (currently none)."""
+        return []
+    
     async def serve(self, stdin: anyio.AsyncFile[str] | None, stdout: anyio.AsyncFile[str] | None) -> dict[str, Any]:
         """
         Launch the awaitable server.
@@ -238,5 +248,21 @@ class BaseCrawler:
                     logger.error(f"Error fetching thumbnails: {ex}\n{traceback.format_exc()}")
         
         return thumbnails_result
+    
+    def _convert_to_resource_types(self, types: Optional[list[str]]) -> Optional[list[ResourceResultType]]:
+        """
+        Convert string type values to ResourceResultType enums.  Silently ignore invalid type strings.
+        
+        Args:
+            types: Optional list of string type values
+            
+        Returns:
+            Optional list of ResourceResultType enums, or None if no valid types
+        """
+        if not types:
+            return None
+        
+        result = [rt for rt in ResourceResultType if rt.value in types]
+        return result if result else None
 
 

@@ -102,7 +102,7 @@ class InterroBotTests(BaseCrawlerTests):
             self.assertEqual(resource.site, 1)
 
         # type filtering
-        type_resources = crawler.get_resources_api(types=[ResourceResultType.PAGE])
+        type_resources = crawler.get_resources_api(types=[ResourceResultType.PAGE.value])
         if type_resources.total > 0:
             for resource in type_resources._results:
                 self.assertEqual(resource.type, ResourceResultType.PAGE)
@@ -141,7 +141,7 @@ class InterroBotTests(BaseCrawlerTests):
         combined_resources = crawler.get_resources_api(
             sites=[1],
             query="example",
-            types=[ResourceResultType.PAGE],
+            types=[ResourceResultType.PAGE.value],
             fields=["content", "headers"],
             sort="+url",
             limit=3
@@ -156,7 +156,7 @@ class InterroBotTests(BaseCrawlerTests):
                 self.assertIn("content", resource_dict)
                 self.assertIn("headers", resource_dict)
 
-        html_resources = crawler.get_resources_api(types=[ResourceResultType.PAGE, ResourceResultType.PDF])
+        html_resources = crawler.get_resources_api(types=[ResourceResultType.PAGE.value, ResourceResultType.PDF.value])
         self.assertTrue(html_resources.total > 0, "No HTML resources found when filtering for 'html' type")
         self.assertTrue(all(r.type.value in ("html", "pdf") for r in html_resources._results),
                 "Not all resources have type 'html' or 'pdf' when filtering for those types")

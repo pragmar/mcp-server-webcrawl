@@ -146,12 +146,13 @@ class InterroBotCrawler(BaseCrawler):
         """
         # convert keys/strings to enums for a sturdier API
         # this is the MCP/API boundary, inverse occurs on to_dict
-        enum_types: list[ResourceResultType] = [ResourceResultType(t) for t in types] if types else None
+        resource_types = self._convert_to_resource_types(types)        
+        
         json_result: BaseJsonApi = BaseJsonApi("GetResources", {
             "ids": ids,
             "sites": sites,
             "query": query,
-            "types": enum_types,
+            "types": resource_types,
             "fields": fields,
             "statuses": statuses,
             "sort": sort,
@@ -164,7 +165,7 @@ class InterroBotCrawler(BaseCrawler):
             ids=ids,
             sites=sites,
             query=query,
-            types=enum_types,
+            types=resource_types,
             fields=fields,
             statuses=statuses,
             sort=sort,
