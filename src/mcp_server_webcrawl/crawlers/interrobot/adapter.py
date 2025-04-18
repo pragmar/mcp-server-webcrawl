@@ -101,10 +101,10 @@ def iso_to_datetime(dt_string: Optional[str]) -> datetime:
 
     if not dt_string:
         return None
-    dt_string = dt_string.replace('Z', '+00:00')
+    dt_string = dt_string.replace("Z", "+00:00")
     match = re.match(r"(.*\.\d{6})\d*([-+]\d{2}:\d{2}|$)", dt_string)
     if match:
-        dt_string = match.group(1) + (match.group(2) or '')
+        dt_string = match.group(1) + (match.group(2) or "")
     return datetime.fromisoformat(dt_string)
 
 
@@ -201,6 +201,10 @@ def get_resources(
     params: dict[str, Any] = {}
     where_clauses: list[str] = []
     from_clause = "ResourcesFullText LEFT JOIN Resources ON ResourcesFullText.Id = Resources.Id"
+
+    # filter out -403/norobots, these are noise 99% of the time, but allow explicit requests
+    if not statuses:
+        where_clauses.append("Resources.Status > 0")
 
     # process field selection
     select_fields = set(RESOURCES_FIELDS_REQUIRED)

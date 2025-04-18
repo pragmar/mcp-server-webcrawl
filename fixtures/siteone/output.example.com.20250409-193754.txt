@@ -1,0 +1,213 @@
+
+ ####                ####             #####        
+ ####                ####           #######        
+ ####      ###       ####         #########        
+ ####     ######     ####       ###### ####        
+  ######################       #####   ####        
+    #######    #######       #####     ####        
+    #######    #######         #       ####        
+  ######################               ####        
+ ####     ######     ####              ####        
+ ####       ##       ####              ####        
+ ####                ####       ################## 
+ ####                ####       ################## 
+
+==================================================
+# SiteOne Crawler, v1.0.8.20240824               #
+# Author: jan.reges@siteone.cz                   #
+==================================================
+
+
+Progress report           | URL                                                                                                                                       | Status | Type     | Time   | Size    | Access.  | Best pr.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1/1     | 100% |>>>>>>>>>>| /                                                                                                                                         | 200    | HTML     | 327 ms | 1 kB    | 1/1/2    | 4       
+
+Redirected URLs
+---------------
+
+No redirects found.
+
+
+404 URLs
+--------
+
+No 404 URLs found.
+
+
+SSL/TLS info
+------------
+
+No SSL/TLS info.
+
+
+TOP fastest URLs
+----------------
+
+Time   | Status | Fast URL                                                                                                                                                                                                          
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+327 ms | 200    | https://example.com/                                                                                                                                                                                              
+
+
+TOP slowest URLs
+----------------
+
+Time   | Status | Slow URL                                                                                                                                                                                                     
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+327 ms | 200    | https://example.com/                                                                                                                                                                                         
+
+
+SEO metadata
+------------
+
+This table contains large data and shows max 10 rows. To see them all, use output to HTML using `--output-html-report=tmp/myreport.html`.
+
+URL                                                | Indexing             | Title                               | H1                                  | Description                         | Keywords                           
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/                                                  | Allowed              | Example Domain                      | Example Domain                      |                                     |                                    
+
+
+OpenGraph metadata
+------------------
+
+No URLs with OpenGraph data (og:* or twitter:* meta tags).
+
+
+Heading structure
+-----------------
+
+This table contains large data and shows max 10 rows. To see them all, use output to HTML using `--output-html-report=tmp/myreport.html`.
+
+Heading structure                                                                                                                                                                | Count | Errors | URL                           
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+<h1> Example Domain                                                                                                                                                              | 1     | 0      | /                             
+
+
+HTTP headers
+------------
+
+Header           | Occurs | Unique | Values preview                                                                                                                               | Min value  | Max value 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Accept-Ranges    | 1      | 1      | bytes                                                                                                                                        |            |           
+Alt-Svc          | 1      | 1      | h3=":443"; ma=93600,h3-29=":443"; ma=93600,quic=":443"; ma=93600; v="43"                                                                     |            |           
+Cache-Control    | 1      | 1      | max-age=1784                                                                                                                                 |            |           
+Connection       | 1      | 1      | close                                                                                                                                        |            |           
+Content-Encoding | 1      | 1      | gzip                                                                                                                                         |            |           
+Content-Length   | 1      | -      | [ignored generic values]                                                                                                                     | 648 B      | 648 B     
+Content-Type     | 1      | 1      | text/html                                                                                                                                    |            |           
+Date             | 1      | -      | [ignored generic values]                                                                                                                     | 2025-04-09 | 2025-04-09
+Etag             | 1      | -      | [ignored generic values]                                                                                                                     |            |           
+Last-Modified    | 1      | -      | [ignored generic values]                                                                                                                     | 2025-01-13 | 2025-01-13
+Vary             | 1      | 1      | Accept-Encoding                                                                                                                              |            |           
+
+
+HTTP header values
+------------------
+
+Header           | Occurs | Value                                                                                                                                                                         
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Accept-Ranges    | 1      | bytes                                                                                                                                                                         
+Alt-Svc          | 1      | h3=":443"; ma=93600,h3-29=":443"; ma=93600,quic=":443"; ma=93600; v="43"                                                                                                      
+Cache-Control    | 1      | max-age=1784                                                                                                                                                                  
+Connection       | 1      | close                                                                                                                                                                         
+Content-Encoding | 1      | gzip                                                                                                                                                                          
+Content-Type     | 1      | text/html                                                                                                                                                                     
+Vary             | 1      | Accept-Encoding                                                                                                                                                               
+
+
+Best practices
+--------------
+
+Analysis name                  | OK    | Notice | Warning | Critical
+----------------------------------------------------------------------
+DOM depth (> 30)               | 1     | 0      | 0       | 0       
+Heading structure              | 2     | 0      | 0       | 0       
+Title uniqueness (> 10%)       | 1     | 0      | 0       | 0       
+Description uniqueness (> 10%) | 1     | 0      | 0       | 0       
+Brotli support                 | 0     | 0      | 1       | 0       
+WebP support                   | 0     | 0      | 1       | 0       
+AVIF support                   | 0     | 0      | 1       | 0       
+
+
+Accessibility
+-------------
+
+Analysis name               | OK    | Notice | Warning | Critical
+-------------------------------------------------------------------
+Missing aria labels         | 0     | 0      | 1       | 0       
+Missing html lang attribute | 0     | 0      | 0       | 1       
+
+
+Source domains
+--------------
+
+Domain      | Totals      | HTML       
+-----------------------------------------
+example.com | 1/1kB/327ms | 1/1kB/327ms
+
+
+Content types
+-------------
+
+Content type | URLs  | Total size | Total time | Avg time | Status 20x
+------------------------------------------------------------------------
+HTML         | 1     | 1 kB       | 327 ms     | 327 ms   | 1         
+
+
+Content types (MIME types)
+--------------------------
+
+Content type               | URLs  | Total size | Total time | Avg time | Status 20x
+--------------------------------------------------------------------------------------
+text/html                  | 1     | 1 kB       | 327 ms     | 327 ms   | 1         
+
+
+DNS info
+--------
+
+DNS resolving tree                                                    
+------------------------------------------------------------------------
+Crawler\Analysis\DnsAnalyzer::getDnsInfo: nslookup command failed.    
+
+
+Security
+--------
+
+Header                     | OK    | Notice | Warning | Critical | Recommendation                                                                                                                                                  
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Strict-Transport-Security  | 0     | 0      | 0       | 1        | Strict-Transport-Security header is not set. It enforces secure connections and protects against MITM attacks.                                                  
+X-XSS-Protection           | 0     | 0      | 0       | 1        | X-XSS-Protection header is not set. It enables browser's built-in defenses against XSS attacks.                                                                 
+Content-Security-Policy    | 0     | 0      | 0       | 1        | Content-Security-Policy header is not set. It restricts resources the page can load and prevents XSS attacks.                                                   
+X-Frame-Options            | 0     | 0      | 1       | 0        | X-Frame-Options header is not set. It prevents clickjacking attacks when set to 'deny' or 'sameorigin.                                                          
+X-Content-Type-Options     | 0     | 0      | 1       | 0        | X-Content-Type-Options header is not set. It stops MIME type sniffing and mitigates content type attacks.                                                       
+Referrer-Policy            | 0     | 0      | 1       | 0        | Referrer-Policy header is not set. It controls referrer header sharing and enhances privacy and security.                                                       
+Feature-Policy             | 0     | 0      | 1       | 0        | Feature-Policy header is not set. It allows enabling/disabling browser APIs and features for security. Not important if Permissions-Policy is set.              
+Permissions-Policy         | 0     | 0      | 1       | 0        | Permissions-Policy header is not set. It allows enabling/disabling browser APIs and features for security.                                                      
+Server                     | 1     | 0      | 0       | 0        | Server header is not set or empty. This is recommended.                                                                                                         
+
+
+Analysis stats
+--------------
+
+Class::method                                        | Exec time | Exec count
+-------------------------------------------------------------------------------
+SslTlsAnalyzer::getTLSandSSLCertificateInfo          | 2.3 s     | 1         
+BestPracticeAnalyzer::checkNonClickablePhoneNumbers  | 0 ms      | 1         
+Manager::parseDOMDocument                            | 0 ms      | 1         
+SeoAndOpenGraphAnalyzer::analyzeSeo                  | 0 ms      | 1         
+AccessibilityAnalyzer::checkMissingAriaLabels        | 0 ms      | 1         
+AccessibilityAnalyzer::checkMissingLabels            | 0 ms      | 1         
+SeoAndOpenGraphAnalyzer::analyzeHeadings             | 0 ms      | 1         
+BestPracticeAnalyzer::checkMaxDOMDepth               | 0 ms      | 1         
+AccessibilityAnalyzer::checkMissingRoles             | 0 ms      | 1         
+BestPracticeAnalyzer::checkHeadingStructure          | 0 ms      | 1         
+BestPracticeAnalyzer::checkMissingQuotesOnAttributes | 0 ms      | 1         
+SeoAndOpenGraphAnalyzer::analyzeOpenGraph            | 0 ms      | 1         
+AccessibilityAnalyzer::checkImageAltAttributes       | 0 ms      | 1         
+AccessibilityAnalyzer::checkMissingLang              | 0 ms      | 1         
+BestPracticeAnalyzer::checkInlineSvg                 | 0 ms      | 1         
+BestPracticeAnalyzer::checkTitleUniqueness           | 0 ms      | 1         
+BestPracticeAnalyzer::checkBrotliSupport             | 0 ms      | 1         
+BestPracticeAnalyzer::checkMetaDescriptionUniqueness | 0 ms      | 1         
+BestPracticeAnalyzer::checkWebpSupport               | 0 ms      | 1         
+BestPracticeAnalyzer::checkAvifSupport               | 0 ms      | 1         
+

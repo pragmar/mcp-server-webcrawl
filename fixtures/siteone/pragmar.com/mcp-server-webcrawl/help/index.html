@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>mcp-server-webcrawl | Help</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="description" content="Help section for mcp-server-webcrawl (MCP server)." />
+        <link rel="shortcut icon" href="../../media/static/images/mcp-server-webcrawl/favicon.de2d0cf26f.png"/>
+        <link type="text/css" rel="stylesheet" href="../../media/static/styles/css/mcp.min.de2d0cf26f.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="og:image" content="https://pragmar.com/media/static/images/mcp-server-webcrawl/og-mcp-server-webcrawl.png?202504050153" />
+        <meta name="og:description" content="Help section for mcp-server-webcrawl (MCP server)." />
+        <meta name="og:title" content="mcp-server-webcrawl | Help" />
+        <meta name="twitter:card" content="summary" />
+    <script>var _SiteOneUrlDepth = 3;</script></head>
+    <body>
+
+<header>
+    <div>
+        <div class="constrain header__wrap">
+            <nav class="links">
+                <a href="../../index.html">Home</a>                    
+                <a href="../../mcp-server-webcrawl/help/index.html">Help</a>                            
+                <a href="https://github.com/pragmar/mcp_server_webcrawl">Github</a>
+            </nav>     
+            <h1 class="header__main">
+                <a href="../../mcp-server-webcrawl/index.html">
+                    <span class="accessible">mcp_server_webcrawl</span>
+                    <img src="../../media/static/images/mcp-server-webcrawl/mcpswc.de2d0cf26f.svg" alt="mcp-server-webcrawl logo and visual metaphors alluding to DC adapter interchange"/>
+                </a>
+            </h1>
+        </div>
+
+        
+    </div>
+</header>
+
+<main>
+    <div class="constrain">
+        <h2>What is this and what can it do?</h2>
+        <div class="summary">
+            <div>
+                <p>
+                    <strong>mcp-server-webcrawl</strong> is a <a href="https://modelcontextprotocol.io/">MCP server</a> 
+                    run on your computer. It creates
+                    a gateway to web crawler archives so that language models (OpenAI, Claude) can
+                    filter and process the data, either automously or under your direction,
+                    augmenting the base LLM knowledgebase with your 
+                    web content.
+                </p>
+                <p>
+                    Use <strong>mcp-server-webcrawl</strong> for technical inference, content management, 
+                    marketing, SEO, and more. The sky is the limit!
+                </p>
+                <p>
+                    The server supports a host of web crawlers including two mainstream
+                    crawl formats, wget and WARC. 
+                    <a href="https://interro.bot/">InterroBot</a>, 
+                    <a href="https://github.com/projectdiscovery/katana">Katana</a>, and
+                    <a href="https://crawler.siteone.io/">SiteOne</a> crawlers are also supported.
+                </p>
+                
+                <p>
+                    <strong>mcp-server-webcrawl</strong> is free and <a href="https://github.com/pragmar/mcp_server_webcrawl">open source</a>.
+                </p>
+            </div>
+            <div class="video__wrap"> 
+                <img src="../../media/static/images/mcp-server-webcrawl/og-mcp-server-webcrawl.de2d0cf26f.png" alt="open source, multicrawler, advanced search, cross platform"/>
+            </div>
+        </div>
+        <h2>Requirements</h2>
+        <div class="summary alternate">
+            <div>
+                <p>
+                    Claude Desktop (macOS/Windows) currently has everything necessary to run 
+                    <strong>mcp-server-webcrawl</strong>. In addition to the Claude Desktop, you'll need 
+                    to have installed <a href="https://www.python.org/downloads/">Python</a> (>=3.10).
+                </p>
+                <p>
+                    With Python installed, you should now have "pip" access on Terminal (macOS) or Powershell 
+                    (Windows). You can install <strong>mcp-server-webcrawl</strong> with the following command.
+                </p>
+                <p>
+                    <pre class="summary__pip">pip install mcp-server-webcrawl</pre>
+                </p>
+                <p>
+                    At time of writing (4/2025), OpenAI support for MCP was announced, but nothing tangible yet. 
+                    Hang tight!
+                </p>
+            </div>
+            
+        </div>
+        <h2>MCP Configuration</h2>
+        <div class="summary">
+<div class="configuration">
+            
+
+<input type="radio" name="crawler" id="radioWget" class="configuration__radio" checked>
+<label for="radioWget" class="configuration__label">wget</label>
+
+<input type="radio" name="crawler" id="radioWarc" class="configuration__radio">
+<label for="radioWarc" class="configuration__label">WARC</label>
+
+<input type="radio" name="crawler" id="radioInterrobot" class="configuration__radio">
+<label for="radioInterrobot" class="configuration__label">InterroBot</label>
+
+<input type="radio" name="crawler" id="radioKatana" class="configuration__radio">
+<label for="radioKatana" class="configuration__label">Katana</label>
+
+<input type="radio" name="crawler" id="radioSiteone" class="configuration__radio">
+<label for="radioSiteone" class="configuration__label">SiteOne</label>
+
+<div class="configuration__example">
+
+
+
+<div id="confWget">
+<pre>{ 
+  "mcpServers": {
+    "webcrawl": {
+      "command": "mcp-server-webcrawl",
+       "args": ["--crawler", "wget", "--datasrc", 
+         "/path/to/wget/archives/"]     
+    }
+  }
+}
+
+<span class="comment"># tested configurations (macOS Terminal/Windows WSL)</span>
+<span class="comment"># --adjust-extension for file extensions, e.g. *.html</span>
+<span>$ wget --mirror https://example.com</span>
+<span>$ wget --mirror https://example.com --adjust-extension</span></pre>
+</div>
+
+<div id="confWarc">
+<pre>{ 
+  "mcpServers": {
+    "webcrawl": {
+      "command": "mcp-server-webcrawl",
+       "args": ["--crawler", "warc", "--datasrc", 
+         "/path/to/warc/archives/"]     
+    }
+  }
+}
+
+<span class="comment"># tested configurations (macOS Terminal/Windows WSL)</span>
+<span>$ wget --warc-file=example --recursive https://example.com</span>
+<span>$ wget --warc-file=example --recursive --page-requisites https://example.com</span></pre>
+</div>
+
+<div id="confInterrobot">
+<pre>{ 
+  "mcpServers": {
+    "webcrawl": {
+      "command": "mcp-server-webcrawl",
+       "args": ["--crawler", "interrobot", "--datasrc", 
+         "[homedir]/Documents/InterroBot/interrobot.v2.db"]
+    }
+  }
+}
+
+<span class="comment"># crawls executed in InterroBot (windowed)</span>
+<span class="comment"># Windows: replace [homedir] with /Users/...</span>
+<span class="comment"># macOS: path provided on InterroBot settings page</span></pre>
+</div>
+
+<div id="confKatana">
+<pre>{ 
+  "mcpServers": {
+    "webcrawl": {
+      "command": "mcp-server-webcrawl",
+       "args": ["--crawler", "katana", "--datasrc", 
+         "/path/to/katana/crawls/"]
+    }
+  }
+}
+
+<span class="comment"># tested configurations (macOS Terminal/Powershell/WSL)</span>
+<span class="comment"># -store-response to save crawl contents</span>
+<span class="comment"># -store-response-dir allows for many site crawls in one dir</span>
+<span>$ katana -u https://example.com -store-response -store-response-dir crawls/</span></pre>
+
+</div>
+
+<div id="confSiteone">
+<pre>{ 
+  "mcpServers": {
+    "webcrawl": {
+      "command": "mcp-server-webcrawl",
+       "args": ["--crawler", "siteone", "--datasrc", 
+         "/path/to/siteone/archives/"]     
+    }
+  }
+}
+
+<span class="comment"># crawls executed in SiteOne (windowed)</span>
+<span class="comment"># *Generate offline website* must be checked</span></pre>
+
+</div>
+</div>
+</div>
+            <div class="configuration__selection">
+                <p>
+                    To connect <strong>mcp-server-webcrawl</strong> to Claude:
+                    from developer settings, find and edit the MCP configuration to include
+                    your crawl. 
+                </p>
+                <p>
+                    Pay close attention to the datasrc path. It should be the directory
+                    of webroot directories for file crawlers, and the db itself for database-based crawlers.
+                </p>
+            </div>
+        </div>
+        <div class="configuration__visualization">
+            <img src="../../media/static/images/mcp-server-webcrawl/netwww.de2d0cf26f.svg" alt="Abstraction of LLM clients (Claude and OpenAI) communicating with a website archive"/>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <nav class="pragmar">
+        <div class="pragmar__also">Software by <a href="../../index.html">Pragmar</a></div>
+        <div class="pragmar__products__wrap">
+            <div class="pragmar__products">
+            
+                
+                    
+                    <a class="pragmar__product interrobot" href="https://interro.bot/?utm_source=pragmar.com">
+                        <img src="../../media/static/images/home/interrobot.de2d0cf26f.png" alt="InterroBot icon"/>
+                        <div><strong>InterroBot</strong>.
+                            Web crawler and analyzer. Free/paid.</div>
+                    </a>
+                    
+                
+                    
+                    <a class="pragmar__product appstat" href="../../appstat/index.html">
+                        <img src="../../media/static/images/home/appstat.de2d0cf26f.png" alt="appstat icon"/>
+                        <div><strong>appstat</strong>.
+                            Windows process monitor. Free.</div>
+                    </a>
+                    
+                
+                    
+                
+                    
+                    <a class="pragmar__product moffitor" href="../../moffitor/index.html">
+                        <img src="../../media/static/images/home/moffitor.de2d0cf26f.png" alt="Moffitor icon"/>
+                        <div><strong>Moffitor</strong>.
+                            One-click monitor sleep. Free.</div>
+                    </a>
+                    
+                
+                    
+                    <a class="pragmar__product qbit" href="../../qbit/index.html">
+                        <img src="../../media/static/images/home/qbit.de2d0cf26f.png" alt="Qbit icon"/>
+                        <div><strong>Qbit</strong>.
+                            Skybox generator for game devs. Free/paid.</div>
+                    </a>
+                    
+                
+            
+            </div>
+        </div>
+    </nav>
+</footer>
+<script src="../../media/static/scripts/js/main.min.de2d0cf26f.js"></script>
+
+    </body>
+</html>

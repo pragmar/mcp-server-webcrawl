@@ -12,11 +12,12 @@ from mcp_server_webcrawl.crawlers.interrobot.crawler import InterroBotCrawler
 from mcp_server_webcrawl.crawlers.warc.crawler import WarcCrawler
 from mcp_server_webcrawl.crawlers.wget.crawler import WgetCrawler
 from mcp_server_webcrawl.crawlers.katana.crawler import KatanaCrawler
+from mcp_server_webcrawl.crawlers.siteone.crawler import SiteOneCrawler
 from mcp_server_webcrawl.crawlers.base.crawler import BaseCrawler
 from mcp_server_webcrawl.utils.cli import get_help_short_message, get_help_long_message
 from mcp_server_webcrawl.settings import DEBUG
 
-__version__: str = "0.7.6"
+__version__: str = "0.7.7"
 __name__: str = "mcp-server-webcrawl"
 
 if DEBUG:
@@ -59,7 +60,7 @@ def main() -> None:
         "warc": WarcCrawler,
         "wget": WgetCrawler,
         "katana": KatanaCrawler,
-        "siteone": WgetCrawler,
+        "siteone": SiteOneCrawler,
     }
 
     if not args.crawler or args.crawler.lower() not in crawler_map.keys():

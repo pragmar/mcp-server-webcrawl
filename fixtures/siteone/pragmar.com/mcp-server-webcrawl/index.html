@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>mcp-server-webcrawl | MCP server for web crawlers</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="description" content="AI search and retrieval for web crawlers" />
+        <link rel="shortcut icon" href="../media/static/images/mcp-server-webcrawl/favicon.de2d0cf26f.png"/>
+        <link type="text/css" rel="stylesheet" href="../media/static/styles/css/mcp.min.de2d0cf26f.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="og:image" content="https://pragmar.com/media/static/images/mcp-server-webcrawl/og-mcp-server-webcrawl.png?202504050153" />
+        <meta name="og:description" content="AI search and retrieval for web crawlers" />
+        <meta name="og:title" content="mcp-server-webcrawl | MCP server for web crawlers" />
+        <meta name="twitter:card" content="summary" />
+    <script>var _SiteOneUrlDepth = 2;</script></head>
+    <body>
+
+<header>
+    <div>
+        <div class="constrain header__wrap">
+            <nav class="links">
+                <a href="../index.html">Home</a>                    
+                <a href="../mcp-server-webcrawl/help/index.html">Help</a>                            
+                <a href="https://github.com/pragmar/mcp_server_webcrawl">Github</a>
+            </nav>     
+            <h1 class="header__main">
+                <a href="../mcp-server-webcrawl/index.html">
+                    <span class="accessible">mcp_server_webcrawl</span>
+                    <img src="../media/static/images/mcp-server-webcrawl/mcpswc.de2d0cf26f.svg" alt="mcp-server-webcrawl logo and visual metaphors alluding to DC adapter interchange"/>
+                </a>
+            </h1>
+        </div>
+
+        
+    </div>
+</header>
+
+<main>
+    <div class="constrain">
+        <h2>AI Search and Retrieval for Web Crawlers</h2>
+        <div class="summary">
+            <div>
+                <p>
+                    Bridge the gap between your web crawl and AI language models using  
+                    Model Context Protocol (MCP). With <strong>mcp-server-webcrawl</strong>,  
+                    your AI client filters and analyzes web content under your direction or autonomously, extracting insights 
+                    from your web content.
+                </p>
+                <p>
+                    Support for 
+                    <a href="https://en.wikipedia.org/wiki/WARC_(file_format)">WARC</a>, 
+                    <a href="https://en.wikipedia.org/wiki/Wget">wget</a>, 
+                    <a href="https://interro.bot/">InterroBot</a>, 
+                    <a href="https://github.com/projectdiscovery/katana">Katana</a>, and
+                    <a href="https://crawler.siteone.io/">SiteOne</a> crawlers 
+                    is available out of the gate. The server includes a full-text search interface 
+                    with boolean support, resource filtering by type, 
+                    HTTP status, and more. <strong>mcp-server-webcrawl</strong> provides the LLM a complete menu 
+                    with which to search your web content. 
+                </p>
+                <p>
+                    <strong>mcp-server-webcrawl is free</strong> and <a href="https://github.com/pragmar/mcp_server_webcrawl">open 
+                        source</a>, and requires <a href="https://claude.ai/download">Claude Desktop</a>, 
+                    <a href="https://www.python.org/downloads/">Python</a> (>=3.10). It is installed on the 
+                    command line, via pip install:
+                </p>
+                <pre class="summary__pip">pip install mcp-server-webcrawl</pre>
+                
+            </div>
+            <div class="video__wrap"> 
+                <video src="../media/static/images/mcp-server-webcrawl/mcpdemo.mp4"
+                    poster="/media/static/images/mcp-server-webcrawl/mcpdemo.png"
+                    autoplay loop muted playsinline
+                    aria-label="MCP demo video (autoplay, no audio) showcasing MCP setup using mcp-server-webcrawl">Your browser does not support the video tag.</video>            
+            </div>
+        </div>
+        <h2>Main Features</h2>
+        <div class="features">
+            <div class="features__list">
+                <ul>                    
+                    <li>Claude Desktop ready</li>
+                    <li>Fulltext search support</li>
+                    <li>Filter by type, status, and more</li>
+                </ul>
+            </div>
+            <div class="features__list">
+                <ul>                    
+                    <li>Supports wget, WARC, and more</li>
+                    <li>Augment your LLM knowledgebase</li>
+                    <li>ChatGPT support <a href="https://x.com/sama/status/1904957253456941061?t=pxUUk3dAynvA25TdaIIPMA">coming soon</a></li>
+                </ul>
+            </div>
+        </div>
+        <h2>MCP Configuration</h2>
+        <div class="summary">
+
+<div class="configuration">
+            
+
+<input type="radio" name="crawler" id="radioWget" class="configuration__radio" checked>
+<label for="radioWget" class="configuration__label">wget</label>
+
+<input type="radio" name="crawler" id="radioWarc" class="configuration__radio">
+<label for="radioWarc" class="configuration__label">WARC</label>
+
+<input type="radio" name="crawler" id="radioInterrobot" class="configuration__radio">
+<label for="radioInterrobot" class="configuration__label">InterroBot</label>
+
+<input type="radio" name="crawler" id="radioKatana" class="configuration__radio">
+<label for="radioKatana" class="configuration__label">Katana</label>
+
+<input type="radio" name="crawler" id="radioSiteone" class="configuration__radio">
+<label for="radioSiteone" class="configuration__label">SiteOne</label>
+
+<div class="configuration__example">
+
+
+
+<div id="confWget">
+<pre>{ 
+  "mcpServers": {
+    "webcrawl": {
+      "command": "mcp-server-webcrawl",
+       "args": ["--crawler", "wget", "--datasrc", 
+         "/path/to/wget/archives/"]     
+    }
+  }
+}
+
+<span class="comment"># tested configurations (macOS Terminal/Windows WSL)</span>
+<span class="comment"># --adjust-extension for file extensions, e.g. *.html</span>
+<span>$ wget --mirror https://example.com</span>
+<span>$ wget --mirror https://example.com --adjust-extension</span></pre>
+</div>
+
+<div id="confWarc">
+<pre>{ 
+  "mcpServers": {
+    "webcrawl": {
+      "command": "mcp-server-webcrawl",
+       "args": ["--crawler", "warc", "--datasrc", 
+         "/path/to/warc/archives/"]     
+    }
+  }
+}
+
+<span class="comment"># tested configurations (macOS Terminal/Windows WSL)</span>
+<span>$ wget --warc-file=example --recursive https://example.com</span>
+<span>$ wget --warc-file=example --recursive --page-requisites https://example.com</span></pre>
+</div>
+
+<div id="confInterrobot">
+<pre>{ 
+  "mcpServers": {
+    "webcrawl": {
+      "command": "mcp-server-webcrawl",
+       "args": ["--crawler", "interrobot", "--datasrc", 
+         "[homedir]/Documents/InterroBot/interrobot.v2.db"]
+    }
+  }
+}
+
+<span class="comment"># crawls executed in InterroBot (windowed)</span>
+<span class="comment"># Windows: replace [homedir] with /Users/...</span>
+<span class="comment"># macOS: path provided on InterroBot settings page</span></pre>
+</div>
+
+<div id="confKatana">
+<pre>{ 
+  "mcpServers": {
+    "webcrawl": {
+      "command": "mcp-server-webcrawl",
+       "args": ["--crawler", "katana", "--datasrc", 
+         "/path/to/katana/crawls/"]
+    }
+  }
+}
+
+<span class="comment"># tested configurations (macOS Terminal/Powershell/WSL)</span>
+<span class="comment"># -store-response to save crawl contents</span>
+<span class="comment"># -store-response-dir allows for many site crawls in one dir</span>
+<span>$ katana -u https://example.com -store-response -store-response-dir crawls/</span></pre>
+
+</div>
+
+<div id="confSiteone">
+<pre>{ 
+  "mcpServers": {
+    "webcrawl": {
+      "command": "mcp-server-webcrawl",
+       "args": ["--crawler", "siteone", "--datasrc", 
+         "/path/to/siteone/archives/"]     
+    }
+  }
+}
+
+<span class="comment"># crawls executed in SiteOne (windowed)</span>
+<span class="comment"># *Generate offline website* must be checked</span></pre>
+
+</div>
+</div>
+</div>
+
+            <div class="configuration__selection">
+                <p>
+                    From Claude's developer settings, find the MCP configuration to include
+                    your crawl. Open in a text editor and 
+                    modify the example to reflect your datasrc path.
+                </p>
+                <p>
+                    You can set up more <strong>mcp-server-webcrawl</strong> connections under mcpServers 
+                    if you want.
+                </p>
+
+            </div>
+        </div>
+        <div class="configuration__visualization">
+            <img src="../media/static/images/mcp-server-webcrawl/netwww.de2d0cf26f.svg" alt="Abstraction of LLM clients (Claude and OpenAI) communicating with a website archive"/>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <nav class="pragmar">
+        <div class="pragmar__also">Software by <a href="../index.html">Pragmar</a></div>
+        <div class="pragmar__products__wrap">
+            <div class="pragmar__products">
+            
+                
+                    
+                    <a class="pragmar__product interrobot" href="https://interro.bot/?utm_source=pragmar.com">
+                        <img src="../media/static/images/home/interrobot.de2d0cf26f.png" alt="InterroBot icon"/>
+                        <div><strong>InterroBot</strong>.
+                            Web crawler and analyzer. Free/paid.</div>
+                    </a>
+                    
+                
+                    
+                    <a class="pragmar__product appstat" href="../appstat/index.html">
+                        <img src="../media/static/images/home/appstat.de2d0cf26f.png" alt="appstat icon"/>
+                        <div><strong>appstat</strong>.
+                            Windows process monitor. Free.</div>
+                    </a>
+                    
+                
+                    
+                
+                    
+                    <a class="pragmar__product moffitor" href="../moffitor/index.html">
+                        <img src="../media/static/images/home/moffitor.de2d0cf26f.png" alt="Moffitor icon"/>
+                        <div><strong>Moffitor</strong>.
+                            One-click monitor sleep. Free.</div>
+                    </a>
+                    
+                
+                    
+                    <a class="pragmar__product qbit" href="../qbit/index.html">
+                        <img src="../media/static/images/home/qbit.de2d0cf26f.png" alt="Qbit icon"/>
+                        <div><strong>Qbit</strong>.
+                            Skybox generator for game devs. Free/paid.</div>
+                    </a>
+                    
+                
+            
+            </div>
+        </div>
+    </nav>
+</footer>
+<script src="../media/static/scripts/js/main.min.de2d0cf26f.js"></script>
+
+    </body>
+</html>

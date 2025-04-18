@@ -121,7 +121,7 @@ class BaseJsonApi:
                     "limit": self._results_limit,
                 },
             },
-            "results": [r.to_dict() if hasattr(r, 'to_dict') else r for r in self._results]
+            "results": [r.to_dict() if hasattr(r, "to_dict") else r for r in self._results]
         }
 
         if self._errors:

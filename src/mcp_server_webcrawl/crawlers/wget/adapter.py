@@ -1,8 +1,5 @@
-import hashlib
 import os
-import re
 import sqlite3
-import mimetypes
 
 from contextlib import closing
 from datetime import datetime
@@ -82,70 +79,35 @@ class WgetManager(BaseManager):
         # generate relative url path from file path
         relative_path = file_path.relative_to(base_dir)
         url = f"http://{base_dir.name}/{str(relative_path).replace(os.sep, '/')}"
-        # generate stable id from url
-        file_id = int(hashlib.sha1(url.encode()).hexdigest()[:8], 16)
     
         # clean up the file path - strip wget artifacts
-        clean_path = str(file_path)
-        clean_path = clean_path.lower()
-        clean_path = re.sub(r"[\u00b7·]?\d+\.tmp|\d{12}|\.tmp", "", clean_path)
-
+        decruftified_path = BaseManager.decruft_path(file_path)
+        
         # get the final extension for type mapping
-        extension = Path(clean_path).suffix.lower()
+        extension = Path(decruftified_path).suffix.lower()
         resource_type = WGET_TYPE_MAPPING.get(extension, ResourceResultType.OTHER)
     
         # get file stats
         stat = file_path.stat()
         file_size = stat.st_size
-    
-        # read content for text files
-        content = None
-        if resource_type in [ResourceResultType.PAGE, ResourceResultType.TEXT,
-                    ResourceResultType.CSS, ResourceResultType.SCRIPT, ResourceResultType.OTHER]:
-            
-            # vanilla --mirror will not adjust extension (ResourceResultType.OTHER)
-            # so, need to determine the old fashioned way
-            mime_type, _ = mimetypes.guess_type(file_path)
-            if mime_type and not mime_type.startswith("text/"):
-                return
-            
-            if os.path.getsize(file_path) > 2_000_000:  # 2MB limit
-                return
 
-            try:
-                with open(file_path, "r", encoding="utf-8") as f:
-                    content = f.read()
-            except UnicodeDecodeError:
-                logger.warning(f"Could not decode file as UTF-8: {file_path}")
-                content = None
-        headers: str = self._get_basic_headers(resource_type, file_size)
         cursor.execute("""
             INSERT INTO ResourcesFullText (
                 Id, Project, Url, Type, Status,
                 Headers, Content, Size, Time
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            file_id, site_id, url,
+            BaseManager.string_to_id(url), 
+            site_id, 
+            url,
             resource_type.value,
             200,
-            headers,
-            content,
+            BaseManager.get_basic_headers(file_size, resource_type),
+            BaseManager.read_file_contents(file_path, resource_type),
             file_size,
             0
         ))
     
-    def _get_basic_headers(self, res_type: ResourceResultType, file_size: int) -> str:
-        content_type = {
-            ResourceResultType.PAGE: "text/html",
-            ResourceResultType.CSS: "text/css",
-            ResourceResultType.SCRIPT: "application/javascript",
-            ResourceResultType.IMAGE: "image/jpeg",  # default image type
-            ResourceResultType.PDF: "application/pdf",
-            ResourceResultType.TEXT: "text/plain",
-            ResourceResultType.DOC: "application/msword",
-            ResourceResultType.OTHER: "application/octet-stream"
-        }.get(res_type, "application/octet-stream")    
-        return f"HTTP/1.0 200 OK\r\nContent-Type: {content_type}\r\nContent-Length: {file_size}\r\n\r\n"
 
 manager: WgetManager = WgetManager()
 
@@ -202,7 +164,7 @@ def get_sites(
         
         site = SiteResult(
             id=site_id,
-            url=f"http://{dir_path.name}/",  # Base URL from directory name
+            url=f"http://{dir_path.name}/",
             created=created_time if "created" in selected_fields else None,
             modified=modified_time if "modified" in selected_fields else None,
             robots=robots_content
@@ -227,7 +189,7 @@ def get_resources(
     """
     Get resources from wget directories using in-memory SQLite.
     
-    Args:
+    Args:        
         datasrc: Path to the directory containing wget captures
         ids: Optional list of resource IDs to filter by
         sites: Optional list of site IDs to filter by
@@ -242,6 +204,45 @@ def get_resources(
     Returns:
         Tuple of (list of ResourceResult objects, total count)
     """
+    return get_resources_with_manager(manager, datasrc, ids, sites, query, types, fields, statuses, sort, limit, offset)
+
+
+def get_resources_with_manager(
+    crawl_manager: BaseManager,
+    datasrc: Path,
+    ids: Optional[list[int]] = None,
+    sites: Optional[list[int]] = None,
+    query: str = "",
+    types: Optional[list[ResourceResultType]] = None,
+    fields: Optional[list[str]] = None,
+    statuses: Optional[list[int]] = None,
+    sort: Optional[str] = None,
+    limit: int = RESOURCES_LIMIT_DEFAULT,
+    offset: int = 0
+) -> Tuple[list[ResourceResult], int]:
+    """
+    Get resources from directories using in-memory SQLite with the specified manager.
+
+    Args:
+        crawl_manager: BaseManager instance used for file indexing and database access
+        datasrc: Path to the directory containing site captures
+        ids: Optional list of resource IDs to filter by
+        sites: Optional list of site IDs to filter by
+        query: Search query string
+        types: Optional list of resource types to filter by
+        fields: Optional list of fields to include in response
+        statuses: Optional list of HTTP status codes to filter by
+        sort: Sort order for results
+        limit: Maximum number of results to return
+        offset: Number of results to skip for pagination
+            
+    Returns:
+        Tuple of (list of ResourceResult objects, total count)
+        
+    Notes:
+        Returns empty results if sites is empty or not provided.
+        If the database is being built, it will log a message and return empty results.
+    """
     if not sites or len(sites) == 0:
         return [], 0
     
@@ -251,7 +252,7 @@ def get_resources(
     
     site_paths = [Path(datasrc) / site.url.split("/")[-2] for site in site_results]
     sites_group = SitesGroup(sites, site_paths)
-    connection: sqlite3.Connection = manager.get_connection(sites_group)
+    connection: sqlite3.Connection = crawl_manager.get_connection(sites_group)
     if connection is None:
         # database is currently being built
         logger.info(f"Database for sites {sites} is currently being built, try again later")
@@ -354,3 +355,4 @@ def get_resources(
         return [], 0
     
     return results, total_count
+

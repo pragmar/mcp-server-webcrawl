@@ -45,11 +45,15 @@ class KatanaManager(BaseManager):
     def _load_site_data(self, connection: sqlite3.Connection, directory: Path, site_id: int) -> None:
         """
         Load a site directory of HTTP text files into the database.
-        
+
         Args:
             connection: SQLite connection
             directory: Path to the site directory
             site_id: ID for the site
+
+        Notes:
+            If the directory doesn't exist or isn't a directory, an error is logged
+            and the method returns without processing.
         """
         if not directory.exists() or not directory.is_dir():
             logger.error(f"Directory not found or not a directory: {directory}")
@@ -74,61 +78,51 @@ class KatanaManager(BaseManager):
             site_id: ID for the site
         """
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
         except Exception as e:
             logger.error(f"Error reading file {file_path}: {e}")
             return
 
-        # Parse HTTP text file format
-        # Format: <url>\n\n<request>\n\n<headers>...<response>
-        parts = content.split("\n\n", 2)
+        # crawl format: <url>\n\n<request>\n\n<headers>...<response>
+        parts: list[str] = content.split("\n\n", 2)
         if len(parts) < 3:
             logger.warning(f"Invalid HTTP text format in file {file_path}")
             return
 
-        url = parts[0].strip()
-        request = parts[1].strip()
-        response_data = parts[2].strip()
+        url: str = parts[0].strip()
+        # request: str = parts[1].strip()
+        response_data: str = parts[2].strip()
 
-        # Generate stable ID from URL
-        file_id = int(hashlib.sha1(url.encode()).hexdigest()[:8], 16)
-
-        # Find the response headers and content
         try:
-            # Split response into headers and body at the first empty line after HTTP status line
-            response_parts = response_data.split("\n\n", 1)
-            headers = response_parts[0].strip()
-            body = response_parts[1].strip() if len(response_parts) > 1 else ""
+            response_parts: list[str] = response_data.split("\n\n", 1)
+            headers: str = response_parts[0].strip()
+            body: str = response_parts[1].strip() if len(response_parts) > 1 else ""
 
-            # Extract status code from the first line of headers
-            status_match = re.search(r"HTTP/\d\.\d\s+(\d+)", headers.split("\n")[0])
-            status_code = int(status_match.group(1)) if status_match else 0
+            # status from the first line of headers
+            status_match: str = re.search(r"HTTP/\d\.\d\s+(\d+)", headers.split("\n")[0])
+            status_code: int = int(status_match.group(1)) if status_match else 0
 
-            # Determine content type
             content_type_match = re.search(r"Content-Type:\s*([^\r\n;]+)", headers, re.IGNORECASE)
             content_type = content_type_match.group(1).strip() if content_type_match else ""
-
-            # Determine resource type based on content type
             res_type = self._determine_resource_type(content_type)
-
-            # Calculate size
             content_size = len(body)
 
-            # Insert into database
             cursor.execute("""
                 INSERT INTO ResourcesFullText (
                     Id, Project, Url, Type, Status,
                     Headers, Content, Size, Time
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                file_id, site_id, url,
+                BaseManager.string_to_id(url), 
+                site_id, 
+                url,
                 res_type.value,
                 status_code,
                 headers,
                 body if self._is_text_content(content_type) else None,
                 content_size,
-                0  # Time not available
+                0  # time not available
             ))
 
         except Exception as e:
@@ -142,15 +136,18 @@ def get_sites(
     fields: Optional[list[str]] = None
 ) -> list[SiteResult]:
     """
-    list site directories in the datasrc directory as sites.
+    List site directories in the datasrc directory as sites.
 
     Args:
         datasrc: Path to the directory containing site subdirectories
         ids: Optional list of site IDs to filter by
-        fields: List of fields to include in the response
+        fields: Optional list of fields to include in the response
 
     Returns:
         List of SiteResult objects, one for each site directory
+
+    Notes:
+        Returns an empty list if the datasrc directory doesn't exist.
     """
     assert datasrc is not None, f"datasrc not provided ({datasrc})"
 
@@ -169,7 +166,7 @@ def get_sites(
     results: list[SiteResult] = []
 
     # get all directories that contain HTTP text files
-    site_dirs = [d for d in datasrc.iterdir() if d.is_dir() and not d.name.startswith('.')]
+    site_dirs = [d for d in datasrc.iterdir() if d.is_dir() and not d.name.startswith(".")]
 
     # map directory IDs to paths for filtering
     dir_id_map: dict[int, Path] = {KatanaManager.string_to_id(d.name): d for d in site_dirs}
@@ -188,7 +185,7 @@ def get_sites(
         robots_files = list(dir_path.glob("*robots.txt*"))
         if robots_files:
             try:
-                with open(robots_files[0], 'r', encoding='utf-8', errors='replace') as f:
+                with open(robots_files[0], "r", encoding="utf-8", errors="replace") as f:
                     # for robots.txt files in our format, extract only the content part
                     content = f.read()
                     parts = content.split("\n\n", 2)
@@ -253,7 +250,7 @@ def get_resources(
     if not site_results:
         return [], 0
 
-    site_paths = [Path(datasrc) / site.url.split('/')[-2] for site in site_results]
+    site_paths = [Path(datasrc) / site.url.split("/")[-2] for site in site_results]
     sites_group = SitesGroup(sites, site_paths)
     connection: sqlite3.Connection = manager.get_connection(sites_group)
     if connection is None:

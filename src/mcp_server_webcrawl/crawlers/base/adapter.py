@@ -1,5 +1,8 @@
+import os
 import hashlib
 import sqlite3
+import re
+import mimetypes
 
 from typing import Optional
 from datetime import datetime
@@ -14,12 +17,15 @@ from mcp_server_webcrawl.crawlers.base.indexed import (
     INDEXED_RESOURCE_FIELD_MAPPING,
     INDEXED_SORT_MAPPING,
     INDEXED_TYPE_MAPPING,
+    INDEXED_BINARY_EXTENSIONS,
 )
 
 # field mappings similar to other adapters
 WGET_RESOURCE_FIELD_MAPPING: Final[dict[str, str]] = INDEXED_RESOURCE_FIELD_MAPPING
 WGET_SORT_MAPPING: Final[dict[str, Tuple[str, str]]] = INDEXED_SORT_MAPPING
 WGET_TYPE_MAPPING = INDEXED_TYPE_MAPPING
+
+logger = get_logger()
 
 class SitesGroup:
     def __init__(self, site_ids: list[int], site_paths: list[Path]) -> None:
@@ -80,14 +86,90 @@ class BaseManager:
             self._building_locks.pop(group.cache_key, None)
     
     @staticmethod
-    def string_to_id(dirname: str) -> int:
+    def string_to_id(value: str) -> int:
         """
-        Convert a string, such as a directory name, to a number
-        suitable for a database id, usually.
+        Convert a string, such as a directory name, to a numeric ID
+        suitable for a database primary key. 
+        
+        Hash space and collision probability notes:
+        - [:8]  = 32 bits (4.29 billion values) - ~1% collision chance with 10,000 items
+        - [:12] = 48 bits (280 trillion values) - ~0.0000001% collision chance with 10,000 items
+        - [:16] = 64 bits (max safe SQLite INTEGER) - near-zero collision, 9.22 quintillion values
+        - SQLite INTEGER type is 64-bit signed, with max value of 9,223,372,036,854,775,807.
+        - The big problem with larger hashspaces is the length of the ids they generate for presentation.
+        
+        Args:
+            dirname: Input string to convert to an ID
+            
+        Returns:
+            Integer ID derived from the input string
         """
-        hash_obj = hashlib.sha1(dirname.encode())
-        return int(hash_obj.hexdigest()[:8], 16)
+        hash_obj = hashlib.sha1(value.encode())
+        return int(hash_obj.hexdigest()[:12], 16)
     
+
+    @staticmethod
+    def get_basic_headers(file_size: int, resource_type: ResourceResultType) -> str:
+        content_type = {
+            ResourceResultType.PAGE: "text/html",
+            ResourceResultType.CSS: "text/css",
+            ResourceResultType.SCRIPT: "application/javascript",
+            ResourceResultType.IMAGE: "image/jpeg",  # default image type
+            ResourceResultType.PDF: "application/pdf",
+            ResourceResultType.TEXT: "text/plain",
+            ResourceResultType.DOC: "application/msword",
+            ResourceResultType.OTHER: "application/octet-stream"
+        }.get(resource_type, "application/octet-stream")    
+        return f"HTTP/1.0 200 OK\r\nContent-Type: {content_type}\r\nContent-Length: {file_size}\r\n\r\n"
+    
+    @staticmethod
+    def get_common_binary_extensions() -> list[str]:
+        return INDEXED_BINARY_EXTENSIONS
+    
+
+    @staticmethod
+    def read_file_contents(file_path, resource_type) -> Optional[str]:
+        """Read content from text files with better error handling and encoding detection."""
+        # Skip if not a text resource type
+        if resource_type not in [ResourceResultType.PAGE, ResourceResultType.TEXT,
+                    ResourceResultType.CSS, ResourceResultType.SCRIPT, ResourceResultType.OTHER]:
+            return None
+            
+        # Check file size first to avoid unnecessary processing
+        if os.path.getsize(file_path) > 2_000_000:  # 2MB limit
+            return None
+            
+        # Check extension
+        extension = os.path.splitext(file_path)[1].lower()
+        if extension in BaseManager.get_common_binary_extensions():
+            return None
+            
+        # Check MIME type
+        mime_type, _ = mimetypes.guess_type(file_path)
+        if mime_type and not mime_type.startswith("text/"):
+            # Additional check: some non-text MIME types can still be text
+            if not any(mime_type.startswith(prefix) for prefix in ["application/json", "application/xml", "application/javascript"]):
+                return None
+        
+        content = None
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        except UnicodeDecodeError:
+            logger.warning(f"Could not decode file as UTF-8: {file_path}")
+        
+        return content
+    
+    @staticmethod
+    def decruft_path(path:str) -> list[str]:
+        """
+        Very light touch cleanup of wget file naming, these tmps are creating noise
+        """
+        decruftified = str(path)
+        decruftified = decruftified.lower()
+        decruftified = re.sub(r"[\u00b7·]?\d+\.tmp|\d{12}|\.tmp", "", decruftified)
+        return decruftified
+
     def get_connection(self, group: SitesGroup) -> Optional[sqlite3.Connection]:
         """
         Get database connection for sites in the group, creating if needed.

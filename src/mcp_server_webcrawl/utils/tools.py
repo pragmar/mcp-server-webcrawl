@@ -66,7 +66,20 @@ def get_crawler_tools(sites: Optional[list[SiteResult]] = None):
         ),
         Tool(
             name=RESOURCES_TOOL_NAME,
-            description="Searches for resources (webpages, CSS, PDF, etc.) across projects and retrieves specified fields.",
+            description= ("Searches for resources (webpages, images, CSS, JS, etc.) across projects and retrieves specified fields. "
+                "Extremely useful tips to guide efficient searching follows. "
+                "To find a site homepage or index, use sort='+id' with types=['html'] and the appropriate site ID. "
+                "Most sites indexed by this tool will be small to moderately sized websites, "
+                "don't assume most keywords will generate results. "
+                "When searching a new topic, it is generally best to start with just a site "
+                "(all resources, lay of the land), a site and a search query, "
+                "or by site and filters—combine query and filters once you have a result set to refine. "
+                "This becomes less true as you search more, acquiring a lay of the land and ability to anticipate results. "
+                "If you need to separate internal from external pages, you can query the site index URL with a wildcard (*), e.g. "
+                "https://example.com/*. A vital aspect of this API is field control, you should open up the limit wide when dealing with thin "
+                "fields (string length) and dial way back when using larger fields, like content. Adjust dynamically, the best strategy "
+                "balances preserving the user's context window while minimizing number of queries necessary to answer their question."
+            ),
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -74,9 +87,18 @@ def get_crawler_tools(sites: Optional[list[SiteResult]] = None):
                         "type": "string",
                         "description": ("Fulltext search query string. Leave empty to return all resources when "
                             "filtering on other fields and you will get better precision. "
+                            "Extremely useful tips to guide query construction follows. "
+                            "Be explicit—a query MUST use one of these formats: (1) single keyword, (2) quoted phrase: \"keyword1 keyword2\", (3) " 
+                            "explicit AND: keyword1 AND keyword2, (4) explicit OR: keyword1 OR keyword2, or (5) advanced boolean: (keyword1 AND keyword2) " 
+                            "OR (keyword3 NOT keyword4). " 
+                            "WARNING, space-separated keywords without quotes or operators will not work correctly."
                             "Supports fulltext and boolean operators, syntax and capabilities consistent with "
                             "SQLite FTS5 in boolean mode. Supports AND, OR, NOT operators, quoted phrases, "
-                            "and suffix wildcards (word*), but not prefix wildcards (*word).")
+                            "and suffix wildcards (word*), but not prefix wildcards (*word). "
+                            "Parentheses nesting for complex boolean expressions is fully supported. "
+                            "Does not support `field: value` format, it will poison the query, cause zero results—use filters instead. "
+                            "Does not support stemming, use wildcards (keyword*) instead."
+                        )
                     },
                     "ids": {
                         "type": "array",

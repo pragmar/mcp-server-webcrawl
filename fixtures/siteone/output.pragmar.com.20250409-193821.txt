@@ -1,0 +1,430 @@
+
+ ####                ####             #####        
+ ####                ####           #######        
+ ####      ###       ####         #########        
+ ####     ######     ####       ###### ####        
+  ######################       #####   ####        
+    #######    #######       #####     ####        
+    #######    #######         #       ####        
+  ######################               ####        
+ ####     ######     ####              ####        
+ ####       ##       ####              ####        
+ ####                ####       ################## 
+ ####                ####       ################## 
+
+==================================================
+# SiteOne Crawler, v1.0.8.20240824               #
+# Author: jan.reges@siteone.cz                   #
+==================================================
+
+
+Progress report           | URL                                                                                                                                       | Status | Type     | Time   | Size    | Access.  | Best pr.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1/18    | 5%   |>         | /                                                                                                                                         | 200    | HTML     | 189 ms | 5 kB    | 2/2      | 4       
+2/19    | 10%  |>         | /appstat                                                                                                                                  | 301    | Redirect | 116 ms | 83 B    |          |         
+3/19    | 15%  |>>        | /media/static/images/home/appstat.png                                                                                                     | 200    | Image    | 154 ms | 24 kB   |          |         
+4/19    | 21%  |>>        | /media/static/images/home/qbit.png                                                                                                        | 200    | Image    | 143 ms | 10 kB   |          |         
+5/19    | 26%  |>>>       | /media/static/images/favicon.png                                                                                                          | 200    | Image    | 149 ms | 666 B   |          |         
+6/19    | 31%  |>>>       | /media/static/images/home/interrobot.png                                                                                                  | 200    | Image    | 217 ms | 116 kB  |          |         
+7/20    | 35%  |>>>>      | /qbit                                                                                                                                     | 301    | Redirect | 115 ms | 77 B    |          |         
+8/21    | 38%  |>>>>      | /moffitor                                                                                                                                 | 301    | Redirect | 136 ms | 85 B    |          |         
+9/21    | 42%  |>>>>      | /media/static/images/home/nearly.png                                                                                                      | 200    | Image    | 210 ms | 157 kB  |          |         
+10/21   | 47%  |>>>>>     | /media/static/images/home/snowballearth.png                                                                                               | 200    | Image    | 224 ms | 150 kB  |          |         
+11/21   | 52%  |>>>>>     | /media/static/scripts/js/main.min.js?202504050153                                                                                         | 200    | JS       | 140 ms | 2 kB    |          |         
+12/21   | 57%  |>>>>>>    | /media/static/images/home/moffitor.png                                                                                                    | 200    | Image    | 112 ms | 10 kB   |          |         
+13/37   | 35%  |>>>>      | /appstat/                                                                                                                                 | 200    | HTML     | 357 ms | 9 kB    | 2/2      | 7       
+14/41   | 34%  |>>>       | /media/static/styles/css/appstat.min.css?202504050153                                                                                     | 200    | CSS      | 122 ms | 7 kB    |          |         
+15/42   | 35%  |>>>>      | /appstat/download                                                                                                                         | 301    | Redirect | 116 ms | 101 B   |          |         
+16/42   | 38%  |>>>>      | /media/static/images/appstat/logo.svg                                                                                                     | 200    | Image    | 119 ms | 9 kB    |          |         
+17/42   | 40%  |>>>>      | /media/static/images/home/interrobot.png?202504050153                                                                                     | 200    | Image    | 211 ms | 116 kB  |          |         
+18/42   | 42%  |>>>>      | /media/static/images/appstat/capture.detail.png?202504050153                                                                              | 200    | Image    | 146 ms | 24 kB   |          |         
+19/42   | 45%  |>>>>>     | /appstat/privacy/                                                                                                                         | 200    | HTML     | 129 ms | 6 kB    | 2/2      | 7       
+20/42   | 47%  |>>>>>     | /media/static/images/appstat/logo.svg?202504050153                                                                                        | 200    | Image    | 128 ms | 9 kB    |          |         
+21/42   | 50%  |>>>>>     | /media/static/images/appstat/smallcap.png?202504050153                                                                                    | 200    | Image    | 168 ms | 58 kB   |          |         
+22/42   | 52%  |>>>>>     | /media/static/fonts/Montserrat-Regular-Latin.woff2                                                                                        | 200    | Other    | 156 ms | 17 kB   |          |         
+23/43   | 53%  |>>>>>     | /appstat/download/                                                                                                                        | 302    | Redirect | 118 ms | 151 B   |          |         
+24/43   | 55%  |>>>>>>    | /media/static/images/home/ohdowas.v1.png                                                                                                  | 200    | Image    | 225 ms | 149 kB  |          |         
+25/43   | 58%  |>>>>>>    | /mcp-server-webcrawl                                                                                                                      | 301    | Redirect | 101 ms | 107 B   |          |         
+26/43   | 60%  |>>>>>>    | /media/static/images/home/mcp-server-webcrawl.png                                                                                         | 200    | Image    | 140 ms | 20 kB   |          |         
+27/43   | 62%  |>>>>>>    | /media/static/fonts/Montserrat-SemiBold-Latin.woff2                                                                                       | 200    | Other    | 150 ms | 17 kB   |          |         
+28/43   | 65%  |>>>>>>>   | /media/uploads/bin/appstat.1.0.2.msixbundle                                                                                               | 200    | Other    | 3.5 s  | 20 MB   |          |         
+29/52   | 55%  |>>>>>>    | /moffitor/                                                                                                                                | 200    | HTML     | 113 ms | 6 kB    | 2/2      | 4       
+30/52   | 57%  |>>>>>>    | /moffitor/privacy/                                                                                                                        | 200    | HTML     | 116 ms | 5 kB    | 2/2      | 4       
+31/52   | 59%  |>>>>>>    | /media/static/images/home/appstat.png?202504050153                                                                                        | 200    | Image    | 139 ms | 24 kB   |          |         
+32/52   | 61%  |>>>>>>    | /moffitor/support                                                                                                                         | 301    | Redirect | 134 ms | 101 B   |          |         
+33/52   | 63%  |>>>>>>    | /media/static/images/moffitor/moffitor.svgz?202504050153                                                                                  | 200    | Image    | 111 ms | 4 kB    |          |         
+34/52   | 65%  |>>>>>>>   | /media/static/styles/css/main.min.css?202504050153                                                                                        | 200    | CSS      | 116 ms | 765 B   |          |         
+35/52   | 67%  |>>>>>>>   | /media/static/scripts/js/appstat.min.js?202504050153                                                                                      | 200    | JS       | 124 ms | 5 kB    |          |         
+36/52   | 69%  |>>>>>>>   | /media/static/images/home/mcp-server-webcrawl.png?202504050153                                                                            | 200    | Image    | 167 ms | 20 kB   |          |         
+37/52   | 71%  |>>>>>>>   | /media/static/images/appstat/starsedge.left.webp                                                                                          | 200    | Image    | 122 ms | 4 kB    |          |         
+38/65   | 58%  |>>>>>>    | /qbit/                                                                                                                                    | 200    | HTML     | 112 ms | 13 kB   | 2/2      | 7       
+39/65   | 60%  |>>>>>>    | /media/static/images/qbit/multicore.svgz                                                                                                  | 200    | Image    | 111 ms | 1 kB    |          |         
+40/66   | 60%  |>>>>>>    | /qbit/history/                                                                                                                            | 200    | HTML     | 115 ms | 6 kB    | 2/2      | 7       
+41/66   | 62%  |>>>>>>    | /qbit/privacy/                                                                                                                            | 200    | HTML     | 121 ms | 7 kB    | 2/2      | 7       
+42/66   | 63%  |>>>>>>    | /media/static/images/qbit/antialias.svgz                                                                                                  | 200    | Image    | 111 ms | 816 B   |          |         
+43/66   | 65%  |>>>>>>>   | /media/static/images/qbit/2x1.svgz                                                                                                        | 200    | Image    | 100 ms | 2 kB    |          |         
+44/66   | 66%  |>>>>>>>   | /media/static/images/qbit/draft.svgz                                                                                                      | 200    | Image    | 124 ms | 8 kB    |          |         
+45/67   | 67%  |>>>>>>>   | /media/static/styles/css/qbit.min.css?202504050153                                                                                        | 200    | CSS      | 115 ms | 6 kB    |          |         
+46/67   | 68%  |>>>>>>>   | /media/static/fonts/Montserrat-Medium.woff2                                                                                               | 200    | Other    | 176 ms | 83 kB   |          |         
+47/67   | 70%  |>>>>>>>   | /media/static/images/qbit/arrow.svgz                                                                                                      | 200    | Image    | 128 ms | 6 kB    |          |         
+48/67   | 71%  |>>>>>>>   | /media/static/images/home/qbit.png?202504050153                                                                                           | 200    | Image    | 116 ms | 10 kB   |          |         
+49/67   | 73%  |>>>>>>>   | /media/static/images/home/microsoftstore.svg?202504050153                                                                                 | 200    | Image    | 133 ms | 14 kB   |          |         
+50/67   | 74%  |>>>>>>>   | /media/static/images/moffitor/monitor.svg                                                                                                 | 404    | HTML     | 137 ms | 548 B   |          | 4       
+51/67   | 76%  |>>>>>>>>  | /media/static/images/home/moffitor.png?202504050153                                                                                       | 200    | Image    | 108 ms | 10 kB   |          |         
+52/67   | 77%  |>>>>>>>>  | /media/static/images/home/ohdowas.v2.png                                                                                                  | 200    | Image    | 183 ms | 65 kB   |          |         
+53/67   | 79%  |>>>>>>>>  | /media/static/images/qbit/1x1.svgz                                                                                                        | 200    | Image    | 118 ms | 1 kB    |          |         
+54/67   | 80%  |>>>>>>>>  | /media/static/images/qbit/translogo.png                                                                                                   | 200    | Image    | 127 ms | 10 kB   |          |         
+55/68   | 80%  |>>>>>>>>  | /qbit/download                                                                                                                            | 301    | Redirect | 112 ms | 95 B    |          |         
+56/69   | 81%  |>>>>>>>>  | /qbit/download/                                                                                                                           | 302    | Redirect | 119 ms | 153 B   |          |         
+57/69   | 82%  |>>>>>>>>  | /media/static/download/qbit_1.0.1.msixbundle                                                                                              | 200    | Other    | 711 ms | 3 MB    |          |         
+58/69   | 84%  |>>>>>>>>  | /media/static/images/appstat/appstatdevenv.mp4                                                                                            | 200    | Video    | 397 ms | 1 MB    |          |         
+59/69   | 85%  |>>>>>>>>> | /media/static/images/qbit/engine.svgz                                                                                                     | 200    | Image    | 103 ms | 3 kB    |          |         
+60/69   | 86%  |>>>>>>>>> | /appstat/help/                                                                                                                            | 200    | HTML     | 115 ms | 7 kB    | 2/2      | 7       
+61/69   | 88%  |>>>>>>>>> | /media/static/images/qbit/ram.svgz                                                                                                        | 200    | Image    | 118 ms | 3 kB    |          |         
+62/69   | 89%  |>>>>>>>>> | /media/static/images/qbit/windows10.svgz                                                                                                  | 200    | Image    | 121 ms | 2 kB    |          |         
+63/69   | 91%  |>>>>>>>>> | /media/static/images/home/memoryyellow.png                                                                                                | 200    | Image    | 195 ms | 136 kB  |          |         
+64/70   | 91%  |>>>>>>>>> | /moffitor/support/                                                                                                                        | 200    | HTML     | 120 ms | 8 kB    | 2/2      | 4       
+65/70   | 92%  |>>>>>>>>> | /internal/this/page/does/not/exist/                                                                                                       | 404    | HTML     | 114 ms | 179 B   |          | 4       
+66/70   | 94%  |>>>>>>>>> | /media/static/images/moffitor/monitor.svgz?202504050153                                                                                   | 200    | Image    | 101 ms | 2 kB    |          |         
+67/71   | 94%  |>>>>>>>>> | /moffitor/download                                                                                                                        | 301    | Redirect | 124 ms | 103 B   |          |         
+68/71   | 95%  |>>>>>>>>>>| /media/static/styles/css/moffitor.min.css?202504050153                                                                                    | 200    | CSS      | 114 ms | 5 kB    |          |         
+69/72   | 95%  |>>>>>>>>>>| /moffitor/download/                                                                                                                       | 302    | Redirect | 122 ms | 161 B   |          |         
+70/72   | 97%  |>>>>>>>>>>| /media/static/download/moffitor_1.0.0.msixbundle                                                                                          | 200    | Other    | 5.8 s  | 29 MB   |          |         
+71/72   | 98%  |>>>>>>>>>>| /media/static/images/appstat/starsedge.right.webp                                                                                         | 200    | Image    | 104 ms | 4 kB    |          |         
+72/78   | 92%  |>>>>>>>>> | /mcp-server-webcrawl/                                                                                                                     | 200    | HTML     | 111 ms | 11 kB   | 1/2/3    | 4       
+73/78   | 93%  |>>>>>>>>> | /media/static/images/mcp-server-webcrawl/mcpswc.svg?202504050153                                                                          | 200    | Image    | 113 ms | 58 kB   |          |         
+74/78   | 94%  |>>>>>>>>> | /media/static/images/mcp-server-webcrawl/netwww.svg?202504050153                                                                          | 200    | Image    | 124 ms | 20 kB   |          |         
+75/78   | 96%  |>>>>>>>>>>| /media/static/styles/css/mcp.min.css?202504050153                                                                                         | 200    | CSS      | 115 ms | 8 kB    |          |         
+76/79   | 96%  |>>>>>>>>>>| /mcp-server-webcrawl/help/                                                                                                                | 200    | HTML     | 113 ms | 10 kB   | 1/2/3    | 4       
+77/79   | 97%  |>>>>>>>>>>| /media/static/images/mcp-server-webcrawl/mcpdemo.mp4                                                                                      | 200    | Video    | 477 ms | 2 MB    |          |         
+78/79   | 98%  |>>>>>>>>>>| /media/static/images/mcp-server-webcrawl/og-mcp-server-webcrawl.png?202504050153                                                          | 200    | Image    | 124 ms | 11 kB   |          |         
+79/79   | 100% |>>>>>>>>>>| /media/static/images/mcp-server-webcrawl/favicon.png                                                                                      | 200    | Image    | 112 ms | 10 kB   |          |         
+
+Redirected URLs
+---------------
+
+Status | Redirected URL                                                         | Target URL                                                             | Found at URL                                                          
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+301    | /appstat                                                               | /appstat/                                                              | /                                                                     
+301    | /appstat/download                                                      | /appstat/download/                                                     | /appstat/                                                             
+302    | /appstat/download/                                                     | /media/uploads/bin/appstat.1.0.2.msixbundle                            | /appstat/download                                                     
+301    | /mcp-server-webcrawl                                                   | /mcp-server-webcrawl/                                                  | /                                                                     
+301    | /moffitor                                                              | /moffitor/                                                             | /                                                                     
+301    | /moffitor/download                                                     | /moffitor/download/                                                    | /moffitor/                                                            
+302    | /moffitor/download/                                                    | /media/static/download/moffitor_1.0.0.msixbundle                       | /moffitor/download                                                    
+301    | /moffitor/support                                                      | /moffitor/support/                                                     | /moffitor/                                                            
+301    | /qbit                                                                  | /qbit/                                                                 | /                                                                     
+301    | /qbit/download                                                         | /qbit/download/                                                        | /qbit/                                                                
+302    | /qbit/download/                                                        | /media/static/download/qbit_1.0.1.msixbundle                           | /qbit/download                                                        
+
+
+404 URLs
+--------
+
+Status | URL 404                                                                                                     | Found at URL                                                                                               
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+404    | https://pragmar.com/internal/this/page/does/not/exist/                                                      | https://pragmar.com/moffitor/support/                                                                      
+404    | https://pragmar.com/media/static/images/moffitor/monitor.svg                                                | https://pragmar.com/moffitor/                                                                              
+
+
+SSL/TLS info
+------------
+
+No SSL/TLS info.
+
+
+TOP fastest URLs
+----------------
+
+Time   | Status | Fast URL                                                                                                                                                                                                          
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+111 ms | 200    | https://pragmar.com/mcp-server-webcrawl/                                                                                                                                                                          
+112 ms | 200    | https://pragmar.com/qbit/                                                                                                                                                                                         
+113 ms | 200    | https://pragmar.com/mcp-server-webcrawl/help/                                                                                                                                                                     
+113 ms | 200    | https://pragmar.com/moffitor/                                                                                                                                                                                     
+115 ms | 200    | https://pragmar.com/qbit/history/                                                                                                                                                                                 
+115 ms | 200    | https://pragmar.com/appstat/help/                                                                                                                                                                                 
+116 ms | 200    | https://pragmar.com/moffitor/privacy/                                                                                                                                                                             
+120 ms | 200    | https://pragmar.com/moffitor/support/                                                                                                                                                                             
+121 ms | 200    | https://pragmar.com/qbit/privacy/                                                                                                                                                                                 
+129 ms | 200    | https://pragmar.com/appstat/privacy/                                                                                                                                                                              
+189 ms | 200    | https://pragmar.com/                                                                                                                                                                                              
+357 ms | 200    | https://pragmar.com/appstat/                                                                                                                                                                                      
+
+
+TOP slowest URLs
+----------------
+
+Time   | Status | Slow URL                                                                                                                                                                                                     
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+357 ms | 200    | https://pragmar.com/appstat/                                                                                                                                                                                 
+189 ms | 200    | https://pragmar.com/                                                                                                                                                                                         
+137 ms | 404    | https://pragmar.com/media/static/images/moffitor/monitor.svg                                                                                                                                                 
+129 ms | 200    | https://pragmar.com/appstat/privacy/                                                                                                                                                                         
+121 ms | 200    | https://pragmar.com/qbit/privacy/                                                                                                                                                                            
+120 ms | 200    | https://pragmar.com/moffitor/support/                                                                                                                                                                        
+116 ms | 200    | https://pragmar.com/moffitor/privacy/                                                                                                                                                                        
+115 ms | 200    | https://pragmar.com/appstat/help/                                                                                                                                                                            
+115 ms | 200    | https://pragmar.com/qbit/history/                                                                                                                                                                            
+114 ms | 404    | https://pragmar.com/internal/this/page/does/not/exist/                                                                                                                                                       
+113 ms | 200    | https://pragmar.com/moffitor/                                                                                                                                                                                
+113 ms | 200    | https://pragmar.com/mcp-server-webcrawl/help/                                                                                                                                                                
+112 ms | 200    | https://pragmar.com/qbit/                                                                                                                                                                                    
+111 ms | 200    | https://pragmar.com/mcp-server-webcrawl/                                                                                                                                                                     
+
+
+SEO metadata
+------------
+
+This table contains large data and shows max 10 rows. To see them all, use output to HTML using `--output-html-report=tmp/myreport.html`.
+
+URL                                                | Indexing             | Title                               | H1                                  | Description                         | Keywords                           
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/                                                  | Allowed              | Pragmar                             | pragmar.com                         | Creator of fine develope…and more. |                                    
+/appstat/                                          | Allowed              | appstat | Process Monito…or Windows | appstat                             | Windows process monitor.…lications. |                                    
+/appstat/help/                                     | Allowed              | appstat | Help                      | appstat                             | Support statement for ap…s monitor. |                                    
+/appstat/privacy/                                  | Allowed              | appstat | Privacy Statement         | appstat                             | Windows process monitor.…lications. |                                    
+/mcp-server-webcrawl/                              | Allowed              | mcp-server-webcrawl | MC…b crawlers | mcp_server_webcrawl                 | AI search and retrieval…b crawlers |                                    
+/mcp-server-webcrawl/help/                         | Allowed              | mcp-server-webcrawl | Help          | mcp_server_webcrawl                 | Help section for mcp-ser…P server). |                                    
+/moffitor/                                         | Allowed              | Moffitor | Put Your Comp…on Demand | Moffitor                            | Moffitor is a Windows ap…a button. |                                    
+/moffitor/privacy/                                 | Allowed              | Moffitor | Privacy Statement        | Moffitor                            | The Moffitor application…erwise)... |                                    
+/moffitor/support/                                 | Allowed              | Moffitor | Support                  | Moffitor                            | Support for Moffitor, a…pend tool. |                                    
+/qbit/                                             | Allowed              | Qbit | The Pragmatic Sky…Generator | Qbit Skybox Generator               | Qbit is a tool for game…me engine. |                                    
+
+
+OpenGraph metadata
+------------------
+
+This table contains large data and shows max 10 rows. To see them all, use output to HTML using `--output-html-report=tmp/myreport.html`.
+
+URL                                                | OG Title                       | OG Description                 | OG Image           | Twitter Title                  | Twitter Description            | Twitter Image     
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/                                                  |                                |                                |                    |                                |                                |                   
+/appstat/                                          | appstat | Process Mo…r Windows | Windows process moni…ications. | https://prag…50153 |                                |                                |                   
+/appstat/help/                                     | appstat | Help                 | Support statement fo…monitor. | https://prag…50153 |                                |                                |                   
+/appstat/privacy/                                  | appstat | Privacy Statement    | Windows process moni…ications. | https://prag…50153 |                                |                                |                   
+/mcp-server-webcrawl/                              | mcp-server-webcrawl…crawlers | AI search and retrie…crawlers | https://prag…50153 |                                |                                |                   
+/mcp-server-webcrawl/help/                         | mcp-server-webcrawl | Help     | Help section for mcp…server). | https://prag…50153 |                                |                                |                   
+/moffitor/                                         | Moffitor | Put Your…on Demand | Moffitor is a Window…a button. | https://prag…50153 |                                |                                |                   
+/moffitor/privacy/                                 | Moffitor | Privacy Statement   | The Moffitor applica…rwise)... | https://prag…50153 |                                |                                |                   
+/moffitor/support/                                 | Moffitor | Support             | Support for Moffitor…end tool. | https://prag…50153 |                                |                                |                   
+/qbit/                                             | Qbit | The Pragmatic…Generator | Qbit is a tool for g…e engine. | https://prag…50153 |                                |                                |                   
+
+
+Heading structure
+-----------------
+
+This table contains large data and shows max 10 rows. To see them all, use output to HTML using `--output-html-report=tmp/myreport.html`.
+
+Heading structure                                                                                                                                                                | Count | Errors | URL                           
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+<h1> pragmar.com <h2> Software <h2> Music                                                                                                                                        | 3     | 0      | /                             
+<h1> appstat <h2> Process Monitor for Windows <h2> Main Features <h2> Comparison to OS Utilities                                                                                 | 4     | 0      | /appstat/                     
+<h1> appstat <h2> Privacy Statement <h3> Information Collected <h3> Updates to this Privacy Statement                                                                            | 4     | 0      | /appstat/privacy/             
+<h1> Moffitor <h2> One-Click Monitor Suspend for Windows <h2> Moffitor is Freeware                                                                                               | 3     | 0      | /moffitor/                    
+<h1> Moffitor <h2> Moffitor Privacy Statement <h3> Information Collected <h3> Updates to this Privacy Statement                                                                  | 4     | 0      | /moffitor/privacy/            
+<h1> Qbit Skybox Generator <h2> What are we talking about here? <h2> Streamline Your Workflow <h2> Pricing &amp; Availability <h2> System Requirements                           | 5     | 0      | /qbit/                        
+<h1> Qbit Skybox Generator <h2> Version History <h3> Version Notes                                                                                                               | 3     | 0      | /qbit/history/                
+<h1> Qbit Skybox Generator <h2> Qbit Privacy Statement <h3> Information Collected <h3> Updates to this Privacy Statement                                                         | 4     | 0      | /qbit/privacy/                
+<h1> appstat <h2> Application Support <h3> Support Statement <h3> Frequently Asked Questions <h3> Release History                                                                | 5     | 0      | /appstat/help/                
+<h1> Moffitor <h2> Moffitor Support <h3> Application Support Statement <h3> Understanding How Moffitor Works <h3> How…ried Everything, and I'm Stuck <h3> Ignore This Question   | 7     | 0      | /moffitor/support/            
+
+
+HTTP headers
+------------
+
+Header                     | Occurs | Unique | Values preview                                                                                                                               | Min value  | Max value 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Accept-Ranges              | 31     | 1      | bytes                                                                                                                                        |            |           
+Cache-Control              | 54     | 1      | max-age=315360000                                                                                                                            |            |           
+Connection                 | 79     | 1      | close                                                                                                                                        |            |           
+Content-Encoding           | 37     | 1      | gzip                                                                                                                                         |            |           
+Content-Length             | 42     | -      | [ignored generic values]                                                                                                                     | 0 B        | 29 MB     
+Content-Security-Policy    | 68     | 1      | default-src 'self'; script-src 'self' https://stats.pragmar.com https://*.youtub…e'; base-uri 'self'; form-action 'self'          |            |           
+Content-Type               | 79     | 9      | [see values below]                                                                                                                           |            |           
+Cross-Origin-Opener-Policy | 24     | 1      | same-origin                                                                                                                                  |            |           
+Date                       | 79     | -      | [ignored generic values]                                                                                                                     | 2025-04-09 | 2025-04-09
+Etag                       | 54     | -      | [ignored generic values]                                                                                                                     |            |           
+Expires                    | 54     | -      | [ignored generic values]                                                                                                                     | 2037-12-31 | 2037-12-31
+Last-Modified              | 54     | -      | [ignored generic values]                                                                                                                     | 2015-12-23 | 2025-04-07
+Location                   | 11     | 11     | [see values below]                                                                                                                           |            |           
+Permissions-Policy         | 68     | 1      | camera=(), microphone=(), geolocation=(), payment=()                                                                                         |            |           
+Referrer-Policy            | 68     | 1      | origin-when-cross-origin                                                                                                                     |            |           
+Server                     | 79     | 1      | nginx                                                                                                                                        |            |           
+Transfer-Encoding          | 37     | 1      | chunked                                                                                                                                      |            |           
+Vary                       | 37     | 1      | Accept-Encoding                                                                                                                              |            |           
+X-Content-Type-Options     | 24     | 1      | nosniff                                                                                                                                      |            |           
+X-Frame-Options            | 16     | 1      | DENY                                                                                                                                         |            |           
+
+
+HTTP header values
+------------------
+
+Header                     | Occurs | Value                                                                                                                                                                         
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Accept-Ranges              | 31     | bytes                                                                                                                                                                         
+Cache-Control              | 54     | max-age=315360000                                                                                                                                                             
+Connection                 | 79     | close                                                                                                                                                                         
+Content-Encoding           | 37     | gzip                                                                                                                                                                          
+Content-Security-Policy    | 68     | default-src 'self'; script-src 'self' https://stats.pragmar.com https://*.youtube.com https://*.ytimg.com; img-src '…ame-ancestors 'none'; base-uri 'self'; form-action 'self'
+Content-Type               | 21     | image/png                                                                                                                                                                     
+Content-Type               | 16     | image/svg+xml                                                                                                                                                                 
+Content-Type               | 13     | text/html; charset=utf-8                                                                                                                                                      
+Content-Type               | 12     | text/html                                                                                                                                                                     
+Content-Type               | 6      | application/octet-stream                                                                                                                                                      
+Content-Type               | 5      | text/css                                                                                                                                                                      
+Content-Type               | 2      | application/javascript                                                                                                                                                        
+Content-Type               | 2      | image/webp                                                                                                                                                                    
+Content-Type               | 2      | video/mp4                                                                                                                                                                     
+Cross-Origin-Opener-Policy | 24     | same-origin                                                                                                                                                                   
+Location                   | 1      | /appstat/                                                                                                                                                                     
+Location                   | 1      | /qbit/                                                                                                                                                                        
+Location                   | 1      | /moffitor/                                                                                                                                                                    
+Location                   | 1      | /appstat/download/                                                                                                                                                            
+Location                   | 1      | /media/uploads/bin/appstat.1.0.2.msixbundle                                                                                                                                   
+Location                   | 1      | /mcp-server-webcrawl/                                                                                                                                                         
+Location                   | 1      | /moffitor/support/                                                                                                                                                            
+Location                   | 1      | /qbit/download/                                                                                                                                                               
+Location                   | 1      | /media/static/download/qbit_1.0.1.msixbundle                                                                                                                                  
+Location                   | 1      | /moffitor/download/                                                                                                                                                           
+Location                   | 1      | /media/static/download/moffitor_1.0.0.msixbundle                                                                                                                              
+Permissions-Policy         | 68     | camera=(), microphone=(), geolocation=(), payment=()                                                                                                                          
+Referrer-Policy            | 68     | origin-when-cross-origin                                                                                                                                                      
+Server                     | 79     | nginx                                                                                                                                                                         
+Transfer-Encoding          | 37     | chunked                                                                                                                                                                       
+Vary                       | 37     | Accept-Encoding                                                                                                                                                               
+X-Content-Type-Options     | 24     | nosniff                                                                                                                                                                       
+X-Frame-Options            | 16     | DENY                                                                                                                                                                          
+
+
+TOP non-unique titles
+---------------------
+
+Nothing to report.
+
+
+TOP non-unique descriptions
+---------------------------
+
+Count | Description                                                                                                                                                                                             
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3     | Qbit is a tool for game developers—given an image, the application will output six images, one for each face of a skybox. The exported images can be used in any modern 3d game engine.                 
+2     | Windows process monitor. Monitor CPU, memory, disk, and thread metrics in real-time across your running applications.                                                                                   
+
+
+Best practices
+--------------
+
+Analysis name                            | OK    | Notice | Warning | Critical
+--------------------------------------------------------------------------------
+DOM depth (> 30)                         | 14    | 0      | 0       | 0       
+Heading structure                        | 28    | 0      | 0       | 0       
+Large inline SVGs (> 5120 B)             | 2     | 0      | 0       | 0       
+Invalid inline SVGs                      | 2     | 0      | 0       | 0       
+Duplicate inline SVGs (> 5 and > 1024 B) | 2     | 0      | 0       | 0       
+Title uniqueness (> 10%)                 | 12    | 0      | 0       | 0       
+Description uniqueness (> 10%)           | 7     | 0      | 2       | 0       
+Brotli support                           | 0     | 0      | 12      | 0       
+WebP support                             | 2     | 0      | 0       | 0       
+AVIF support                             | 0     | 0      | 1       | 0       
+
+
+Accessibility
+-------------
+
+Analysis name                | OK    | Notice | Warning | Critical
+--------------------------------------------------------------------
+Missing image alt attributes | 34    | 0      | 0       | 0       
+Missing aria labels          | 0     | 0      | 47      | 5       
+Missing roles                | 0     | 0      | 6       | 0       
+Missing html lang attribute  | 1     | 0      | 0       | 0       
+
+
+Source domains
+--------------
+
+Domain      | Totals      | HTML       | Image       | JS          | CSS          | Video       | Redirect    | Other     
+----------------------------------------------------------------------------------------------------------------------------
+pragmar.com | 79/56MB/21s | 14/93kB/2s | 39/1MB/5.5s | 2/7kB/264ms | 5/26kB/581ms | 2/3MB/874ms | 11/1kB/1.3s | 6/52MB/10s
+
+
+Content types
+-------------
+
+Content type | URLs  | Total size | Total time | Avg time | Status 20x | Status 30x | Status 40x
+--------------------------------------------------------------------------------------------------
+Image        | 39    | 1 MB       | 5.5 s      | 140 ms   | 39         | 0          | 0         
+HTML         | 14    | 93 kB      | 2 s        | 140 ms   | 12         | 0          | 2         
+Redirect     | 11    | 1 kB       | 1.3 s      | 119 ms   | 0          | 11         | 0         
+Other        | 6     | 52 MB      | 10 s       | 1.7 s    | 6          | 0          | 0         
+CSS          | 5     | 26 kB      | 581 ms     | 116 ms   | 5          | 0          | 0         
+JS           | 2     | 7 kB       | 264 ms     | 132 ms   | 2          | 0          | 0         
+Video        | 2     | 3 MB       | 874 ms     | 437 ms   | 2          | 0          | 0         
+
+
+Content types (MIME types)
+--------------------------
+
+Content type               | URLs  | Total size | Total time | Avg time | Status 20x | Status 30x | Status 40x
+----------------------------------------------------------------------------------------------------------------
+image/png                  | 21    | 1 MB       | 3.4 s      | 160 ms   | 21         | 0          | 0         
+image/svg+xml              | 16    | 143 kB     | 1.9 s      | 116 ms   | 16         | 0          | 0         
+text/html; charset=utf-8   | 13    | 92 kB      | 1.8 s      | 140 ms   | 12         | 0          | 1         
+text/html                  | 12    | 2 kB       | 1.4 s      | 121 ms   | 0          | 11         | 1         
+application/octet-stream   | 6     | 52 MB      | 10 s       | 1.7 s    | 6          | 0          | 0         
+text/css                   | 5     | 26 kB      | 581 ms     | 116 ms   | 5          | 0          | 0         
+application/javascript     | 2     | 7 kB       | 264 ms     | 132 ms   | 2          | 0          | 0         
+image/webp                 | 2     | 8 kB       | 226 ms     | 113 ms   | 2          | 0          | 0         
+video/mp4                  | 2     | 3 MB       | 874 ms     | 437 ms   | 2          | 0          | 0         
+
+
+DNS info
+--------
+
+DNS resolving tree                                                    
+------------------------------------------------------------------------
+Crawler\Analysis\DnsAnalyzer::getDnsInfo: nslookup command failed.    
+
+
+Security
+--------
+
+Header                     | OK    | Notice | Warning | Critical | Recommendation                                                                                                                                                  
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Strict-Transport-Security  | 0     | 0      | 0       | 13       | Strict-Transport-Security header is not set. It enforces secure connections and protects against MITM attacks.                                                  
+X-XSS-Protection           | 0     | 0      | 0       | 13       | X-XSS-Protection header is not set. It enables browser's built-in defenses against XSS attacks.                                                                 
+Server                     | 0     | 0      | 13      | 0        | Server header is set to known 'nginx'. It is better not to reveal used technologies.                                                                            
+Feature-Policy             | 0     | 13     | 0       | 0        | Feature-Policy header is not set but Permissions-Policy is set. That's enough.                                                                                  
+X-Frame-Options            | 13    | 0      | 0       | 0        |                                                                                                                                                                 
+X-Content-Type-Options     | 13    | 0      | 0       | 0        |                                                                                                                                                                 
+Referrer-Policy            | 13    | 0      | 0       | 0        |                                                                                                                                                                 
+Content-Security-Policy    | 13    | 0      | 0       | 0        |                                                                                                                                                                 
+Permissions-Policy         | 13    | 0      | 0       | 0        |                                                                                                                                                                 
+
+
+Analysis stats
+--------------
+
+Class::method                                        | Exec time | Exec count
+-------------------------------------------------------------------------------
+SslTlsAnalyzer::getTLSandSSLCertificateInfo          | 2.6 s     | 1         
+BestPracticeAnalyzer::checkNonClickablePhoneNumbers  | 8 ms      | 14        
+Manager::parseDOMDocument                            | 3 ms      | 14        
+AccessibilityAnalyzer::checkMissingRoles             | 2 ms      | 12        
+BestPracticeAnalyzer::checkMissingQuotesOnAttributes | 1 ms      | 14        
+AccessibilityAnalyzer::checkMissingAriaLabels        | 1 ms      | 12        
+BestPracticeAnalyzer::checkMaxDOMDepth               | 1 ms      | 14        
+AccessibilityAnalyzer::checkMissingLabels            | 1 ms      | 12        
+BestPracticeAnalyzer::checkHeadingStructure          | 1 ms      | 14        
+BestPracticeAnalyzer::checkInlineSvg                 | 1 ms      | 14        
+AccessibilityAnalyzer::checkImageAltAttributes       | 0 ms      | 12        
+SeoAndOpenGraphAnalyzer::analyzeSeo                  | 0 ms      | 1         
+SeoAndOpenGraphAnalyzer::analyzeHeadings             | 0 ms      | 1         
+SeoAndOpenGraphAnalyzer::analyzeOpenGraph            | 0 ms      | 1         
+AccessibilityAnalyzer::checkMissingLang              | 0 ms      | 12        
+BestPracticeAnalyzer::checkMetaDescriptionUniqueness | 0 ms      | 1         
+BestPracticeAnalyzer::checkTitleUniqueness           | 0 ms      | 1         
+BestPracticeAnalyzer::checkBrotliSupport             | 0 ms      | 1         
+BestPracticeAnalyzer::checkWebpSupport               | 0 ms      | 1         
+BestPracticeAnalyzer::checkAvifSupport               | 0 ms      | 1         
+

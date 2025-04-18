@@ -70,17 +70,19 @@ class WarcManager(BaseManager):
     def _process_warc_record(self, cursor: sqlite3.Cursor, record: Any, site_id: int) -> None:
         """
         Process a single WARC record and insert it into the database.
-        
+
         Args:
             cursor: SQLite cursor
-            record: WARC record to process
+            record: A warcio record object with rec_type, rec_headers, http_headers, and content_stream attributes
             site_id: ID for the site
+
+        Notes:
+            Errors during processing are logged but not raised.
         """
         try:
             url: str = record.rec_headers.get_header("WARC-Target-URI")
             content_type: str = record.http_headers.get_header("Content-Type", "")
             status: int = record.http_headers.get_statuscode() or 0
-            record_id: int = int(hashlib.sha1(url.encode()).hexdigest()[:8], 16)
             res_type: ResourceResultType = self._determine_resource_type(content_type)
             content: bytes = record.content_stream().read()
             content_size: int = len(content)
@@ -99,7 +101,9 @@ class WarcManager(BaseManager):
                     Headers, Content, Size, Time
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                record_id, site_id, url,
+                BaseManager.string_to_id(url), 
+                site_id, 
+                url,
                 res_type.value,
                 status, 
                 record.http_headers.to_str(),

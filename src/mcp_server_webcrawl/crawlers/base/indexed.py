@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Optional, Final, Tuple
+from typing import Any, Optional, Final, Tuple, Callable
 
 from mcp.types import TextContent, ImageContent, EmbeddedResource, Tool
 
@@ -8,6 +8,8 @@ from mcp_server_webcrawl.crawlers.base.crawler import BaseCrawler
 from mcp_server_webcrawl.crawlers.base.api import BaseJsonApi
 from mcp_server_webcrawl.utils.tools import get_crawler_tools
 from mcp_server_webcrawl.utils.logger import get_logger
+
+from mcp_server_webcrawl.models.sites import SiteResult
 
 logger = get_logger()
 
@@ -60,25 +62,49 @@ INDEXED_TYPE_MAPPING = {
     ".docx": ResourceResultType.DOC
 }
 
+INDEXED_BINARY_EXTENSIONS = (
+    ".woff",".woff2",".ttf",".otf",".eot",
+    ".jpeg",".jpg",".png",".webp",".gif",".bmp",".tiff",".tif",".svg",".ico",".heic",".heif",
+    ".mp3",".wav",".ogg",".flac",".aac",".m4a",".wma",
+    ".mp4",".webm",".avi",".mov",".wmv",".mkv",".flv",".m4v",".mpg",".mpeg",
+    ".pdf",".doc",".docx",".xls",".xlsx",".ppt",".pptx",
+    ".zip",".rar",".7z",".tar",".gz",".bz2",".xz",
+    ".exe",".dll",".so",".dylib",".bin",".apk",".app",
+    ".swf",".dat",".db",".sqlite",".class",".pyc",".o"
+)
+
 class IndexedCrawler(BaseCrawler):
     """
     A crawler implementation for data sources that load into an in-memory sqlite.
     Shares commonality between specialized crawlers.    
     """
     
-    def __init__(self, datasrc: Path) -> None:
+    def __init__(
+        self, 
+        datasrc: Path, 
+        get_sites_func: Callable, 
+        get_resources_func: Callable,
+        resource_field_mapping: dict[str, str] = INDEXED_RESOURCE_FIELD_MAPPING
+    ) -> None:
         """
-        Initialize the IndexedCrawler with a data source path.
+        Initialize the IndexedCrawler with a data source path and required adapter functions.
         
         Args:
             datasrc: Path to the data source
+            get_sites_func: Function to retrieve sites from the data source
+            get_resources_func: Function to retrieve resources from the data source
+            resource_field_mapping: Mapping of resource field names to display names
         """
         assert datasrc is not None, f"{self.__class__.__name__} needs a datasrc, regardless of action"
         assert datasrc.is_dir(), f"{self.__class__.__name__} datasrc must be a directory"
+        assert callable(get_sites_func), f"{self.__class__.__name__} requires a callable get_sites_func"
+        assert callable(get_resources_func), f"{self.__class__.__name__} requires a callable get_resources_func"
+        assert isinstance(resource_field_mapping, dict), f"{self.__class__.__name__} resource_field_mapping must be a dict"
+        
         super().__init__(datasrc)
-        # Default resource field mapping that can be overridden by subclasses
-        self.resource_field_mapping = INDEXED_RESOURCE_FIELD_MAPPING
-        self._indexed_get_sites: function = None
+        self.resource_field_mapping = resource_field_mapping
+        self._indexed_get_sites = get_sites_func
+        self._indexed_get_resources = get_resources_func
 
     async def mcp_call_tool(self, name: str, arguments: dict[str, Any] | None
         ) -> list[TextContent | ImageContent | EmbeddedResource]:
@@ -123,13 +149,15 @@ class IndexedCrawler(BaseCrawler):
 
         return [default_sites_tool, default_resources_tool]
 
-
     def get_sites_api(
             self,
             ids: Optional[list[int]] = None,
             fields: Optional[list[str]] = None,
     ) -> BaseJsonApi:
-        raise NotImplementedError(f"{self.__class__.__name__} must implement get_sites_api")
+        sites = self._indexed_get_sites(self.datasrc, ids=ids, fields=fields)
+        json_result = BaseJsonApi("GetProjects", {"ids": ids, "fields": fields})
+        json_result.set_results(sites, len(sites), 0, len(sites))
+        return json_result
 
     def get_resources_api(
         self,
@@ -143,4 +171,46 @@ class IndexedCrawler(BaseCrawler):
         limit: int = 20,
         offset: int = 0,
     ) -> BaseJsonApi:
-        raise NotImplementedError(f"{self.__class__.__name__} must implement get_resources_api")
+        # no site is specified, use the first site
+        # reasoning: no idea what's in the archive directory, don't kick 
+        # off high-compute index of everything, esp. not by default
+        if not sites:
+            all_sites = self._indexed_get_sites(self.datasrc)
+            if not all_sites:
+                return BaseJsonApi("GetResources", {}).set_results([], 0, 0, limit)
+            sites = [all_sites[0].id]
+
+        site_matches = self._indexed_get_sites(self.datasrc, ids=sites)
+        if not site_matches:
+            return BaseJsonApi("GetResources", {}).set_results([], 0, 0, limit)
+        
+        # convert to enums
+        resource_types = self._convert_to_resource_types(types)
+
+        results, total = self._indexed_get_resources(
+            self.datasrc,
+            ids=ids,
+            sites=sites,
+            query=query,
+            types=resource_types,
+            fields=fields,
+            statuses=statuses,
+            sort=sort,
+            limit=limit,
+            offset=offset
+        )
+
+        json_result = BaseJsonApi("GetResources", {
+            "ids": ids,
+            "sites": sites,
+            "query": query,
+            "types": types,
+            "fields": fields,
+            "statuses": statuses,
+            "sort": sort,
+            "limit": limit,
+            "offset": offset,
+        })
+
+        json_result.set_results(results, total, offset, limit)
+        return json_result
