@@ -141,7 +141,20 @@
         <span class="p">),</span>
         <span class="n">Tool</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="n">RESOURCES_TOOL_NAME</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Searches for resources (webpages, CSS, PDF, etc.) across projects and retrieves specified fields.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Searches for resources (webpages, images, CSS, JS, etc.) across projects and retrieves specified fields. &quot;</span>
+                <span class="s2">&quot;Invaluable tips to guide efficient search follows. &quot;</span>
+                <span class="s2">&quot;To find a site homepage or index, use sort=&#39;+id&#39; with types=[&#39;html&#39;] and the appropriate site ID. &quot;</span>
+                <span class="s2">&quot;Most sites indexed by this tool will be small to moderately sized websites, &quot;</span>
+                <span class="s2">&quot;don&#39;t assume most keywords will generate results. &quot;</span>
+                <span class="s2">&quot;When searching a new topic, it is generally best to start with just a site &quot;</span>
+                <span class="s2">&quot;(all resources, lay of the land), a site and a search query, &quot;</span>
+                <span class="s2">&quot;or by site and filters—combine query and filters once you have a result set to refine. &quot;</span>
+                <span class="s2">&quot;This becomes less true as you search more, acquiring a lay of the land and ability to anticipate results. &quot;</span>
+                <span class="s2">&quot;If you need to separate internal from external pages, you can query the site index URL with a wildcard (*), e.g. &quot;</span>
+                <span class="s2">&quot;https://example.com/*. A vital aspect of this API is field control, you should open up the limit wide when dealing with thin &quot;</span>
+                <span class="s2">&quot;fields (string length) and dial way back when using larger fields, like content. Adjust dynamically, the best strategy &quot;</span>
+                <span class="s2">&quot;balances preserving the user&#39;s context window while minimizing number of queries necessary to answer their question.&quot;</span>
+            <span class="p">),</span>
             <span class="n">inputSchema</span><span class="o">=</span><span class="p">{</span>
                 <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
@@ -149,9 +162,18 @@
                         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
                         <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Fulltext search query string. Leave empty to return all resources when &quot;</span>
                             <span class="s2">&quot;filtering on other fields and you will get better precision. &quot;</span>
+                            <span class="s2">&quot;Extremely useful tips to guide query construction follows. &quot;</span>
+                            <span class="s2">&quot;Be explicit—a query MUST use one of these formats: (1) single keyword, (2) quoted phrase: </span><span class="se">\&quot;</span><span class="s2">keyword1 keyword2</span><span class="se">\&quot;</span><span class="s2">, (3) &quot;</span> 
+                            <span class="s2">&quot;explicit AND: keyword1 AND keyword2, (4) explicit OR: keyword1 OR keyword2, or (5) advanced boolean: (keyword1 AND keyword2) &quot;</span> 
+                            <span class="s2">&quot;OR (keyword3 NOT keyword4). &quot;</span> 
+                            <span class="s2">&quot;WARNING, space-separated keywords without quotes or operators will not work correctly.&quot;</span>
                             <span class="s2">&quot;Supports fulltext and boolean operators, syntax and capabilities consistent with &quot;</span>
                             <span class="s2">&quot;SQLite FTS5 in boolean mode. Supports AND, OR, NOT operators, quoted phrases, &quot;</span>
-                            <span class="s2">&quot;and suffix wildcards (word*), but not prefix wildcards (*word).&quot;</span><span class="p">)</span>
+                            <span class="s2">&quot;and suffix wildcards (word*), but not prefix wildcards (*word). &quot;</span>
+                            <span class="s2">&quot;Parentheses nesting for complex boolean expressions is fully supported. &quot;</span>
+                            <span class="s2">&quot;Does not support `field: value` format, it will poison the query, cause zero results—use filters instead. &quot;</span>
+                            <span class="s2">&quot;Does not support stemming, use wildcards (keyword*) instead.&quot;</span>
+                        <span class="p">)</span>
                     <span class="p">},</span>
                     <span class="s2">&quot;ids&quot;</span><span class="p">:</span> <span class="p">{</span>
                         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>

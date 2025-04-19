@@ -72,8 +72,11 @@
            <div itemprop="articleBody">
              
   <h1>Source code for mcp_server_webcrawl.crawlers.base.adapter</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">hashlib</span>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
 <span class="kn">import</span> <span class="nn">sqlite3</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">mimetypes</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
@@ -85,15 +88,11 @@
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.indexed</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">INDEXED_MANAGER_CACHE_MAX</span><span class="p">,</span>
-    <span class="n">INDEXED_RESOURCE_FIELD_MAPPING</span><span class="p">,</span>
-    <span class="n">INDEXED_SORT_MAPPING</span><span class="p">,</span>
-    <span class="n">INDEXED_TYPE_MAPPING</span><span class="p">,</span>
+    <span class="n">INDEXED_BINARY_EXTENSIONS</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="c1"># field mappings similar to other adapters</span>
-<span class="n">WGET_RESOURCE_FIELD_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">INDEXED_RESOURCE_FIELD_MAPPING</span>
-<span class="n">WGET_SORT_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">INDEXED_SORT_MAPPING</span>
-<span class="n">WGET_TYPE_MAPPING</span> <span class="o">=</span> <span class="n">INDEXED_TYPE_MAPPING</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
+
 
 <div class="viewcode-block" id="SitesGroup">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.SitesGroup">[docs]</a>
@@ -103,11 +102,11 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">site_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">site_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Simple container class supports many sites being searched at once.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            site_ids: site ids of the sites</span>
 <span class="sd">            site_paths: paths to site contents (directories)</span>
-<span class="sd">            </span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">site_ids</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">site_paths</span>
@@ -116,7 +115,7 @@
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;[SitesGroup </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_key</span><span class="si">}</span><span class="s2">]&quot;</span>
-    
+
 <div class="viewcode-block" id="SitesGroup.get_sites">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.SitesGroup.get_sites">[docs]</a>
     <span class="k">def</span> <span class="nf">get_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
@@ -135,7 +134,7 @@
 <span class="sd">        Some basic bookeeping, for troubleshooting</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">SitesGroup</span><span class="p">]</span> <span class="o">=</span> <span class="n">group</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>        
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cached</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="n">cached</span></div>
 </div>
 
@@ -147,7 +146,7 @@
 <span class="sd">    Base class for managing web crawler data in in-memory SQLite databases.</span>
 <span class="sd">    Provides connection pooling and caching for efficient access.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    
+
 <div class="viewcode-block" id="BaseManager.__init__">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.__init__">[docs]</a>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -157,7 +156,7 @@
         <span class="c1"># dictionary to track which database builds are in progress</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_building_locks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">datetime</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span></div>
 
-        
+
     <span class="nd">@contextmanager</span>
     <span class="k">def</span> <span class="nf">_building_lock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">:</span> <span class="n">SitesGroup</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Context manager for database building operations.</span>
@@ -172,28 +171,107 @@
         <span class="k">finally</span><span class="p">:</span>
             <span class="c1"># clean up the lock</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_building_locks</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    
+
 <div class="viewcode-block" id="BaseManager.string_to_id">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.string_to_id">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">string_to_id</span><span class="p">(</span><span class="n">dirname</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">string_to_id</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Convert a string, such as a directory name, to a number</span>
-<span class="sd">        suitable for a database id, usually.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">hash_obj</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">(</span><span class="n">dirname</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">hash_obj</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">8</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span></div>
+<span class="sd">        Convert a string, such as a directory name, to a numeric ID</span>
+<span class="sd">        suitable for a database primary key.</span>
 
-    
+<span class="sd">        Hash space and collision probability notes:</span>
+<span class="sd">        - [:8]  = 32 bits (4.29 billion values) - ~1% collision chance with 10,000 items</span>
+<span class="sd">        - [:12] = 48 bits (280 trillion values) - ~0.0000001% collision chance with 10,000 items</span>
+<span class="sd">        - [:16] = 64 bits (max safe SQLite INTEGER) - near-zero collision, 9.22 quintillion values</span>
+<span class="sd">        - SQLite INTEGER type is 64-bit signed, with max value of 9,223,372,036,854,775,807.</span>
+<span class="sd">        - The big problem with larger hashspaces is the length of the ids they generate for presentation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dirname: Input string to convert to an ID</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Integer ID derived from the input string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">hash_obj</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">hash_obj</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">12</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseManager.get_basic_headers">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.get_basic_headers">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_basic_headers</span><span class="p">(</span><span class="n">file_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">resource_type</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">content_type</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">:</span> <span class="s2">&quot;text/html&quot;</span><span class="p">,</span>
+            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="p">:</span> <span class="s2">&quot;text/css&quot;</span><span class="p">,</span>
+            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="p">:</span> <span class="s2">&quot;application/javascript&quot;</span><span class="p">,</span>
+            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">:</span> <span class="s2">&quot;image/jpeg&quot;</span><span class="p">,</span>  <span class="c1"># default image type</span>
+            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PDF</span><span class="p">:</span> <span class="s2">&quot;application/pdf&quot;</span><span class="p">,</span>
+            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">:</span> <span class="s2">&quot;text/plain&quot;</span><span class="p">,</span>
+            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">DOC</span><span class="p">:</span> <span class="s2">&quot;application/msword&quot;</span><span class="p">,</span>
+            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">:</span> <span class="s2">&quot;application/octet-stream&quot;</span>
+        <span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource_type</span><span class="p">,</span> <span class="s2">&quot;application/octet-stream&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;HTTP/1.0 200 OK</span><span class="se">\r\n</span><span class="s2">Content-Type: </span><span class="si">{</span><span class="n">content_type</span><span class="si">}</span><span class="se">\r\n</span><span class="s2">Content-Length: </span><span class="si">{</span><span class="n">file_size</span><span class="si">}</span><span class="se">\r\n\r\n</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="BaseManager.read_file_contents">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.read_file_contents">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">read_file_contents</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">resource_type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read content from text files with better error handling and encoding detection.&quot;&quot;&quot;</span>
+        <span class="c1"># Skip if not a text resource type</span>
+        <span class="k">if</span> <span class="n">resource_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
+                    <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Check file size first to avoid unnecessary processing</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2_000_000</span><span class="p">:</span>  <span class="c1"># 2MB limit</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Check extension</span>
+        <span class="n">extension</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">file_path</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">extension</span> <span class="ow">in</span> <span class="n">INDEXED_BINARY_EXTENSIONS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Check MIME type</span>
+        <span class="n">mime_type</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mime_type</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">mime_type</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;text/&quot;</span><span class="p">):</span>
+            <span class="c1"># Additional check: some non-text MIME types can still be text</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">mime_type</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;application/json&quot;</span><span class="p">,</span> <span class="s2">&quot;application/xml&quot;</span><span class="p">,</span> <span class="s2">&quot;application/javascript&quot;</span><span class="p">]):</span>
+                <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">content</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not decode file as UTF-8: </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">content</span></div>
+
+
+<div class="viewcode-block" id="BaseManager.decruft_path">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.decruft_path">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">decruft_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Very light touch cleanup of wget file naming, these tmps are creating noise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">decruftified</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">decruftified</span> <span class="o">=</span> <span class="n">decruftified</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">decruftified</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[\u00b7·]?\d+\.tmp|\d</span><span class="si">{12}</span><span class="s2">|\.tmp&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">decruftified</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">decruftified</span></div>
+
+
 <div class="viewcode-block" id="BaseManager.get_connection">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.get_connection">[docs]</a>
     <span class="k">def</span> <span class="nf">get_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">:</span> <span class="n">SitesGroup</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get database connection for sites in the group, creating if needed.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            sites_group: Group of sites to connect to</span>
-<span class="sd">            </span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            SQLite connection to in-memory database with data loaded</span>
 <span class="sd">            or None if the database is currently being built</span>
@@ -202,11 +280,11 @@
             <span class="n">build_time</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_building_locks</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span>
             <span class="n">get_logger</span><span class="p">()</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Database for </span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2"> is currently </span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2"> (started at </span><span class="si">{</span><span class="n">build_time</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">None</span>
-        
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">INDEXED_MANAGER_CACHE_MAX</span><span class="p">:</span>            
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">INDEXED_MANAGER_CACHE_MAX</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
-        <span class="n">is_cached</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">cache_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span> 
+        <span class="n">is_cached</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">cache_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_stats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SitesStat</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">is_cached</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">is_cached</span><span class="p">:</span>
@@ -217,7 +295,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_setup_schema</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
 
                 <span class="k">for</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">site_path</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">get_sites</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_load_site_data</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">site_path</span><span class="p">),</span> <span class="n">site_id</span><span class="p">)</span>                
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_load_site_data</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">site_path</span><span class="p">),</span> <span class="n">site_id</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">connection</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span></div>
@@ -232,7 +310,7 @@
     <span class="k">def</span> <span class="nf">_setup_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create the database schema for storing resource data.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            connection: SQLite connection to set up</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -256,16 +334,16 @@
     <span class="k">def</span> <span class="nf">_load_site_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">site_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load site data into the database. To be implemented by subclasses.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            connection: SQLite connection</span>
 <span class="sd">            site_path: Path to the site data</span>
 <span class="sd">            site_id: ID for the site</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Subclasses must implement _load_site_data&quot;</span><span class="p">)</span>
-        
+
     <span class="k">def</span> <span class="nf">_determine_resource_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResourceResultType</span><span class="p">:</span>
-        
+
         <span class="n">content_type_mapping</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;html&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
             <span class="s2">&quot;javascript&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="p">,</span>
@@ -278,21 +356,21 @@
             <span class="s2">&quot;application/json&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
             <span class="s2">&quot;application/xml&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span>
         <span class="p">}</span>
-        
+
         <span class="n">content_type</span> <span class="o">=</span> <span class="n">content_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">res_type</span> <span class="ow">in</span> <span class="n">content_type_mapping</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">content_type</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">res_type</span>
-        
+
         <span class="k">return</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span>
 
     <span class="k">def</span> <span class="nf">_is_text_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Check if content type represents text.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            content_type: HTTP Content-Type header value</span>
-<span class="sd">            </span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            True if the content is textual, False otherwise</span>
 <span class="sd">        &quot;&quot;&quot;</span>

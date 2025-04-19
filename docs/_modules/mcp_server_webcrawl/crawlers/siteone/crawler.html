@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>mcp_server_webcrawl.crawlers.warc.crawler &mdash; mcp-server-webcrawl  documentation</title>
+  <title>mcp_server_webcrawl.crawlers.siteone.crawler &mdash; mcp-server-webcrawl  documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
 
@@ -62,7 +62,7 @@
       <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
           <li class="breadcrumb-item"><a href="../../crawlers.html">mcp_server_webcrawl.crawlers</a></li>
-      <li class="breadcrumb-item active">mcp_server_webcrawl.crawlers.warc.crawler</li>
+      <li class="breadcrumb-item active">mcp_server_webcrawl.crawlers.siteone.crawler</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -71,38 +71,41 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for mcp_server_webcrawl.crawlers.warc.crawler</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+  <h1>Source code for mcp_server_webcrawl.crawlers.siteone.crawler</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.indexed</span> <span class="kn">import</span> <span class="n">IndexedCrawler</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.warc.adapter</span> <span class="kn">import</span> <span class="n">get_sites</span><span class="p">,</span> <span class="n">get_resources</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.siteone.adapter</span> <span class="kn">import</span> <span class="n">get_sites</span><span class="p">,</span> <span class="n">get_resources</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
 
-<div class="viewcode-block" id="WarcCrawler">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.crawler.WarcCrawler">[docs]</a>
-<span class="k">class</span> <span class="nc">WarcCrawler</span><span class="p">(</span><span class="n">IndexedCrawler</span><span class="p">):</span>
+<div class="viewcode-block" id="SiteOneCrawler">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.siteone.html#mcp_server_webcrawl.crawlers.siteone.crawler.SiteOneCrawler">[docs]</a>
+<span class="k">class</span> <span class="nc">SiteOneCrawler</span><span class="p">(</span><span class="n">IndexedCrawler</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A crawler implementation for WARC (Web ARChive) files.</span>
-<span class="sd">    Provides functionality for accessing and searching web archive content.</span>
+<span class="sd">    A crawler implementation for SiteOne captured sites.</span>
+<span class="sd">    Provides functionality for accessing and searching web content from SiteOne captures.</span>
+<span class="sd">    SiteOne merges a wget archive with a custom SiteOne generated log to aquire more</span>
+<span class="sd">    fields than wget can alone.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="WarcCrawler.__init__">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.crawler.WarcCrawler.__init__">[docs]</a>
+<div class="viewcode-block" id="SiteOneCrawler.__init__">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.siteone.html#mcp_server_webcrawl.crawlers.siteone.crawler.SiteOneCrawler.__init__">[docs]</a>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Initialize the WARC crawler with a data source directory.</span>
+<span class="sd">        Initialize the SiteOne crawler with a data source directory.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            datasrc: The input argument as Path, must be a directory containing WARC files</span>
+<span class="sd">            datasrc: The input argument as Path, it must be a directory containing</span>
+<span class="sd">                    SiteOne captures organized as subdirectories</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            AssertionError: If datasrc is None or not a directory</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="n">datasrc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;WarcCrawler needs a datasrc, regardless of action&quot;</span>
-        <span class="k">assert</span> <span class="n">datasrc</span><span class="o">.</span><span class="n">is_dir</span><span class="p">(),</span> <span class="s2">&quot;WarcCrawler datasrc must be a directory&quot;</span>
+        <span class="k">assert</span> <span class="n">datasrc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;SiteOneCrawler needs a datasrc, regardless of action&quot;</span>
+        <span class="k">assert</span> <span class="n">datasrc</span><span class="o">.</span><span class="n">is_dir</span><span class="p">(),</span> <span class="s2">&quot;SiteOneCrawler datasrc must be a directory&quot;</span>
+        
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">datasrc</span><span class="p">,</span> <span class="n">get_sites</span><span class="p">,</span> <span class="n">get_resources</span><span class="p">)</span></div>
 </div>
 

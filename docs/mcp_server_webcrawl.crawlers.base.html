@@ -172,15 +172,68 @@ Provides connection pooling and caching for efficient access.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.BaseManager.string_to_id">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">string_to_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dirname</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/adapter.html#BaseManager.string_to_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.string_to_id" title="Link to this definition"></a></dt>
-<dd><p>Convert a string, such as a directory name, to a number
-suitable for a database id, usually.</p>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">string_to_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/adapter.html#BaseManager.string_to_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.string_to_id" title="Link to this definition"></a></dt>
+<dd><p>Convert a string, such as a directory name, to a numeric ID
+suitable for a database primary key.</p>
+<p>Hash space and collision probability notes:
+- [:8]  = 32 bits (4.29 billion values) - ~1% collision chance with 10,000 items
+- [:12] = 48 bits (280 trillion values) - ~0.0000001% collision chance with 10,000 items
+- [:16] = 64 bits (max safe SQLite INTEGER) - near-zero collision, 9.22 quintillion values
+- SQLite INTEGER type is 64-bit signed, with max value of 9,223,372,036,854,775,807.
+- The big problem with larger hashspaces is the length of the ids they generate for presentation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>dirname</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dirname</strong> – Input string to convert to an ID</p></li>
+<li><p><strong>value</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Integer ID derived from the input string</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.BaseManager.get_basic_headers">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_basic_headers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/adapter.html#BaseManager.get_basic_headers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.get_basic_headers" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+<li><p><strong>resource_type</strong> (<a class="reference internal" href="mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.resources.ResourceResultType" title="mcp_server_webcrawl.models.resources.ResourceResultType"><em>ResourceResultType</em></a>) – </p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.BaseManager.read_file_contents">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">read_file_contents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/adapter.html#BaseManager.read_file_contents"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.read_file_contents" title="Link to this definition"></a></dt>
+<dd><p>Read content from text files with better error handling and encoding detection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.BaseManager.decruft_path">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">decruft_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/adapter.html#BaseManager.decruft_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.decruft_path" title="Link to this definition"></a></dt>
+<dd><p>Very light touch cleanup of wget file naming, these tmps are creating noise</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -420,6 +473,28 @@ the MCP server and handle tool operations for web resources.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.mcp_list_prompts">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mcp_list_prompts</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/crawler.html#BaseCrawler.mcp_list_prompts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.mcp_list_prompts" title="Link to this definition"></a></dt>
+<dd><p>List available prompts (currently none).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.mcp_list_resources">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mcp_list_resources</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/crawler.html#BaseCrawler.mcp_list_resources"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.mcp_list_resources" title="Link to this definition"></a></dt>
+<dd><p>List available resources (currently none).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.serve">
 <em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">serve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stdin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stdout</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/crawler.html#BaseCrawler.serve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.serve" title="Link to this definition"></a></dt>
 <dd><p>Launch the awaitable server.</p>
@@ -583,19 +658,29 @@ Basically, it is a passthrough.</p>
 <dd><p>Bases: <a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler" title="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseCrawler</span></code></a></p>
 <p>A crawler implementation for data sources that load into an in-memory sqlite.
 Shares commonality between specialized crawlers.</p>
-<p>Initialize the IndexedCrawler with a data source path.</p>
+<p>Initialize the IndexedCrawler with a data source path and required adapter functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>datasrc</strong> – Path to the data source</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>datasrc</strong> – Path to the data source</p></li>
+<li><p><strong>get_sites_func</strong> – Function to retrieve sites from the data source</p></li>
+<li><p><strong>get_resources_func</strong> – Function to retrieve resources from the data source</p></li>
+<li><p><strong>resource_field_mapping</strong> – Mapping of resource field names to display names</p></li>
+</ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.indexed.IndexedCrawler.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasrc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/indexed.html#IndexedCrawler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.indexed.IndexedCrawler.__init__" title="Link to this definition"></a></dt>
-<dd><p>Initialize the IndexedCrawler with a data source path.</p>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasrc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_sites_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_resources_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_field_mapping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'content':</span> <span class="pre">'Content',</span> <span class="pre">'headers':</span> <span class="pre">'Headers',</span> <span class="pre">'id':</span> <span class="pre">'Id',</span> <span class="pre">'name':</span> <span class="pre">'Name',</span> <span class="pre">'site':</span> <span class="pre">'Project',</span> <span class="pre">'size':</span> <span class="pre">'Size',</span> <span class="pre">'status':</span> <span class="pre">'Status',</span> <span class="pre">'time':</span> <span class="pre">'Time',</span> <span class="pre">'type':</span> <span class="pre">'Type',</span> <span class="pre">'url':</span> <span class="pre">'Url'}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/indexed.html#IndexedCrawler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.indexed.IndexedCrawler.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialize the IndexedCrawler with a data source path and required adapter functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>datasrc</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>Path</em></a>) – Path to the data source</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>datasrc</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>Path</em></a>) – Path to the data source</p></li>
+<li><p><strong>get_sites_func</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.13)"><em>Callable</em></a>) – Function to retrieve sites from the data source</p></li>
+<li><p><strong>get_resources_func</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.13)"><em>Callable</em></a>) – Function to retrieve resources from the data source</p></li>
+<li><p><strong>resource_field_mapping</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em>) – Mapping of resource field names to display names</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>

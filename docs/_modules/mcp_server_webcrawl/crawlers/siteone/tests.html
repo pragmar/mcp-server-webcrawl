@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>mcp_server_webcrawl.crawlers.wget.tests &mdash; mcp-server-webcrawl  documentation</title>
+  <title>mcp_server_webcrawl.crawlers.siteone.tests &mdash; mcp-server-webcrawl  documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
 
@@ -62,7 +62,7 @@
       <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
           <li class="breadcrumb-item"><a href="../../crawlers.html">mcp_server_webcrawl.crawlers</a></li>
-      <li class="breadcrumb-item active">mcp_server_webcrawl.crawlers.wget.tests</li>
+      <li class="breadcrumb-item active">mcp_server_webcrawl.crawlers.siteone.tests</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -71,57 +71,57 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for mcp_server_webcrawl.crawlers.wget.tests</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.wget.crawler</span> <span class="kn">import</span> <span class="n">WgetCrawler</span>
+  <h1>Source code for mcp_server_webcrawl.crawlers.siteone.tests</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.siteone.crawler</span> <span class="kn">import</span> <span class="n">SiteOneCrawler</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">ResourceResultType</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.tests</span> <span class="kn">import</span> <span class="n">BaseCrawlerTests</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers</span> <span class="kn">import</span> <span class="n">get_fixture_directory</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.wget.adapter</span> <span class="kn">import</span> <span class="n">WgetManager</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.siteone.adapter</span> <span class="kn">import</span> <span class="n">SiteOneManager</span>
 
-<span class="c1"># Calculate IDs for test directories using same hash function as adapter</span>
-<span class="n">EXAMPLE_SITE_ID</span> <span class="o">=</span> <span class="n">WgetManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="s2">&quot;example.com&quot;</span><span class="p">)</span>
-<span class="n">PRAGMAR_SITE_ID</span> <span class="o">=</span> <span class="n">WgetManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="s2">&quot;pragmar.com&quot;</span><span class="p">)</span>
+<span class="c1"># calculate using same hash function as adapter</span>
+<span class="n">EXAMPLE_SITE_ID</span> <span class="o">=</span> <span class="n">SiteOneManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="s2">&quot;example.com&quot;</span><span class="p">)</span>
+<span class="n">PRAGMAR_SITE_ID</span> <span class="o">=</span> <span class="n">SiteOneManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="s2">&quot;pragmar.com&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="WgetTests">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.wget.html#mcp_server_webcrawl.crawlers.wget.tests.WgetTests">[docs]</a>
-<span class="k">class</span> <span class="nc">WgetTests</span><span class="p">(</span><span class="n">BaseCrawlerTests</span><span class="p">):</span>
+<div class="viewcode-block" id="SiteOneTests">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.siteone.html#mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests">[docs]</a>
+<span class="k">class</span> <span class="nc">SiteOneTests</span><span class="p">(</span><span class="n">BaseCrawlerTests</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Test suite for the wget crawler implementation.</span>
+<span class="sd">    Test suite for the SiteOne crawler implementation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="WgetTests.setUp">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.wget.html#mcp_server_webcrawl.crawlers.wget.tests.WgetTests.setUp">[docs]</a>
+<div class="viewcode-block" id="SiteOneTests.setUp">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.siteone.html#mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.setUp">[docs]</a>
     <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set up the test environment with fixture data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">setUp</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span> <span class="o">=</span> <span class="n">get_fixture_directory</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;wget&quot;</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span> <span class="o">=</span> <span class="n">get_fixture_directory</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;siteone&quot;</span></div>
 
 
-<div class="viewcode-block" id="WgetTests.test_wget_pulse">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.wget.html#mcp_server_webcrawl.crawlers.wget.tests.WgetTests.test_wget_pulse">[docs]</a>
-    <span class="k">def</span> <span class="nf">test_wget_pulse</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SiteOneTests.test_siteone_pulse">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.siteone.html#mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_siteone_pulse">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_siteone_pulse</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Test basic crawler initialization.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">crawler</span> <span class="o">=</span> <span class="n">WgetCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
+        <span class="n">crawler</span> <span class="o">=</span> <span class="n">SiteOneCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">crawler</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="o">.</span><span class="n">is_dir</span><span class="p">())</span></div>
 
 
-<div class="viewcode-block" id="WgetTests.test_wget_sites">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.wget.html#mcp_server_webcrawl.crawlers.wget.tests.WgetTests.test_wget_sites">[docs]</a>
-    <span class="k">def</span> <span class="nf">test_wget_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SiteOneTests.test_siteone_sites">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.siteone.html#mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_siteone_sites">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_siteone_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Test site retrieval API functionality.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">crawler</span> <span class="o">=</span> <span class="n">WgetCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
-        
+        <span class="n">crawler</span> <span class="o">=</span> <span class="n">SiteOneCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
+
         <span class="c1"># all sites</span>
         <span class="n">sites_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">sites_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
-        
+
         <span class="c1"># single site</span>
         <span class="n">site_one_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="n">EXAMPLE_SITE_ID</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">site_one_json</span><span class="o">.</span><span class="n">total</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
@@ -133,14 +133,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="s2">&quot;modified&quot;</span> <span class="ow">in</span> <span class="n">site_field_result</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="WgetTests.test_wget_resources">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.wget.html#mcp_server_webcrawl.crawlers.wget.tests.WgetTests.test_wget_resources">[docs]</a>
-    <span class="k">def</span> <span class="nf">test_wget_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SiteOneTests.test_siteone_resources">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.siteone.html#mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_siteone_resources">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_siteone_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Test resource retrieval API functionality with various parameters.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">crawler</span> <span class="o">=</span> <span class="n">WgetCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
-        
+        <span class="n">crawler</span> <span class="o">=</span> <span class="n">SiteOneCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
+
         <span class="n">resources_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">resources_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
 
@@ -151,7 +151,7 @@
             <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">]</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">query_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Search query should return results&quot;</span><span class="p">)</span>
-        
+
         <span class="c1"># search term exists in returned resources</span>
         <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">query_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
             <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
@@ -216,7 +216,7 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">field_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">field_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-        
+
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">custom_fields</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">resource_dict</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Field &#39;</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">&#39; should be in response&quot;</span><span class="p">)</span>
 
@@ -245,10 +245,27 @@
             <span class="p">)</span>
 
         <span class="c1"># status code filtering</span>
-        <span class="n">status_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span> <span class="n">statuses</span><span class="o">=</span><span class="p">[</span><span class="mi">200</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">status_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Status filtering should return results&quot;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">status_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+        <span class="n">status_resources_ok</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span> <span class="n">statuses</span><span class="o">=</span><span class="p">[</span><span class="mi">200</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">status_resources_ok</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Status filtering should return results&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">status_resources_ok</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+
+        <span class="c1"># redirects</span>
+        <span class="n">status_resources_redirect</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span> <span class="n">statuses</span><span class="o">=</span><span class="p">[</span><span class="mi">302</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">status_resources_redirect</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Status filtering should return results&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">status_resources_redirect</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="mi">302</span><span class="p">)</span>
+
+        <span class="c1"># 404 will not have all metadata, content likely missing, but should capture filesize</span>
+        <span class="c1"># pragmar.com has an intentional 404, should be in the fixture</span>
+        <span class="c1"># http://pragmar.com/internal/this/page/does/not/exist/</span>
+        <span class="n">status_resources_not_found</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span> <span class="n">statuses</span><span class="o">=</span><span class="p">[</span><span class="mi">404</span><span class="p">],</span> <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">status_resources_not_found</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Status filtering should return results&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">status_resources_not_found</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="mi">404</span><span class="p">)</span>
+        <span class="n">status_resources_not_found_result</span> <span class="o">=</span> <span class="n">status_resources_not_found</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="s2">&quot;size&quot;</span> <span class="ow">in</span> <span class="n">status_resources_not_found_result</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">status_resources_not_found_result</span><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Size should be greater than 0&quot;</span><span class="p">)</span>
 
         <span class="c1"># combined filtering</span>
         <span class="n">combined_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
@@ -259,7 +276,7 @@
             <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;+url&quot;</span><span class="p">,</span>
             <span class="n">limit</span><span class="o">=</span><span class="mi">3</span>
         <span class="p">)</span>
-        
+
         <span class="k">if</span> <span class="n">combined_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">combined_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">site</span><span class="p">,</span> <span class="n">PRAGMAR_SITE_ID</span><span class="p">)</span>
@@ -275,14 +292,14 @@
             <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;+url&quot;</span><span class="p">,</span>
             <span class="n">limit</span><span class="o">=</span><span class="mi">100</span>
         <span class="p">)</span>
-        
+
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">multisite_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Multi-site search should return results&quot;</span><span class="p">)</span>
-        
+
         <span class="c1"># which sites we find results from</span>
         <span class="n">found_sites</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">multisite_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
             <span class="n">found_sites</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">site</span><span class="p">)</span>
-            
+
         <span class="c1"># we got results from both sites</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">found_sites</span><span class="p">),</span>
@@ -301,31 +318,32 @@
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="WgetTests.test_wget_random_sort">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.wget.html#mcp_server_webcrawl.crawlers.wget.tests.WgetTests.test_wget_random_sort">[docs]</a>
-    <span class="k">def</span> <span class="nf">test_wget_random_sort</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SiteOneTests.test_siteone_random_sort">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.siteone.html#mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_siteone_random_sort">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_siteone_random_sort</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Test the random sort functionality using the &#39;?&#39; sort parameter.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">crawler</span> <span class="o">=</span> <span class="n">WgetCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
-        
+        <span class="n">crawler</span> <span class="o">=</span> <span class="n">SiteOneCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
+
         <span class="n">random1_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span> <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;?&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">random1_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Database should contain resources&quot;</span><span class="p">)</span>
         <span class="n">random1_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">random1_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">]</span>
-        
+
         <span class="n">random2_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span> <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;?&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">random2_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Random sort should return results&quot;</span><span class="p">)</span>
         <span class="n">random2_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">random2_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">]</span>
-        
+
         <span class="k">if</span> <span class="n">random2_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;=</span> <span class="mi">10</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span>
-                <span class="n">random1_ids</span><span class="p">,</span> 
+                <span class="n">random1_ids</span><span class="p">,</span>
                 <span class="n">random2_ids</span><span class="p">,</span>
                 <span class="sa">f</span><span class="s2">&quot;Random sort should produce different order than standard sort.</span><span class="se">\n</span><span class="s2">Standard: </span><span class="si">{</span><span class="n">random1_ids</span><span class="si">}</span><span class="se">\n</span><span class="s2">Random: </span><span class="si">{</span><span class="n">random2_ids</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skip randomness verification: Not enough resources (</span><span class="si">{</span><span class="n">random2_resources</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span></div>
 </div>
+
 
 </pre></div>
 

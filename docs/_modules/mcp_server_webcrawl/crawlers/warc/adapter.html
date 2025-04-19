@@ -72,8 +72,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for mcp_server_webcrawl.crawlers.warc.adapter</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">hashlib</span>
-<span class="kn">import</span> <span class="nn">os</span>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sqlite3</span>
 <span class="kn">import</span> <span class="nn">warcio</span>
 
@@ -103,9 +102,6 @@
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
 
-<span class="c1"># field mappings similar to other adapters</span>
-<span class="n">WARC_RESOURCE_FIELD_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">INDEXED_RESOURCE_FIELD_MAPPING</span>
-<span class="n">WARC_SORT_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">INDEXED_SORT_MAPPING</span>
 <span class="n">WARC_FILE_EXTENSIONS</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;.warc&quot;</span><span class="p">,</span> <span class="s2">&quot;.warc.gz&quot;</span><span class="p">,</span> <span class="s2">&quot;.txt&quot;</span><span class="p">]</span>
 
 <div class="viewcode-block" id="WarcManager">
@@ -149,17 +145,19 @@
     <span class="k">def</span> <span class="nf">_process_warc_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cursor</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Cursor</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Process a single WARC record and insert it into the database.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            cursor: SQLite cursor</span>
-<span class="sd">            record: WARC record to process</span>
+<span class="sd">            record: A warcio record object with rec_type, rec_headers, http_headers, and content_stream attributes</span>
 <span class="sd">            site_id: ID for the site</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            Errors during processing are logged but not raised.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">rec_headers</span><span class="o">.</span><span class="n">get_header</span><span class="p">(</span><span class="s2">&quot;WARC-Target-URI&quot;</span><span class="p">)</span>
             <span class="n">content_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">http_headers</span><span class="o">.</span><span class="n">get_header</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
             <span class="n">status</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">http_headers</span><span class="o">.</span><span class="n">get_statuscode</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">0</span>
-            <span class="n">record_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">(</span><span class="n">url</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">8</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span>
             <span class="n">res_type</span><span class="p">:</span> <span class="n">ResourceResultType</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_determine_resource_type</span><span class="p">(</span><span class="n">content_type</span><span class="p">)</span>
             <span class="n">content</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">content_stream</span><span class="p">()</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
             <span class="n">content_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
@@ -178,7 +176,9 @@
 <span class="s2">                    Headers, Content, Size, Time</span>
 <span class="s2">                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)</span>
 <span class="s2">            &quot;&quot;&quot;</span><span class="p">,</span> <span class="p">(</span>
-                <span class="n">record_id</span><span class="p">,</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span>
+                <span class="n">BaseManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="n">url</span><span class="p">),</span> 
+                <span class="n">site_id</span><span class="p">,</span> 
+                <span class="n">url</span><span class="p">,</span>
                 <span class="n">res_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                 <span class="n">status</span><span class="p">,</span> 
                 <span class="n">record</span><span class="o">.</span><span class="n">http_headers</span><span class="o">.</span><span class="n">to_str</span><span class="p">(),</span>
@@ -246,10 +246,10 @@
     <span class="c1"># process field selection</span>
     <span class="n">select_fields</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">RESOURCES_FIELDS_REQUIRED</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">fields</span><span class="p">:</span>
-        <span class="n">select_fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">WARC_RESOURCE_FIELD_MAPPING</span><span class="p">)</span>
+        <span class="n">select_fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">INDEXED_RESOURCE_FIELD_MAPPING</span><span class="p">)</span>
     
     <span class="c1"># convert to qualified field names</span>
-    <span class="n">qualified_fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">WARC_RESOURCE_FIELD_MAPPING</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">select_fields</span><span class="p">]</span>
+    <span class="n">qualified_fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">INDEXED_RESOURCE_FIELD_MAPPING</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">select_fields</span><span class="p">]</span>
     <span class="n">fields_joined</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">qualified_fields</span><span class="p">)</span>
     
     <span class="c1"># build query components</span>
@@ -277,8 +277,8 @@
     
     <span class="n">where_clause</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; WHERE </span><span class="si">{</span><span class="s1">&#39; AND &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">where_clauses</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">where_clauses</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
     
-    <span class="k">if</span> <span class="n">sort</span> <span class="ow">in</span> <span class="n">WARC_SORT_MAPPING</span><span class="p">:</span>
-        <span class="n">field</span><span class="p">,</span> <span class="n">direction</span> <span class="o">=</span> <span class="n">WARC_SORT_MAPPING</span><span class="p">[</span><span class="n">sort</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">sort</span> <span class="ow">in</span> <span class="n">INDEXED_SORT_MAPPING</span><span class="p">:</span>
+        <span class="n">field</span><span class="p">,</span> <span class="n">direction</span> <span class="o">=</span> <span class="n">INDEXED_SORT_MAPPING</span><span class="p">[</span><span class="n">sort</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">&quot;RANDOM&quot;</span><span class="p">:</span>
             <span class="n">order_clause</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot; ORDER BY RANDOM()&quot;</span>
         <span class="k">else</span><span class="p">:</span>

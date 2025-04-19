@@ -91,7 +91,7 @@
 <span class="k">def</span> <span class="nf">get_help_long_message</span><span class="p">(</span><span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;A server to connect your web crawls/archives to an LLM via MCP (Model Context Protocol).</span>
 
-<span class="s2">Usage: </span><span class="si">{</span><span class="n">__cli_gold</span><span class="p">(</span><span class="s1">&#39;mcp-server-webcrawl&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> [-c </span><span class="se">{{</span><span class="s2">warc,wget,interrobot,katana,siteone</span><span class="se">}}</span><span class="s2">] [-d DATASRC]</span>
+<span class="s2">Usage: </span><span class="si">{</span><span class="n">__cli_gold</span><span class="p">(</span><span class="s1">&#39;mcp-server-webcrawl&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> [-c </span><span class="se">{{</span><span class="s2">wget,warc,interrobot,katana,siteone</span><span class="se">}}</span><span class="s2">] [-d DATASRC]</span>
 
 <span class="s2">Options:</span>
 <span class="s2">  -c, --crawler  Specify which crawler to use</span>
@@ -116,11 +116,11 @@
 <span class="se">{{</span><span class="s2">&quot;mcpServers&quot;: </span><span class="se">{{</span>
 <span class="s2">  &quot;wget&quot;: </span><span class="se">{{</span>
 <span class="s2">    &quot;command&quot;: &quot;mcp-server-webcrawl&quot;,</span>
-<span class="s2">      &quot;args&quot;: [&quot;--crawler&quot;, &quot;wget&quot;, &quot;--datasrc&quot;, </span>
+<span class="s2">      &quot;args&quot;: [&quot;--crawler&quot;, &quot;wget&quot;, &quot;--datasrc&quot;,</span>
 <span class="s2">        &quot;/path/to/archived/hosts/&quot;]</span><span class="se">}}</span><span class="s2">,</span>
 <span class="s2">  &quot;interrobot&quot;: </span><span class="se">{{</span>
 <span class="s2">    &quot;command&quot;: &quot;mcp-server-webcrawl&quot;,</span>
-<span class="s2">      &quot;args&quot;: [&quot;--crawler&quot;, &quot;interrobot&quot;, &quot;--datasrc&quot;, </span>
+<span class="s2">      &quot;args&quot;: [&quot;--crawler&quot;, &quot;interrobot&quot;, &quot;--datasrc&quot;,</span>
 <span class="s2">        &quot;/path/to/interrobot.v2.db&quot;]</span><span class="se">}}</span>
 <span class="s2">  </span><span class="se">}}</span>
 <span class="se">}}</span>
