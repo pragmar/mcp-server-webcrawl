@@ -68,6 +68,7 @@ class SiteOneTests(BaseCrawlerTests):
         # search term exists in returned resources
         for resource in query_resources._results:
             resource_dict = resource.to_dict()
+            # print(resource_dict)
             found = False
             for field, value in resource_dict.items():
                 if isinstance(value, str) and "privacy" in value.lower():
@@ -128,7 +129,7 @@ class SiteOneTests(BaseCrawlerTests):
             fields=custom_fields
         )
         self.assertTrue(field_resources.total > 0)
-        resource_dict = field_resources._results[0].to_dict()
+        resource_dict = field_resources._results[0].to_forcefield_dict(custom_fields)
 
         for field in custom_fields:
             self.assertIn(field, resource_dict, f"Field '{field}' should be in response")

@@ -11,11 +11,11 @@ class SiteResult:
     """
     Represents a website or crawl directory result.
     """
-    
+
     def __init__(
         self,
         id: int,
-        url: Optional[str] = None,        
+        url: Optional[str] = None,
         created: Optional[datetime] = None,
         modified: Optional[datetime] = None,
         robots: Optional[str] = None,
@@ -23,7 +23,7 @@ class SiteResult:
     ):
         """
         Initialize a SiteResult instance.
-        
+
         Args:
             id: Site identifier
             url: Site URL
@@ -38,7 +38,7 @@ class SiteResult:
         self.modified = modified
         self.robots = robots
         self.metadata = metadata or {}
-    
+
     def to_dict(self) -> dict[str, METADATA_VALUE_TYPE]:
         """
         Convert the object to a dictionary suitable for JSON serialization.
@@ -51,5 +51,25 @@ class SiteResult:
             "robots": self.robots,
             "metadata": self.metadata if self.metadata else None,
         }
-        
+
         return {k: v for k, v in result.items() if v is not None and not (k == "metadata" and v == {})}
+
+    def to_forcefield_dict(self, forcefields: list[str]) -> dict[str, METADATA_VALUE_TYPE]:
+        """
+        Convert the object to a dictionary with specified fields forced to exist.
+
+        Creates a dictionary that includes all non-None values from the forcefields list,
+        and ensuring all fields in the forcefields list exist, even if null.
+
+        Args:
+            forcefields: List of field names that must appear in the output dictionary
+                with at least a None value
+
+        Returns:
+            Dictionary containing all non-None object attributes, plus forced fields
+            set to None if not already present
+        """
+        # None self annihilates in filter, forcefields can force their existence, as null
+        result = {k: None for k in forcefields}
+        result.update(self.to_dict())
+        return result

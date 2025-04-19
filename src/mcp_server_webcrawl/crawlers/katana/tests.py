@@ -34,11 +34,11 @@ class KatanaTests(BaseCrawlerTests):
         site retrieval API functionality.
         """
         crawler = KatanaCrawler(self._datasrc)
-        
+
         # all sites
         sites_json = crawler.get_sites_api()
         self.assertTrue(sites_json.total >= 2)
-        
+
         # single site
         site_one_json = crawler.get_sites_api(ids=[EXAMPLE_SITE_ID])
         self.assertTrue(site_one_json.total == 1)
@@ -54,7 +54,7 @@ class KatanaTests(BaseCrawlerTests):
         resource retrieval API functionality with various parameters.
         """
         crawler = KatanaCrawler(self._datasrc)
-        
+
         # basic resource retrieval
         resources_json = crawler.get_resources_api()
         self.assertTrue(resources_json.total > 0)
@@ -66,7 +66,7 @@ class KatanaTests(BaseCrawlerTests):
             fields=["content", "headers"]
         )
         self.assertTrue(query_resources.total > 0, "Search query should return results")
-        
+
         # verify search term exists in returned resources
         for resource in query_resources._results:
             resource_dict = resource.to_dict()
@@ -176,7 +176,7 @@ class KatanaTests(BaseCrawlerTests):
             sort="+url",
             limit=3
         )
-        
+
         if combined_resources.total > 0:
             for resource in combined_resources._results:
                 self.assertEqual(resource.site, PRAGMAR_SITE_ID)
@@ -192,14 +192,14 @@ class KatanaTests(BaseCrawlerTests):
             sort="+url",
             limit=100
         )
-        
+
         self.assertTrue(multisite_resources.total > 0, "Multi-site search should return results")
-        
+
         # track which sites we find results from
         found_sites = set()
         for resource in multisite_resources._results:
             found_sites.add(resource.site)
-            
+
         # verify we got results from both sites
         self.assertEqual(
             len(found_sites),
@@ -230,7 +230,7 @@ class KatanaTests(BaseCrawlerTests):
         random2_ids = [r.id for r in random2_resources._results]
         if random2_resources.total >= 10:
             self.assertNotEqual(
-                random1_ids, 
+                random1_ids,
                 random2_ids,
                 f"Random sort should produce different order than standard sort.\nStandard: {random1_ids}\nRandom: {random2_ids}"
             )
@@ -242,7 +242,7 @@ class KatanaTests(BaseCrawlerTests):
         content type detection and parsing for HTTP text files.
         """
         crawler = KatanaCrawler(self._datasrc)
-        
+
         # HTML content detection
         html_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
@@ -254,17 +254,17 @@ class KatanaTests(BaseCrawlerTests):
             resource_dict = resource.to_dict()
             if "content" in resource_dict and resource_dict["content"]:
                 self.assertTrue(
-                    "<!DOCTYPE html>" in resource_dict["content"] or 
+                    "<!DOCTYPE html>" in resource_dict["content"] or
                     "<html" in resource_dict["content"],
                     f"HTML content should contain HTML markups: {resource.url}"
                 )
-            
+
             if "headers" in resource_dict and resource_dict["headers"]:
                 self.assertTrue(
                     "Content-Type:" in resource_dict["headers"],
                     f"Headers should contain Content-Type: {resource.url}"
                 )
-        
+
         # script content detection
         script_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
@@ -274,7 +274,7 @@ class KatanaTests(BaseCrawlerTests):
         if script_resources.total > 0:
             for resource in script_resources._results:
                 self.assertEqual(resource.type, ResourceResultType.SCRIPT)
-                
+
         # css content detection
         css_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],

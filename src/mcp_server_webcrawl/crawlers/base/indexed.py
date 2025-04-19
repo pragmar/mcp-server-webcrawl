@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, Optional, Final, Tuple, Callable
 
 from mcp.types import TextContent, ImageContent, EmbeddedResource, Tool
-
+from mcp_server_webcrawl.models import METADATA_VALUE_TYPE
 from mcp_server_webcrawl.models.resources import ResourceResultType, RESOURCES_FIELDS_REQUIRED
 from mcp_server_webcrawl.crawlers.base.crawler import BaseCrawler
 from mcp_server_webcrawl.crawlers.base.api import BaseJsonApi
@@ -81,19 +81,19 @@ INDEXED_BINARY_EXTENSIONS = (
 class IndexedCrawler(BaseCrawler):
     """
     A crawler implementation for data sources that load into an in-memory sqlite.
-    Shares commonality between specialized crawlers.    
+    Shares commonality between specialized crawlers.
     """
-    
+
     def __init__(
-        self, 
-        datasrc: Path, 
-        get_sites_func: Callable, 
+        self,
+        datasrc: Path,
+        get_sites_func: Callable,
         get_resources_func: Callable,
         resource_field_mapping: dict[str, str] = INDEXED_RESOURCE_FIELD_MAPPING
     ) -> None:
         """
         Initialize the IndexedCrawler with a data source path and required adapter functions.
-        
+
         Args:
             datasrc: Path to the data source
             get_sites_func: Function to retrieve sites from the data source
@@ -105,7 +105,7 @@ class IndexedCrawler(BaseCrawler):
         assert callable(get_sites_func), f"{self.__class__.__name__} requires a callable get_sites_func"
         assert callable(get_resources_func), f"{self.__class__.__name__} requires a callable get_resources_func"
         assert isinstance(resource_field_mapping, dict), f"{self.__class__.__name__} resource_field_mapping must be a dict"
-        
+
         super().__init__(datasrc)
         self.resource_field_mapping = resource_field_mapping
         self._indexed_get_sites = get_sites_func
@@ -115,11 +115,11 @@ class IndexedCrawler(BaseCrawler):
         ) -> list[TextContent | ImageContent | EmbeddedResource]:
         """
         Call a tool with the given name and arguments.
-        
+
         Args:
             name: Tool name to call
             arguments: Tool arguments
-            
+
         Returns:
             List of content objects
         """
@@ -129,7 +129,7 @@ class IndexedCrawler(BaseCrawler):
     async def mcp_list_tools(self) -> list[Tool]:
         """
         List available tools for this crawler.
-        
+
         Returns:
             List of Tool objects
         """
@@ -160,7 +160,15 @@ class IndexedCrawler(BaseCrawler):
             fields: Optional[list[str]] = None,
     ) -> BaseJsonApi:
         sites = self._indexed_get_sites(self.datasrc, ids=ids, fields=fields)
-        json_result = BaseJsonApi("GetProjects", {"ids": ids, "fields": fields})
+
+        # sites_args = {k: v for k, v in locals().items() if k != "self"}
+        sites_kwargs = {
+            "ids": ids,
+            "fields": fields,
+        }
+
+        # print(resources_args)
+        json_result = BaseJsonApi("GetProjects", sites_kwargs)
         json_result.set_results(sites, len(sites), 0, len(sites))
         return json_result
 
@@ -177,18 +185,31 @@ class IndexedCrawler(BaseCrawler):
         offset: int = 0,
     ) -> BaseJsonApi:
         # no site is specified, use the first site
-        # reasoning: no idea what's in the archive directory, don't kick 
+        # reasoning: no idea what's in the archive directory, don't kick
         # off high-compute index of everything, esp. not by default
+        # resources_kwargs = {k: v for k, v in locals().items() if k != "self"}
+        resources_kwargs: dict[str, METADATA_VALUE_TYPE] = {
+            "ids": ids,
+            "sites": sites,
+            "query": query,
+            "types": types,
+            "fields": fields,
+            "statuses": statuses,
+            "sort": sort,
+            "limit": limit,
+            "offset": offset,
+        }
+
         if not sites:
             all_sites = self._indexed_get_sites(self.datasrc)
             if not all_sites:
-                return BaseJsonApi("GetResources", {}).set_results([], 0, 0, limit)
+                return BaseJsonApi("GetResources", resources_kwargs).set_results([], 0, 0, limit)
             sites = [all_sites[0].id]
 
         site_matches = self._indexed_get_sites(self.datasrc, ids=sites)
         if not site_matches:
-            return BaseJsonApi("GetResources", {}).set_results([], 0, 0, limit)
-        
+            return BaseJsonApi("GetResources", resources_kwargs).set_results([], 0, 0, limit)
+
         # convert to enums
         resource_types = self._convert_to_resource_types(types)
 
@@ -205,17 +226,6 @@ class IndexedCrawler(BaseCrawler):
             offset=offset
         )
 
-        json_result = BaseJsonApi("GetResources", {
-            "ids": ids,
-            "sites": sites,
-            "query": query,
-            "types": types,
-            "fields": fields,
-            "statuses": statuses,
-            "sort": sort,
-            "limit": limit,
-            "offset": offset,
-        })
-
-        json_result.set_results(results, total, offset, limit)
-        return json_result
+        api_result = BaseJsonApi("GetResources", resources_kwargs)
+        api_result.set_results(results, total, offset, limit)
+        return api_result

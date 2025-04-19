@@ -96,6 +96,10 @@ class KatanaManager(BaseManager):
             headers: str = response_parts[0].strip()
             body: str = response_parts[1].strip() if len(response_parts) > 1 else ""
 
+            if "Transfer-Encoding: chunked" in headers:                
+                body = body.split("\n", 1)[1].strip()   # remove hex prefix                
+                body = body.rsplit("\n0", 1)[0].strip() # remove trailing "0" terminator
+
             # status from the first line of headers
             status_match: str = re.search(r"HTTP/\d\.\d\s+(\d+)", headers.split("\n")[0])
             status_code: int = int(status_match.group(1)) if status_match else 0

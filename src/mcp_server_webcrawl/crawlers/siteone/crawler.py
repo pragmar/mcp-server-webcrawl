@@ -27,5 +27,5 @@ class SiteOneCrawler(IndexedCrawler):
         """
         assert datasrc is not None, f"SiteOneCrawler needs a datasrc, regardless of action"
         assert datasrc.is_dir(), "SiteOneCrawler datasrc must be a directory"
-        
+
         super().__init__(datasrc, get_sites, get_resources)

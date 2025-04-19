@@ -213,7 +213,7 @@ class SiteOneManager(BaseManager):
             resource_type.value,
             status_code,  # possibly from log
             BaseManager.get_basic_headers(file_size, resource_type),
-            BaseManager.read_file_contents(file_path, resource_type) or "",
+            BaseManager.read_file_contents(file_path, resource_type),
             file_size,
             response_time  # possibly from log
         ))

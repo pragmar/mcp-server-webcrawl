@@ -148,7 +148,7 @@ class InterroBotCrawler(BaseCrawler):
         # this is the MCP/API boundary, inverse occurs on to_dict
         resource_types = self._convert_to_resource_types(types)        
         
-        json_result: BaseJsonApi = BaseJsonApi("GetResources", {
+        api_result: BaseJsonApi = BaseJsonApi("GetResources", {
             "ids": ids,
             "sites": sites,
             "query": query,
@@ -173,5 +173,5 @@ class InterroBotCrawler(BaseCrawler):
             offset=offset,
         )
 
-        json_result.set_results(results, total, offset, limit)
-        return json_result
+        api_result.set_results(results, total, offset, limit)
+        return api_result

@@ -62,7 +62,7 @@ class ResourceResult:
     ):
         """
         Initialize a ResourceResult instance.
-        
+
         Args:
             id: Resource identifier
             url: Resource URL
@@ -110,7 +110,7 @@ class ResourceResult:
             "headers": self.headers,
             "content": self.content,
             "created": self.created.isoformat() if self.created else None,
-            "modified": self.modified.isoformat() if self.modified else None,            
+            "modified": self.modified.isoformat() if self.modified else None,
             "status": self.status,
             "size": self.size,
             "time": self.time,
@@ -118,3 +118,9 @@ class ResourceResult:
         }
 
         return {k: v for k, v in result.items() if v is not None and not (k == "metadata" and v == {})}
+
+    def to_forcefield_dict(self, forcefields=[]) -> dict[str, METADATA_VALUE_TYPE]:
+        # None self annihilates in filter, forcefields can force their existence, as null
+        result = {k: None for k in forcefields}
+        result.update(self.to_dict())
+        return result
