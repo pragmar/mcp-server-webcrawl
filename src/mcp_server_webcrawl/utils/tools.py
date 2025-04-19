@@ -67,7 +67,7 @@ def get_crawler_tools(sites: Optional[list[SiteResult]] = None):
         Tool(
             name=RESOURCES_TOOL_NAME,
             description= ("Searches for resources (webpages, images, CSS, JS, etc.) across projects and retrieves specified fields. "
-                "Extremely useful tips to guide efficient searching follows. "
+                "Invaluable tips to guide efficient search follows. "
                 "To find a site homepage or index, use sort='+id' with types=['html'] and the appropriate site ID. "
                 "Most sites indexed by this tool will be small to moderately sized websites, "
                 "don't assume most keywords will generate results. "

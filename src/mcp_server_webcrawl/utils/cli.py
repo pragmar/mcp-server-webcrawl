@@ -13,7 +13,7 @@ def get_help_short_message(version: str) -> str:
 def get_help_long_message(version: str) -> str:
     return f"""A server to connect your web crawls/archives to an LLM via MCP (Model Context Protocol).
 
-Usage: {__cli_gold('mcp-server-webcrawl')} [-c {{warc,wget,interrobot,katana,siteone}}] [-d DATASRC]
+Usage: {__cli_gold('mcp-server-webcrawl')} [-c {{wget,warc,interrobot,katana,siteone}}] [-d DATASRC]
 
 Options:
   -c, --crawler  Specify which crawler to use
@@ -38,11 +38,11 @@ MCP Configuration Example:
 {{"mcpServers": {{
   "wget": {{
     "command": "mcp-server-webcrawl",
-      "args": ["--crawler", "wget", "--datasrc", 
+      "args": ["--crawler", "wget", "--datasrc",
         "/path/to/archived/hosts/"]}},
   "interrobot": {{
     "command": "mcp-server-webcrawl",
-      "args": ["--crawler", "interrobot", "--datasrc", 
+      "args": ["--crawler", "interrobot", "--datasrc",
         "/path/to/interrobot.v2.db"]}}
   }}
 }}

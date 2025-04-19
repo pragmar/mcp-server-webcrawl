@@ -13,6 +13,11 @@ from mcp_server_webcrawl.models.sites import SiteResult
 
 logger = get_logger()
 
+# files on disk will need default for reassembly {proto}{dir}
+# these things are already approximations (perhaps) having passed through wget filtering (--adjust-extension)
+# representative of the file on disk, also https is what the LLM is going to guess in all cases
+INDEXED_RESOURCE_DEFAULT_PROTOCOL:str = "https://"
+
 # Field mappings similar to other adapters
 INDEXED_RESOURCE_FIELD_MAPPING: Final[dict[str, str]] = {
     "id": "Id",

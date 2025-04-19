@@ -1,4 +1,3 @@
-import hashlib
 import re
 import sqlite3
 
@@ -10,6 +9,7 @@ from typing import Any, Final, Optional, Set, Tuple
 from mcp_server_webcrawl.crawlers.base.adapter import BaseManager, SitesGroup
 from mcp_server_webcrawl.crawlers.base.indexed import (
     INDEXED_RESOURCE_FIELD_MAPPING,
+    INDEXED_RESOURCE_DEFAULT_PROTOCOL,
     INDEXED_SORT_MAPPING,
 )
 from mcp_server_webcrawl.models.resources import (
@@ -37,7 +37,7 @@ class KatanaManager(BaseManager):
     Manages HTTP text files in in-memory SQLite databases.
     Provides connection pooling and caching for efficient access.
     """
-    
+
     def __init__(self) -> None:
         """Initialize the HTTP text manager with empty cache and statistics."""
         super().__init__()
@@ -71,7 +71,7 @@ class KatanaManager(BaseManager):
     def _process_http_text_file(self, cursor: sqlite3.Cursor, file_path: Path, site_id: int) -> None:
         """
         Process a single HTTP text file and insert it into the database.
-        
+
         Args:
             cursor: SQLite cursor
             file_path: Path to the HTTP text file
@@ -114,8 +114,8 @@ class KatanaManager(BaseManager):
                     Headers, Content, Size, Time
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                BaseManager.string_to_id(url), 
-                site_id, 
+                BaseManager.string_to_id(url),
+                site_id,
                 url,
                 res_type.value,
                 status_code,
@@ -202,7 +202,7 @@ def get_sites(
 
         site = SiteResult(
             id=site_id,
-            url=f"http://{dir_path.name}/",  # base URL from directory name
+            url=f"{INDEXED_RESOURCE_DEFAULT_PROTOCOL}{dir_path.name}/",  # base URL from directory name
             created=created_time if "created" in select_fields else None,
             modified=modified_time if "modified" in select_fields else None,
             robots=robots_content

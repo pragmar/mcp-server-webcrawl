@@ -13,10 +13,10 @@ from mcp_server_webcrawl.models.resources import (
     ResourceResultType,
     RESOURCES_LIMIT_DEFAULT,
 )
+from mcp_server_webcrawl.crawlers.base.indexed import INDEXED_RESOURCE_DEFAULT_PROTOCOL
 
-
-# heads up. SiteOne uses wget adapters, this is unintuitive but reasonable as SiteOne 
-# uses wget for archiving. lean into maximal recycling of wget, if it stops making 
+# heads up. SiteOne uses wget adapters, this is unintuitive but reasonable as SiteOne
+# uses wget for archiving. lean into maximal recycling of wget, if it stops making
 # sense switch to homegrown
 from mcp_server_webcrawl.crawlers.wget.adapter import (
     WGET_TYPE_MAPPING,
@@ -59,7 +59,7 @@ class SiteOneManager(BaseManager):
                         parts_path = parts[3].split("?")[0]
                         try:
                             status = int(parts[4])
-                            url = f"http://{directory_name}{parts_path}"
+                            url = f"{INDEXED_RESOURCE_DEFAULT_PROTOCOL}{directory_name}{parts_path}"
                             time_str = parts[6].split()[0]
                             time = int(float(time_str) * (1000 if "s" in parts[6] else 1))
 
@@ -131,8 +131,8 @@ class SiteOneManager(BaseManager):
                         ResourceResultType.OTHER.value,
                         meta["status"],
                         BaseManager.get_basic_headers(size, ResourceResultType.OTHER),
-                        None,  # no content
-                        size,     # Zero size
+                        "",     # no content
+                        size,   # no size
                         meta["time"]
                     ))
 
@@ -155,7 +155,7 @@ class SiteOneManager(BaseManager):
         """
         # relative url path from file path (similar to wget)
         relative_path = file_path.relative_to(base_dir)
-        url = f"http://{base_dir.name}/{str(relative_path).replace(os.sep, '/')}"
+        url = f"{INDEXED_RESOURCE_DEFAULT_PROTOCOL}{base_dir.name}/{str(relative_path).replace(os.sep, '/')}"
         file_size = file_path.stat().st_size
         decruftified_path = BaseManager.decruft_path(file_path)
         extension = Path(decruftified_path).suffix.lower()
@@ -214,7 +214,7 @@ class SiteOneManager(BaseManager):
             resource_type.value,
             status_code,  # possibly from log
             BaseManager.get_basic_headers(file_size, resource_type),
-            BaseManager.read_file_contents(file_path, resource_type),
+            BaseManager.read_file_contents(file_path, resource_type) or "",
             file_size,
             response_time  # possibly from log
         ))
