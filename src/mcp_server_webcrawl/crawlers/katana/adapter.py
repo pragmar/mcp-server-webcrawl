@@ -4,7 +4,7 @@ import sqlite3
 from contextlib import closing
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Final, Optional, Set, Tuple
+from typing import Any, Optional, Set, Tuple
 
 from mcp_server_webcrawl.crawlers.base.adapter import BaseManager, SitesGroup
 from mcp_server_webcrawl.crawlers.base.indexed import (
@@ -28,9 +28,6 @@ from mcp_server_webcrawl.utils.logger import get_logger
 
 logger = get_logger()
 
-# field mappings similar to other adapters
-KATANA_RESOURCE_FIELD_MAPPING: Final[dict[str, str]] = INDEXED_RESOURCE_FIELD_MAPPING
-KATANA_SORT_MAPPING: Final[dict[str, Tuple[str, str]]] = INDEXED_SORT_MAPPING
 
 class KatanaManager(BaseManager):
     """
@@ -264,10 +261,10 @@ def get_resources(
     # process field selection
     select_fields: Set[str] = set(RESOURCES_FIELDS_REQUIRED)
     if fields:
-        select_fields.update(f for f in fields if f in KATANA_RESOURCE_FIELD_MAPPING)
+        select_fields.update(f for f in fields if f in INDEXED_RESOURCE_FIELD_MAPPING)
 
     # convert to qualified field names
-    qualified_fields: list[str] = [KATANA_RESOURCE_FIELD_MAPPING[f] for f in select_fields]
+    qualified_fields: list[str] = [INDEXED_RESOURCE_FIELD_MAPPING[f] for f in select_fields]
     fields_joined: str = ", ".join(qualified_fields)
 
     # build query components
@@ -295,8 +292,8 @@ def get_resources(
 
     where_clause: str = f" WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
-    if sort in KATANA_SORT_MAPPING:
-        field, direction = KATANA_SORT_MAPPING[sort]
+    if sort in INDEXED_SORT_MAPPING:
+        field, direction = INDEXED_SORT_MAPPING[sort]
         if direction == "RANDOM":
             order_clause: str = " ORDER BY RANDOM()"
         else:

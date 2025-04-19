@@ -14,16 +14,8 @@ from mcp_server_webcrawl.models.resources import ResourceResultType
 from mcp_server_webcrawl.utils.logger import get_logger
 from mcp_server_webcrawl.crawlers.base.indexed import (
     INDEXED_MANAGER_CACHE_MAX,
-    INDEXED_RESOURCE_FIELD_MAPPING,
-    INDEXED_SORT_MAPPING,
-    INDEXED_TYPE_MAPPING,
     INDEXED_BINARY_EXTENSIONS,
 )
-
-# field mappings similar to other adapters
-WGET_RESOURCE_FIELD_MAPPING: Final[dict[str, str]] = INDEXED_RESOURCE_FIELD_MAPPING
-WGET_SORT_MAPPING: Final[dict[str, Tuple[str, str]]] = INDEXED_SORT_MAPPING
-WGET_TYPE_MAPPING = INDEXED_TYPE_MAPPING
 
 logger = get_logger()
 
@@ -108,7 +100,6 @@ class BaseManager:
         hash_obj = hashlib.sha1(value.encode())
         return int(hash_obj.hexdigest()[:12], 16)
 
-
     @staticmethod
     def get_basic_headers(file_size: int, resource_type: ResourceResultType) -> str:
         content_type = {
@@ -124,11 +115,6 @@ class BaseManager:
         return f"HTTP/1.0 200 OK\r\nContent-Type: {content_type}\r\nContent-Length: {file_size}\r\n\r\n"
 
     @staticmethod
-    def get_common_binary_extensions() -> list[str]:
-        return INDEXED_BINARY_EXTENSIONS
-
-
-    @staticmethod
     def read_file_contents(file_path, resource_type) -> Optional[str]:
         """Read content from text files with better error handling and encoding detection."""
         # Skip if not a text resource type
@@ -142,7 +128,7 @@ class BaseManager:
 
         # Check extension
         extension = os.path.splitext(file_path)[1].lower()
-        if extension in BaseManager.get_common_binary_extensions():
+        if extension in INDEXED_BINARY_EXTENSIONS:
             return None
 
         # Check MIME type

@@ -27,11 +27,6 @@ from mcp_server_webcrawl.crawlers.base.indexed import (
     INDEXED_TYPE_MAPPING,
 )
 
-# field mappings similar to other adapters
-WGET_RESOURCE_FIELD_MAPPING: Final[dict[str, str]] = INDEXED_RESOURCE_FIELD_MAPPING
-WGET_SORT_MAPPING: Final[dict[str, Tuple[str, str]]] = INDEXED_SORT_MAPPING
-WGET_TYPE_MAPPING = INDEXED_TYPE_MAPPING
-
 # "http-client-cache", "result-storage" are technically SiteOne ignores
 # but this is the only modification to an otherwise clean alias of wget
 # a complete breakout of SiteOne subclassing isn't necessary yet
@@ -86,7 +81,7 @@ class WgetManager(BaseManager):
 
         # get the final extension for type mapping
         extension = Path(decruftified_path).suffix.lower()
-        resource_type = WGET_TYPE_MAPPING.get(extension, ResourceResultType.OTHER)
+        resource_type = INDEXED_TYPE_MAPPING.get(extension, ResourceResultType.OTHER)
 
         # get file stats
         stat = file_path.stat()
@@ -262,10 +257,10 @@ def get_resources_with_manager(
     limit = min(max(1, limit), RESOURCES_LIMIT_MAX)
     selected_fields: Set[str] = set(RESOURCES_FIELDS_REQUIRED)
     if fields:
-        selected_fields.update(f for f in fields if f in WGET_RESOURCE_FIELD_MAPPING)
+        selected_fields.update(f for f in fields if f in INDEXED_RESOURCE_FIELD_MAPPING)
 
     # convert to qualified field names
-    qualified_fields: list[str] = [WGET_RESOURCE_FIELD_MAPPING[f] for f in selected_fields]
+    qualified_fields: list[str] = [INDEXED_RESOURCE_FIELD_MAPPING[f] for f in selected_fields]
     fields_joined: str = ", ".join(qualified_fields)
 
     # build query components
@@ -293,8 +288,8 @@ def get_resources_with_manager(
 
     where_clause: str = f" WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
-    if sort in WGET_SORT_MAPPING:
-        field, direction = WGET_SORT_MAPPING[sort]
+    if sort in INDEXED_SORT_MAPPING:
+        field, direction = INDEXED_SORT_MAPPING[sort]
         if direction == "RANDOM":
             order_clause: str = " ORDER BY RANDOM()"
         else:

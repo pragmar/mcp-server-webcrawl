@@ -1,4 +1,3 @@
-import hashlib
 import os
 import sqlite3
 import warcio
@@ -29,9 +28,6 @@ from mcp_server_webcrawl.utils.logger import get_logger
 
 logger = get_logger()
 
-# field mappings similar to other adapters
-WARC_RESOURCE_FIELD_MAPPING: Final[dict[str, str]] = INDEXED_RESOURCE_FIELD_MAPPING
-WARC_SORT_MAPPING: Final[dict[str, Tuple[str, str]]] = INDEXED_SORT_MAPPING
 WARC_FILE_EXTENSIONS: Final[list[str]] = [".warc", ".warc.gz", ".txt"]
 
 class WarcManager(BaseManager):
@@ -168,10 +164,10 @@ def get_resources(
     # process field selection
     select_fields: Set[str] = set(RESOURCES_FIELDS_REQUIRED)
     if fields:
-        select_fields.update(f for f in fields if f in WARC_RESOURCE_FIELD_MAPPING)
+        select_fields.update(f for f in fields if f in INDEXED_RESOURCE_FIELD_MAPPING)
     
     # convert to qualified field names
-    qualified_fields: list[str] = [WARC_RESOURCE_FIELD_MAPPING[f] for f in select_fields]
+    qualified_fields: list[str] = [INDEXED_RESOURCE_FIELD_MAPPING[f] for f in select_fields]
     fields_joined: str = ", ".join(qualified_fields)
     
     # build query components
@@ -199,8 +195,8 @@ def get_resources(
     
     where_clause: str = f" WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
     
-    if sort in WARC_SORT_MAPPING:
-        field, direction = WARC_SORT_MAPPING[sort]
+    if sort in INDEXED_SORT_MAPPING:
+        field, direction = INDEXED_SORT_MAPPING[sort]
         if direction == "RANDOM":
             order_clause: str = " ORDER BY RANDOM()"
         else:

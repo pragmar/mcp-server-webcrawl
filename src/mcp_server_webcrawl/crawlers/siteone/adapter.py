@@ -13,19 +13,18 @@ from mcp_server_webcrawl.models.resources import (
     ResourceResultType,
     RESOURCES_LIMIT_DEFAULT,
 )
-from mcp_server_webcrawl.crawlers.base.indexed import INDEXED_RESOURCE_DEFAULT_PROTOCOL
+from mcp_server_webcrawl.crawlers.base.indexed import (
+    INDEXED_TYPE_MAPPING, 
+    INDEXED_RESOURCE_DEFAULT_PROTOCOL
+)
 
 # heads up. SiteOne uses wget adapters, this is unintuitive but reasonable as SiteOne
 # uses wget for archiving. lean into maximal recycling of wget, if it stops making
 # sense switch to homegrown
 from mcp_server_webcrawl.crawlers.wget.adapter import (
-    WGET_TYPE_MAPPING,
-    get_sites, # recycle wget get sites, there is no difference
-    get_resources_with_manager, # get_resources wrapper using SiteOneManager
+    get_sites,  # hands off, used
+    get_resources_with_manager,
 )
-
-# field mappings similar to other adapters
-SITEONE_TYPE_MAPPING = WGET_TYPE_MAPPING
 
 logger = get_logger()
 
@@ -197,10 +196,10 @@ class SiteOneManager(BaseManager):
                 "other": ResourceResultType.OTHER,
                 "font": ResourceResultType.OTHER,
             }
-            resource_type = type_mapping.get(log_type, SITEONE_TYPE_MAPPING.get(extension, ResourceResultType.OTHER))
+            resource_type = type_mapping.get(log_type, INDEXED_TYPE_MAPPING.get(extension, ResourceResultType.OTHER))
         else:
             # fallback to extension-based mapping
-            resource_type = SITEONE_TYPE_MAPPING.get(extension, ResourceResultType.OTHER)
+            resource_type = INDEXED_TYPE_MAPPING.get(extension, ResourceResultType.OTHER)
 
         cursor.execute("""
             INSERT INTO ResourcesFullText (
