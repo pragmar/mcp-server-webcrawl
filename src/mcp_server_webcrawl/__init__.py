@@ -8,11 +8,10 @@ from collections import OrderedDict
 from pathlib import Path
 from argparse import ArgumentParser
 
-
 from mcp_server_webcrawl.utils.cli import get_help_short_message, get_help_long_message
 from mcp_server_webcrawl.settings import DEBUG
 
-__version__: str = "0.7.8"
+__version__: str = "0.7.9"
 __name__: str = "mcp-server-webcrawl"
 
 if DEBUG:

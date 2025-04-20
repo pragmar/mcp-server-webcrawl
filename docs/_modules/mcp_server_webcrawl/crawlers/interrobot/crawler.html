@@ -238,7 +238,7 @@
         <span class="c1"># this is the MCP/API boundary, inverse occurs on to_dict</span>
         <span class="n">resource_types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_to_resource_types</span><span class="p">(</span><span class="n">types</span><span class="p">)</span>        
         
-        <span class="n">json_result</span><span class="p">:</span> <span class="n">BaseJsonApi</span> <span class="o">=</span> <span class="n">BaseJsonApi</span><span class="p">(</span><span class="s2">&quot;GetResources&quot;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="n">api_result</span><span class="p">:</span> <span class="n">BaseJsonApi</span> <span class="o">=</span> <span class="n">BaseJsonApi</span><span class="p">(</span><span class="s2">&quot;GetResources&quot;</span><span class="p">,</span> <span class="p">{</span>
             <span class="s2">&quot;ids&quot;</span><span class="p">:</span> <span class="n">ids</span><span class="p">,</span>
             <span class="s2">&quot;sites&quot;</span><span class="p">:</span> <span class="n">sites</span><span class="p">,</span>
             <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="n">query</span><span class="p">,</span>
@@ -263,8 +263,8 @@
             <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">json_result</span><span class="o">.</span><span class="n">set_results</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">json_result</span></div>
+        <span class="n">api_result</span><span class="o">.</span><span class="n">set_results</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">api_result</span></div>
 </div>
 
 </pre></div>

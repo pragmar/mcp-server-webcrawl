@@ -76,7 +76,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Final</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Callable</span>
 
 <span class="kn">from</span> <span class="nn">mcp.types</span> <span class="kn">import</span> <span class="n">TextContent</span><span class="p">,</span> <span class="n">ImageContent</span><span class="p">,</span> <span class="n">EmbeddedResource</span><span class="p">,</span> <span class="n">Tool</span>
-
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models</span> <span class="kn">import</span> <span class="n">METADATA_VALUE_TYPE</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">ResourceResultType</span><span class="p">,</span> <span class="n">RESOURCES_FIELDS_REQUIRED</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.crawler</span> <span class="kn">import</span> <span class="n">BaseCrawler</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.api</span> <span class="kn">import</span> <span class="n">BaseJsonApi</span>
@@ -157,21 +157,21 @@
 <span class="k">class</span> <span class="nc">IndexedCrawler</span><span class="p">(</span><span class="n">BaseCrawler</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A crawler implementation for data sources that load into an in-memory sqlite.</span>
-<span class="sd">    Shares commonality between specialized crawlers.    </span>
+<span class="sd">    Shares commonality between specialized crawlers.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    
+
 <div class="viewcode-block" id="IndexedCrawler.__init__">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.indexed.IndexedCrawler.__init__">[docs]</a>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> 
-        <span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> 
-        <span class="n">get_sites_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">get_sites_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">get_resources_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">resource_field_mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">INDEXED_RESOURCE_FIELD_MAPPING</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize the IndexedCrawler with a data source path and required adapter functions.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            datasrc: Path to the data source</span>
 <span class="sd">            get_sites_func: Function to retrieve sites from the data source</span>
@@ -183,7 +183,7 @@
         <span class="k">assert</span> <span class="nb">callable</span><span class="p">(</span><span class="n">get_sites_func</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> requires a callable get_sites_func&quot;</span>
         <span class="k">assert</span> <span class="nb">callable</span><span class="p">(</span><span class="n">get_resources_func</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> requires a callable get_resources_func&quot;</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resource_field_mapping</span><span class="p">,</span> <span class="nb">dict</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> resource_field_mapping must be a dict&quot;</span>
-        
+
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">datasrc</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">resource_field_mapping</span> <span class="o">=</span> <span class="n">resource_field_mapping</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_indexed_get_sites</span> <span class="o">=</span> <span class="n">get_sites_func</span>
@@ -196,11 +196,11 @@
         <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">TextContent</span> <span class="o">|</span> <span class="n">ImageContent</span> <span class="o">|</span> <span class="n">EmbeddedResource</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Call a tool with the given name and arguments.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            name: Tool name to call</span>
 <span class="sd">            arguments: Tool arguments</span>
-<span class="sd">            </span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            List of content objects</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -213,7 +213,7 @@
     <span class="k">async</span> <span class="k">def</span> <span class="nf">mcp_list_tools</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tool</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        List available tools for this crawler.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            List of Tool objects</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -247,7 +247,15 @@
             <span class="n">fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseJsonApi</span><span class="p">:</span>
         <span class="n">sites</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_indexed_get_sites</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasrc</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="n">fields</span><span class="p">)</span>
-        <span class="n">json_result</span> <span class="o">=</span> <span class="n">BaseJsonApi</span><span class="p">(</span><span class="s2">&quot;GetProjects&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;ids&quot;</span><span class="p">:</span> <span class="n">ids</span><span class="p">,</span> <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">fields</span><span class="p">})</span>
+
+        <span class="c1"># sites_args = {k: v for k, v in locals().items() if k != &quot;self&quot;}</span>
+        <span class="n">sites_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;ids&quot;</span><span class="p">:</span> <span class="n">ids</span><span class="p">,</span>
+            <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">fields</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># print(resources_args)</span>
+        <span class="n">json_result</span> <span class="o">=</span> <span class="n">BaseJsonApi</span><span class="p">(</span><span class="s2">&quot;GetProjects&quot;</span><span class="p">,</span> <span class="n">sites_kwargs</span><span class="p">)</span>
         <span class="n">json_result</span><span class="o">.</span><span class="n">set_results</span><span class="p">(</span><span class="n">sites</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sites</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sites</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">json_result</span></div>
 
@@ -267,18 +275,31 @@
         <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseJsonApi</span><span class="p">:</span>
         <span class="c1"># no site is specified, use the first site</span>
-        <span class="c1"># reasoning: no idea what&#39;s in the archive directory, don&#39;t kick </span>
+        <span class="c1"># reasoning: no idea what&#39;s in the archive directory, don&#39;t kick</span>
         <span class="c1"># off high-compute index of everything, esp. not by default</span>
+        <span class="c1"># resources_kwargs = {k: v for k, v in locals().items() if k != &quot;self&quot;}</span>
+        <span class="n">resources_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">METADATA_VALUE_TYPE</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;ids&quot;</span><span class="p">:</span> <span class="n">ids</span><span class="p">,</span>
+            <span class="s2">&quot;sites&quot;</span><span class="p">:</span> <span class="n">sites</span><span class="p">,</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="n">query</span><span class="p">,</span>
+            <span class="s2">&quot;types&quot;</span><span class="p">:</span> <span class="n">types</span><span class="p">,</span>
+            <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">fields</span><span class="p">,</span>
+            <span class="s2">&quot;statuses&quot;</span><span class="p">:</span> <span class="n">statuses</span><span class="p">,</span>
+            <span class="s2">&quot;sort&quot;</span><span class="p">:</span> <span class="n">sort</span><span class="p">,</span>
+            <span class="s2">&quot;limit&quot;</span><span class="p">:</span> <span class="n">limit</span><span class="p">,</span>
+            <span class="s2">&quot;offset&quot;</span><span class="p">:</span> <span class="n">offset</span><span class="p">,</span>
+        <span class="p">}</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="n">sites</span><span class="p">:</span>
             <span class="n">all_sites</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_indexed_get_sites</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasrc</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">all_sites</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">BaseJsonApi</span><span class="p">(</span><span class="s2">&quot;GetResources&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">set_results</span><span class="p">([],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">BaseJsonApi</span><span class="p">(</span><span class="s2">&quot;GetResources&quot;</span><span class="p">,</span> <span class="n">resources_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">set_results</span><span class="p">([],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
             <span class="n">sites</span> <span class="o">=</span> <span class="p">[</span><span class="n">all_sites</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
 
         <span class="n">site_matches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_indexed_get_sites</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasrc</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="n">sites</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">site_matches</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">BaseJsonApi</span><span class="p">(</span><span class="s2">&quot;GetResources&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">set_results</span><span class="p">([],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
-        
+            <span class="k">return</span> <span class="n">BaseJsonApi</span><span class="p">(</span><span class="s2">&quot;GetResources&quot;</span><span class="p">,</span> <span class="n">resources_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">set_results</span><span class="p">([],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
+
         <span class="c1"># convert to enums</span>
         <span class="n">resource_types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_to_resource_types</span><span class="p">(</span><span class="n">types</span><span class="p">)</span>
 
@@ -295,20 +316,9 @@
             <span class="n">offset</span><span class="o">=</span><span class="n">offset</span>
         <span class="p">)</span>
 
-        <span class="n">json_result</span> <span class="o">=</span> <span class="n">BaseJsonApi</span><span class="p">(</span><span class="s2">&quot;GetResources&quot;</span><span class="p">,</span> <span class="p">{</span>
-            <span class="s2">&quot;ids&quot;</span><span class="p">:</span> <span class="n">ids</span><span class="p">,</span>
-            <span class="s2">&quot;sites&quot;</span><span class="p">:</span> <span class="n">sites</span><span class="p">,</span>
-            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="n">query</span><span class="p">,</span>
-            <span class="s2">&quot;types&quot;</span><span class="p">:</span> <span class="n">types</span><span class="p">,</span>
-            <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">fields</span><span class="p">,</span>
-            <span class="s2">&quot;statuses&quot;</span><span class="p">:</span> <span class="n">statuses</span><span class="p">,</span>
-            <span class="s2">&quot;sort&quot;</span><span class="p">:</span> <span class="n">sort</span><span class="p">,</span>
-            <span class="s2">&quot;limit&quot;</span><span class="p">:</span> <span class="n">limit</span><span class="p">,</span>
-            <span class="s2">&quot;offset&quot;</span><span class="p">:</span> <span class="n">offset</span><span class="p">,</span>
-        <span class="p">})</span>
-
-        <span class="n">json_result</span><span class="o">.</span><span class="n">set_results</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">json_result</span></div>
+        <span class="n">api_result</span> <span class="o">=</span> <span class="n">BaseJsonApi</span><span class="p">(</span><span class="s2">&quot;GetResources&quot;</span><span class="p">,</span> <span class="n">resources_kwargs</span><span class="p">)</span>
+        <span class="n">api_result</span><span class="o">.</span><span class="n">set_results</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">api_result</span></div>
 </div>
 
 </pre></div>
