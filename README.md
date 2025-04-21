@@ -26,7 +26,7 @@ a variety of web crawlers:
 **mcp-server-webcrawl** is free and open source, and requires Claude Desktop, Python (>=3.10). It is installed on the command line, via pip install:
 
 ```bash
-pip install mcp_server_webcrawl
+pip install mcp-server-webcrawl
 ```
 
 ## Features
