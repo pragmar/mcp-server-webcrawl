@@ -55,6 +55,34 @@ You can set up more mcp-server-webcrawl connections under mcpServers as needed.
 }
 ```
 
+### Important Note for macOS Users
+
+On macOS, you must use the absolute path to the `mcp-server-webcrawl` executable in the `command` field, rather than just the command name. This is different from Windows/Linux configuration.
+
+For example:
+
+```json
+{ 
+  "mcpServers": {
+    "webcrawl": {
+      "command": "/Users/yourusername/.local/bin/mcp-server-webcrawl",
+      "args": [varies by crawler, see below]
+    }
+  }
+}
+```
+
+To find the absolute path of the `mcp-server-webcrawl` executable on your system:
+
+1. Open Terminal
+2. Run `which mcp-server-webcrawl`
+3. Copy the full path returned and use it in your config file
+
+The location may vary depending on how Python and pip are configured on your system, but common locations include:
+* `/Users/yourusername/.local/bin/mcp-server-webcrawl`
+* `/usr/local/bin/mcp-server-webcrawl`
+* `/opt/homebrew/bin/mcp-server-webcrawl` (if installed via Homebrew)
+
 ### wget (using --mirror)
 
 The datasrc argument should be set to the parent directory of the mirrors.

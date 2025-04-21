@@ -175,12 +175,12 @@ class SiteOneManager(BaseManager):
             if metadata is not None:
                 break
 
-        status_code = metadata.get("status", 200)
-        response_time = metadata.get("time", 0)
-        log_type = metadata.get("type", "").lower()
-
         if metadata is None:
             metadata = {}
+
+        status_code = metadata.get("status", 200)
+        response_time = metadata.get("time", 0)
+        log_type = metadata.get("type", "").lower()        
 
         if log_type:
             # no type for redirects, but more often than not pages
