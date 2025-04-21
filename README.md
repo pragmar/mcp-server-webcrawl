@@ -57,19 +57,12 @@ You can set up more mcp-server-webcrawl connections under mcpServers as needed.
 
 ### Important Note for macOS Users
 
-On macOS, you must use the absolute path to the `mcp-server-webcrawl` executable in the `command` field, rather than just the command name. This is different from Windows/Linux configuration.
+On macOS, you must use the absolute path to the `mcp-server-webcrawl` executable in the `command` field, rather than just the command name. This is different from Windows configuration.
 
 For example:
 
 ```json
-{ 
-  "mcpServers": {
-    "webcrawl": {
-      "command": "/Users/yourusername/.local/bin/mcp-server-webcrawl",
-      "args": [varies by crawler, see below]
-    }
-  }
-}
+"command": "/Users/yourusername/.local/bin/mcp-server-webcrawl",
 ```
 
 To find the absolute path of the `mcp-server-webcrawl` executable on your system:
