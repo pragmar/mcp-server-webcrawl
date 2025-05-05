@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/pragmar-mcp-server-webcrawl-badge.png)](https://mseep.ai/app/pragmar-mcp-server-webcrawl)
+
 <p align="center">
   <img src="sphinx/_static/images/mcpswc.svg" alt="MCP Server Webcrawl" width="100%">
 </p>
