@@ -1,5 +1,5 @@
 InterroBot MCP Setup Guide
-=======================
+==========================
 
 Instructions for setting up `mcp-server-webcrawl <https://pragmar.com/mcp-server-webcrawl/>`_ with InterroBot. 
 This allows your LLM (e.g. Claude Desktop) to search content and metadata from websites you've crawled with InterroBot.
@@ -11,7 +11,7 @@ This allows your LLM (e.g. Claude Desktop) to search content and metadata from w
 Follow along with the video, or the step-action guide below.
 
 Requirements
------------
+------------
 
 Before you begin, ensure you have:
 
@@ -21,7 +21,7 @@ Before you begin, ensure you have:
 - Basic familiarity with command line interfaces
 
 What is InterroBot?
------------------
+-------------------
 
 InterroBot is a commercial web crawler and analyzer that works seamlessly with MCP Server Web Crawl, providing several advantages:
 
@@ -31,10 +31,10 @@ InterroBot is a commercial web crawler and analyzer that works seamlessly with M
 - Cross-platform \(Windows, macOS, Android\)
 
 Installation Steps
------------------
+------------------
 
 1. Install MCP Server Web Crawl
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Open your terminal or command line and install the package::
 
@@ -45,7 +45,7 @@ Verify installation was successful::
     mcp-server-webcrawl --version
 
 2. Create Crawls with InterroBot
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Open InterroBot
 2. For a new project, you'll see an empty project screen
@@ -56,7 +56,7 @@ Verify installation was successful::
    - On macOS: Path can be found in InterroBot settings page
 
 3. Configure Claude Desktop
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Open Claude Desktop
 2. Go to **File → Settings → Developer → Edit Config**
@@ -83,7 +83,7 @@ Verify installation was successful::
 5. Restart Claude Desktop
 
 4. Verify and Use
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 1. In Claude Desktop, you should now see MCP tools available under Search and Tools
 2. Ask Claude to list your crawled sites::
@@ -99,7 +99,7 @@ Verify installation was successful::
     Can you give me a file type summary for [crawled site]? Which types of files are there, page count, etc.
 
 Troubleshooting
---------------
+---------------
 
 - If Claude doesn't show MCP tools after restart, verify your configuration file is correctly formatted
 - Ensure Python and mcp-server-webcrawl are properly installed

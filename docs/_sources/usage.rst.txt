@@ -7,8 +7,8 @@
    }
    </style>
 
-mcp-server-webcrawl Usage
-=========================
+Usage
+=====
 
 Once installed, **mcp-server-webcrawl** can leverage search and retrieval capabilities to pull 
 your website crawl data as needed, using advanced filtering. Use it to help manage your website, 
@@ -26,7 +26,7 @@ you may need to nudge the LLM to the correct field or search strategy. The
 following is the currect API interface for your reference.
 
 webcrawl_sites
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 This tool retrieves a list of sites (project websites or crawl directories).
 
@@ -48,7 +48,7 @@ This tool retrieves a list of sites (project websites or crawl directories).
      - List of additional fields to include beyond defaults (id, url). Empty list means default fields only. Options include created (ISO 8601), modified (ISO 8601), and norobots (str).
 
 webcrawl_search
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 This tool searches for resources (webpages, CSS, images, etc.) across projects and retrieves specified fields.
 
@@ -102,7 +102,7 @@ This tool searches for resources (webpages, CSS, images, etc.) across projects a
      - Support for base64 encoded data for image thumbnails. Default is false. This creates small thumbnails that enable basic image recognition while keeping token output minimal. Only works for image (img) types. SVG format is not currently supported.
 
 Crawler Features Support
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 API support, by parameter, across crawler type.
 

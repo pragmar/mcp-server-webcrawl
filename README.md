@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://pragmar.com/mcp-server-webcrawl/" style="margin: 0 10px;">Website</a> |
   <a href="https://github.com/pragmar/mcp_server_webcrawl" style="margin: 0 10px;">Github</a> |
-  <a href="https://pragmar.github.io/mcp_server_webcrawl/" style="margin: 0 10px;">Docs</a>
+  <a href="https://pragmar.github.io/mcp-server-webcrawl/" style="margin: 0 10px;">Docs</a>
 </p>
 
 # mcp-server-webcrawl
