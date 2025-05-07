@@ -6,7 +6,7 @@ This allows your LLM (e.g. Claude Desktop) to search content and metadata from w
 
 .. raw:: html
 
-   <iframe width="560" height="315" src="https://www.youtube.com/embed/uqEEqVsofhc" frameborder="0" allowfullscreen></iframe>
+   <iframe width="560" height="315" src="https://www.youtube.com/embed/JOGRYbo6WwI" frameborder="0" allowfullscreen></iframe>
 
 Follow along with the video, or the step-action guide below.
 
