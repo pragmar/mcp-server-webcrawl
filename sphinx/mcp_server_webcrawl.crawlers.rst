@@ -12,6 +12,7 @@ Subpackages
    mcp_server_webcrawl.crawlers.katana
    mcp_server_webcrawl.crawlers.warc
    mcp_server_webcrawl.crawlers.wget
+   mcp_server_webcrawl.crawlers.siteone
 
 Module contents
 ---------------

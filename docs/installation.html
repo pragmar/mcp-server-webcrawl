@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Usage" href="usage.html" />
+    <link rel="next" title="Setup Guides" href="guides.html" />
     <link rel="prev" title="mcp-server-webcrawl" href="index.html" /> 
 </head>
 
@@ -50,6 +50,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#multiple-configurations">Multiple Configurations</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">mcp_server_webcrawl</a></li>
 </ul>
@@ -81,18 +82,18 @@
   <section id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
 <p>Install the package via pip:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>mcp_server_webcrawl
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>mcp-server-webcrawl
 </pre></div>
 </div>
 <section id="requirements">
 <h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
-<p>To use mcp_server_webcrawl effectively, you need:</p>
+<p>To use mcp-server-webcrawl effectively, you need:</p>
 <ul class="simple">
 <li><p>An MCP-capable LLM client such as <a class="reference external" href="https://claude.ai">Claude Desktop</a></p></li>
 <li><p><a class="reference external" href="https://python.org">Python</a> installed on your command line interface</p></li>
 <li><p>Basic familiarity with running Python packages</p></li>
 </ul>
-<p>After ensuring these prerequisites are met, simply run the pip install command above to add the package to your environment. The package will handle its own dependencies during installation.</p>
+<p>After ensuring these prerequisites are met, run the pip install command above to add the package to your environment.</p>
 </section>
 <section id="mcp-configuration">
 <h2>MCP Configuration<a class="headerlink" href="#mcp-configuration" title="Link to this heading"></a></h2>
@@ -103,7 +104,7 @@
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nt">&quot;webcrawl&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mcp-server-webcrawl&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/mcp-server-webcrawl&quot;</span><span class="p">,</span>
 <span class="w">       </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--crawler&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;wget&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--datasrc&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="s2">&quot;/path/to/wget/archives/&quot;</span><span class="p">]</span>
 <span class="w">    </span><span class="p">}</span>
@@ -124,7 +125,7 @@ $<span class="w"> </span>wget<span class="w"> </span>--mirror<span class="w"> </
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nt">&quot;webcrawl&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mcp-server-webcrawl&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/mcp-server-webcrawl&quot;</span><span class="p">,</span>
 <span class="w">       </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--crawler&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;warc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--datasrc&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="s2">&quot;/path/to/warc/archives/&quot;</span><span class="p">]</span>
 <span class="w">    </span><span class="p">}</span>
@@ -144,7 +145,7 @@ $<span class="w"> </span>wget<span class="w"> </span>--warc-file<span class="o">
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nt">&quot;webcrawl&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mcp-server-webcrawl&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/mcp-server-webcrawl&quot;</span><span class="p">,</span>
 <span class="w">       </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--crawler&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;interrobot&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--datasrc&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="s2">&quot;[homedir]/Documents/InterroBot/interrobot.v2.db&quot;</span><span class="p">]</span>
 <span class="w">    </span><span class="p">}</span>
@@ -164,7 +165,7 @@ $<span class="w"> </span>wget<span class="w"> </span>--warc-file<span class="o">
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nt">&quot;webcrawl&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mcp-server-webcrawl&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/mcp-server-webcrawl&quot;</span><span class="p">,</span>
 <span class="w">       </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--crawler&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;katana&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--datasrc&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="s2">&quot;/path/to/katana/crawls/&quot;</span><span class="p">]</span>
 <span class="w">    </span><span class="p">}</span>
@@ -185,7 +186,7 @@ $<span class="w"> </span>katana<span class="w"> </span>-u<span class="w"> </span
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nt">&quot;webcrawl&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mcp-server-webcrawl&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/mcp-server-webcrawl&quot;</span><span class="p">,</span>
 <span class="w">       </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--crawler&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;siteone&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--datasrc&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="s2">&quot;/path/to/siteone/archives/&quot;</span><span class="p">]</span>
 <span class="w">    </span><span class="p">}</span>
@@ -206,11 +207,11 @@ $<span class="w"> </span>katana<span class="w"> </span>-u<span class="w"> </span
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nt">&quot;webcrawl_warc&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mcp-server-webcrawl&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/mcp-server-webcrawl&quot;</span><span class="p">,</span>
 <span class="w">       </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--crawler&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;warc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--datasrc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;/path/to/warc/archives/&quot;</span><span class="p">]</span>
 <span class="w">    </span><span class="p">},</span>
 <span class="w">    </span><span class="nt">&quot;webcrawl_wget&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mcp-server-webcrawl&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/mcp-server-webcrawl&quot;</span><span class="p">,</span>
 <span class="w">       </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--crawler&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;wget&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--datasrc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;/path/to/wget/archives/&quot;</span><span class="p">]</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>
@@ -226,7 +227,7 @@ $<span class="w"> </span>katana<span class="w"> </span>-u<span class="w"> </span
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="index.html" class="btn btn-neutral float-left" title="mcp-server-webcrawl" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="usage.html" class="btn btn-neutral float-right" title="Usage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="guides.html" class="btn btn-neutral float-right" title="Setup Guides" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

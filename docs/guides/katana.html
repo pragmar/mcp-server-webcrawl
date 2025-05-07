@@ -1,0 +1,252 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Katana MCP Setup Guide &mdash; mcp-server-webcrawl  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=888ff710"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="SiteOne MCP Setup Guide" href="siteone.html" />
+    <link rel="prev" title="InterroBot MCP Setup Guide" href="interrobot.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            mcp-server-webcrawl
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../guides.html">Setup Guides</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="wget.html">wget MCP Setup Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="warc.html">WARC MCP Setup Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interrobot.html">InterroBot MCP Setup Guide</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Katana MCP Setup Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="siteone.html">SiteOne MCP Setup Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">mcp_server_webcrawl</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">mcp-server-webcrawl</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../guides.html">Setup Guides</a></li>
+      <li class="breadcrumb-item active">Katana MCP Setup Guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guides/katana.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="katana-mcp-setup-guide">
+<h1>Katana MCP Setup Guide<a class="headerlink" href="#katana-mcp-setup-guide" title="Link to this heading"></a></h1>
+<p>Instructions for setting up <a class="reference external" href="https://pragmar.com/mcp-server-webcrawl/">mcp-server-webcrawl</a> with <a class="reference external" href="https://github.com/projectdiscovery/katana">Katana</a> crawler.
+This allows your LLM (e.g. Claude Desktop) to search content and metadata from websites you’ve crawled using Katana.</p>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/sOMaojm0R0Y" frameborder="0" allowfullscreen></iframe><p>Follow along with the video, or the step-action guide below.</p>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<p>Before you begin, ensure you have:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://claude.ai/download">Claude Desktop</a> installed</p></li>
+<li><p><a class="reference external" href="https://python.org">Python</a> 3.10 or later installed</p></li>
+<li><p><a class="reference external" href="https://go.dev/doc/install">Go programming language</a> installed</p></li>
+<li><p><a class="reference external" href="https://github.com/projectdiscovery/katana">Katana crawler</a> installed</p></li>
+<li><p>Basic familiarity with command line interfaces</p></li>
+</ul>
+</section>
+<section id="what-is-katana">
+<h2>What is Katana?<a class="headerlink" href="#what-is-katana" title="Link to this heading"></a></h2>
+<p>Katana is an open-source web crawler from Project Discovery that offers:</p>
+<ul class="simple">
+<li><p>Fast and efficient web crawling capabilities</p></li>
+<li><p>Command-line interface for flexibility and automation</p></li>
+<li><p>Highly configurable crawling parameters</p></li>
+<li><p>Ability to store complete HTTP responses for analysis</p></li>
+</ul>
+</section>
+<section id="installation-steps">
+<h2>Installation Steps<a class="headerlink" href="#installation-steps" title="Link to this heading"></a></h2>
+<section id="install-mcp-server-web-crawl">
+<h3>1. Install MCP Server Web Crawl<a class="headerlink" href="#install-mcp-server-web-crawl" title="Link to this heading"></a></h3>
+<p>Open your terminal or command line and install the package:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">mcp</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">webcrawl</span>
+</pre></div>
+</div>
+<p>Verify installation was successful:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mcp</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">webcrawl</span> <span class="o">--</span><span class="n">version</span>
+</pre></div>
+</div>
+</section>
+<section id="install-and-run-katana">
+<h3>2. Install and Run Katana<a class="headerlink" href="#install-and-run-katana" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p>Verify Go is installed and on your PATH:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">go</span> <span class="n">version</span>
+</pre></div>
+</div>
+</li>
+<li><p>Install Katana using Go:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">go</span> <span class="n">install</span> <span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">projectdiscovery</span><span class="o">/</span><span class="n">katana</span><span class="o">/</span><span class="n">cmd</span><span class="o">/</span><span class="n">katana</span><span class="nd">@latest</span>
+</pre></div>
+</div>
+</li>
+<li><p>Create a directory for your crawls and run Katana with storage options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a directory for storing crawls</span>
+<span class="n">mkdir</span> <span class="n">crawls</span>
+
+<span class="c1"># Run Katana with storage options</span>
+<span class="n">katana</span> <span class="o">-</span><span class="n">u</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">example</span><span class="o">.</span><span class="n">com</span> <span class="o">-</span><span class="n">store</span><span class="o">-</span><span class="n">response</span> <span class="o">-</span><span class="n">store</span><span class="o">-</span><span class="n">response</span><span class="o">-</span><span class="nb">dir</span> <span class="n">crawls</span><span class="o">/</span>
+</pre></div>
+</div>
+</li>
+<li><p>Repeat for additional websites as needed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">katana</span> <span class="o">-</span><span class="n">u</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">pragmar</span><span class="o">.</span><span class="n">com</span> <span class="o">-</span><span class="n">store</span><span class="o">-</span><span class="n">response</span> <span class="o">-</span><span class="n">store</span><span class="o">-</span><span class="n">response</span><span class="o">-</span><span class="nb">dir</span> <span class="n">crawls</span><span class="o">/</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>The crawler will create a separate host directory for each crawled site within your specified directory.</p>
+</section>
+<section id="configure-claude-desktop">
+<h3>3. Configure Claude Desktop<a class="headerlink" href="#configure-claude-desktop" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p>Open Claude Desktop</p></li>
+<li><p>Go to <strong>File → Settings → Developer → Edit Config</strong></p></li>
+<li><p>Add the following configuration (modify paths as needed):</p></li>
+</ol>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;webcrawl&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/mcp-server-webcrawl&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--crawler&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;katana&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--datasrc&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;/path/to/katana/crawls/&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>On Windows, use <code class="docutils literal notranslate"><span class="pre">&quot;mcp-server-webcrawl&quot;</span></code> as the command</p></li>
+<li><p>On macOS, use the absolute path (output of <code class="docutils literal notranslate"><span class="pre">which</span> <span class="pre">mcp-server-webcrawl</span></code>)</p></li>
+<li><p>Change <code class="docutils literal notranslate"><span class="pre">/path/to/katana/crawls/</span></code> to the actual path where you stored your Katana crawls</p></li>
+</ul>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>Save the file and <strong>completely exit</strong> Claude Desktop (not just close the window)</p></li>
+<li><p>Restart Claude Desktop</p></li>
+</ol>
+</section>
+<section id="verify-and-use">
+<h3>4. Verify and Use<a class="headerlink" href="#verify-and-use" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p>In Claude Desktop, you should now see MCP tools available under Search and Tools</p></li>
+<li><p>Ask Claude to list your crawled sites:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Can you list the crawled sites available?
+</pre></div>
+</div>
+</li>
+<li><p>Try searching content from your crawls:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Can you find information about [topic] on [crawled site]?
+</pre></div>
+</div>
+</li>
+<li><p>Try specialized searches that use Katana’s comprehensive data collection:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Can</span> <span class="n">you</span> <span class="n">find</span> <span class="nb">all</span> <span class="n">the</span> <span class="n">help</span> <span class="n">pages</span> <span class="n">on</span> <span class="n">this</span> <span class="n">site</span> <span class="ow">and</span> <span class="n">tell</span> <span class="n">me</span> <span class="n">how</span> <span class="n">they</span><span class="s1">&#39;re different?</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>If Claude doesn’t show MCP tools after restart, verify your configuration file is correctly formatted</p></li>
+<li><p>Ensure Python and mcp-server-webcrawl are properly installed</p></li>
+<li><p>Check that your Katana crawls directory path in the configuration is correct</p></li>
+<li><p>Make sure the <code class="docutils literal notranslate"><span class="pre">-store-response</span></code> flag was used during crawling, as this is required to save content</p></li>
+<li><p>Verify that each crawl completed successfully and files were saved to the expected location</p></li>
+<li><p>Remember that the first time you use a function, Claude will ask for permission</p></li>
+</ul>
+<p>For more details, including API documentation and other crawler options, visit the <a class="reference external" href="https://github.com/pragmar/mcp_server_webcrawl">mcp-server-webcrawl documentation</a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="interrobot.html" class="btn btn-neutral float-left" title="InterroBot MCP Setup Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="siteone.html" class="btn btn-neutral float-right" title="SiteOne MCP Setup Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, pragmar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -42,7 +42,7 @@ autodoc_default_options = {
 autodoc_member_order = "groupwise"
 autodoc_typehints = "description"
 autodoc_class_signature = "separated"
-# autodoc_mock_imports = ["mcp_server_webcrawl.settings_local"]
+autodoc_mock_imports = ["mcp_server_webcrawl.settings_local"]
 add_module_names = False
 autoclass_content = "both"
 
@@ -50,6 +50,7 @@ autoclass_content = "both"
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
 }
+
 
 
 toctree_maxdepth = 2

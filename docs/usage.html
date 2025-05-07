@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Usage &mdash; mcp-server-webcrawl  documentation</title>
+  <title>mcp-server-webcrawl Usage &mdash; mcp-server-webcrawl  documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="mcp_server_webcrawl" href="modules.html" />
-    <link rel="prev" title="Installation" href="installation.html" /> 
+    <link rel="prev" title="SiteOne MCP Setup Guide" href="guides/siteone.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -45,8 +45,9 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#mcp-server-webcrawl-usage">MCP Server Webcrawl Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides.html">Setup Guides</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">mcp-server-webcrawl Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#available-tools">Available Tools</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">mcp_server_webcrawl</a></li>
@@ -66,7 +67,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Usage</li>
+      <li class="breadcrumb-item active">mcp-server-webcrawl Usage</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/usage.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -76,25 +77,25 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="usage">
-<h1>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h1>
-<style>
+  <style>
 .wy-table-responsive table td, .wy-table-responsive table th {
   white-space: normal !important;
 }
 </style><section id="mcp-server-webcrawl-usage">
-<h2>MCP Server Webcrawl Usage<a class="headerlink" href="#mcp-server-webcrawl-usage" title="Link to this heading"></a></h2>
-<p>Once installed, <strong>mcp_server_webcrawl</strong> can leverage search and retrieval capabilities to pull
+<h1>mcp-server-webcrawl Usage<a class="headerlink" href="#mcp-server-webcrawl-usage" title="Link to this heading"></a></h1>
+<p>Once installed, <strong>mcp-server-webcrawl</strong> can leverage search and retrieval capabilities to pull
 your website crawl data as needed, using advanced filtering. Use it to help manage your website,
 as an on-demand resource database (marketing, SEO, etc.), or anything else.</p>
 <p>The truth of the matter is, you don’t need to know the API behind the MCP server, as it is
 designed to be consumed by the LLM. It is, however, useful to understand for advanced use cases.</p>
 <section id="available-tools">
-<h3>Available Tools<a class="headerlink" href="#available-tools" title="Link to this heading"></a></h3>
-<p>The package provides two main tools for interacting with your web crawl data,
-webcrawl_sites and webcrawl_search.</p>
+<h2>Available Tools<a class="headerlink" href="#available-tools" title="Link to this heading"></a></h2>
+<p>The API is <em>supposed</em> to stay out your way, and to a large degree
+it can be navigated autonomously by your MCP client. Sometimes, however,
+you may need to nudge the LLM to the correct field or search strategy. The
+following is the currect API interface for your reference.</p>
 <section id="webcrawl-sites">
-<h4>webcrawl_sites<a class="headerlink" href="#webcrawl-sites" title="Link to this heading"></a></h4>
+<h3>webcrawl_sites<a class="headerlink" href="#webcrawl-sites" title="Link to this heading"></a></h3>
 <p>This tool retrieves a list of sites (project websites or crawl directories).</p>
 <table class="docutils align-default">
 <colgroup>
@@ -125,7 +126,7 @@ webcrawl_sites and webcrawl_search.</p>
 </table>
 </section>
 <section id="webcrawl-search">
-<h4>webcrawl_search<a class="headerlink" href="#webcrawl-search" title="Link to this heading"></a></h4>
+<h3>webcrawl_search<a class="headerlink" href="#webcrawl-search" title="Link to this heading"></a></h3>
 <p>This tool searches for resources (webpages, CSS, images, etc.) across projects and retrieves specified fields.</p>
 <table class="docutils align-default">
 <colgroup>
@@ -142,35 +143,35 @@ webcrawl_sites and webcrawl_search.</p>
 </tr>
 </thead>
 <tbody>
+<tr class="row-even"><td><p>ids</p></td>
+<td><p>array&lt;int&gt;</p></td>
+<td><p>No</p></td>
+<td><p>Optional list of resource IDs to retrieve specific resources directly.</p></td>
+</tr>
+<tr class="row-odd"><td><p>sites</p></td>
+<td><p>array&lt;int&gt;</p></td>
+<td><p>No</p></td>
+<td><p>Optional list of project IDs to filter search results to specific sites. In most scenarios, you’d filter to only one site.</p></td>
+</tr>
 <tr class="row-even"><td><p>query</p></td>
 <td><p>string</p></td>
 <td><p>No</p></td>
 <td><p>Fulltext search query string. Leave empty to return all resources when filtering on other fields for better precision. Supports fulltext and boolean operators (AND, OR, NOT), quoted phrases, and suffix wildcards, but not prefix wildcards.</p></td>
 </tr>
-<tr class="row-odd"><td><p>ids</p></td>
-<td><p>array&lt;int&gt;</p></td>
-<td><p>No</p></td>
-<td><p>Optional list of resource IDs to retrieve specific resources directly.</p></td>
-</tr>
-<tr class="row-even"><td><p>sites</p></td>
-<td><p>array&lt;int&gt;</p></td>
-<td><p>No</p></td>
-<td><p>Optional list of project IDs to filter search results to specific sites. In most scenarios, you’d filter to only one site.</p></td>
-</tr>
-<tr class="row-odd"><td><p>types</p></td>
-<td><p>array&lt;string&gt;</p></td>
-<td><p>No</p></td>
-<td><p>Optional filter for specific resource types. Allowed values include: headers, content, size, name, time.</p></td>
-</tr>
-<tr class="row-even"><td><p>fields</p></td>
-<td><p>array&lt;string&gt;</p></td>
-<td><p>No</p></td>
-<td><p>List of additional fields to include beyond defaults (modified, created). Empty list means default fields only. The content field can lead to large results and should be used with LIMIT.</p></td>
-</tr>
 <tr class="row-odd"><td><p>statuses</p></td>
 <td><p>array&lt;int&gt;</p></td>
 <td><p>No</p></td>
 <td><p>Optional list of HTTP status codes to filter results. Example: [200] returns only successful resources, [404, 500] returns only resources with Not Found or Server Error.</p></td>
+</tr>
+<tr class="row-even"><td><p>types</p></td>
+<td><p>array&lt;string&gt;</p></td>
+<td><p>No</p></td>
+<td><p>Optional filter for specific resource types. Allowed values include: headers, content, size, name, time.</p></td>
+</tr>
+<tr class="row-odd"><td><p>fields</p></td>
+<td><p>array&lt;string&gt;</p></td>
+<td><p>No</p></td>
+<td><p>List of additional fields to include beyond defaults (modified, created). Empty list means default fields only. The content field can lead to large results and should be used with LIMIT.</p></td>
 </tr>
 <tr class="row-even"><td><p>sort</p></td>
 <td><p>string</p></td>
@@ -195,6 +196,197 @@ webcrawl_sites and webcrawl_search.</p>
 </tbody>
 </table>
 </section>
+<section id="crawler-features-support">
+<h3>Crawler Features Support<a class="headerlink" href="#crawler-features-support" title="Link to this heading"></a></h3>
+<p>API support, by parameter, across crawler type.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>wget</p></th>
+<th class="head"><p>WARC</p></th>
+<th class="head"><p>InterroBot</p></th>
+<th class="head"><p>Katana</p></th>
+<th class="head"><p>SiteOne</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Sites/ids</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-odd"><td><p>Sites/fields</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-even"><td><p>Search/ids</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-odd"><td><p>Search/sites</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-even"><td><p>Search/query</p></td>
+<td><p>①</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>①</p></td>
+</tr>
+<tr class="row-odd"><td><p>Search/types</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-even"><td><p>Search/fields</p></td>
+<td><p>②</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>②</p></td>
+</tr>
+<tr class="row-odd"><td><p>Search/statuses</p></td>
+<td><p>③</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-even"><td><p>Search/sort</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-odd"><td><p>Search/limit</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-even"><td><p>Search/offset</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-odd"><td><p>Search/thumbnails</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="crawler-field-support">
+<h3>Crawler Field Support<a class="headerlink" href="#crawler-field-support" title="Link to this heading"></a></h3>
+<p>API support, by field, across crawler type.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>wget</p></th>
+<th class="head"><p>WARC</p></th>
+<th class="head"><p>InterroBot</p></th>
+<th class="head"><p>Katana</p></th>
+<th class="head"><p>SiteOne</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>id</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-odd"><td><p>url</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-even"><td><p>type</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-odd"><td><p>status</p></td>
+<td><p>③</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-even"><td><p>size</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-odd"><td><p>headers</p></td>
+<td></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>content</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+</tbody>
+</table>
+<p>①②③ wget (–mirror) does not index HTTP status beyond 200 OK (HTTP errors not saved to disk).
+wget and SiteOne crawlers do not support queryable HTTP headers. When used in
+WARC mode (as opposed to simple mirror), wget is capable of collecting HTTP headers
+and status.</p>
+<p>Crawlers have strengths and weaknesses, judge them on how well they
+fit your needs. Don’t worry too
+much about field support. You probably don’t need HTTP headers, except for
+specialized web-dev, honestly. They all support fulltext boolean search
+across the crawl data.</p>
 </section>
 </section>
 </section>
@@ -203,7 +395,7 @@ webcrawl_sites and webcrawl_search.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="guides/siteone.html" class="btn btn-neutral float-left" title="SiteOne MCP Setup Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="modules.html" class="btn btn-neutral float-right" title="mcp_server_webcrawl" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

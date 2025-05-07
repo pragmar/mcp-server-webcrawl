@@ -5,18 +5,18 @@ Install the package via pip:
 
 .. code-block:: bash
 
-   pip install mcp_server_webcrawl
+   pip install mcp-server-webcrawl
 
 Requirements
 ------------
 
-To use mcp_server_webcrawl effectively, you need:
+To use mcp-server-webcrawl effectively, you need:
 
 * An MCP-capable LLM client such as `Claude Desktop`_
 * `Python`_ installed on your command line interface
 * Basic familiarity with running Python packages
 
-After ensuring these prerequisites are met, simply run the pip install command above to add the package to your environment. The package will handle its own dependencies during installation.
+After ensuring these prerequisites are met, run the pip install command above to add the package to your environment. 
 
 MCP Configuration
 -----------------
@@ -33,7 +33,7 @@ wget
    { 
      "mcpServers": {
        "webcrawl": {
-         "command": "mcp-server-webcrawl",
+         "command": "/path/to/mcp-server-webcrawl",
           "args": ["--crawler", "wget", "--datasrc", 
             "/path/to/wget/archives/"]     
        }
@@ -58,7 +58,7 @@ WARC
    { 
      "mcpServers": {
        "webcrawl": {
-         "command": "mcp-server-webcrawl",
+         "command": "/path/to/mcp-server-webcrawl",
           "args": ["--crawler", "warc", "--datasrc", 
             "/path/to/warc/archives/"]     
        }
@@ -82,7 +82,7 @@ InterroBot
    { 
      "mcpServers": {
        "webcrawl": {
-         "command": "mcp-server-webcrawl",
+         "command": "/path/to/mcp-server-webcrawl",
           "args": ["--crawler", "interrobot", "--datasrc", 
             "[homedir]/Documents/InterroBot/interrobot.v2.db"]
        }
@@ -104,7 +104,7 @@ Katana
    { 
      "mcpServers": {
        "webcrawl": {
-         "command": "mcp-server-webcrawl",
+         "command": "/path/to/mcp-server-webcrawl",
           "args": ["--crawler", "katana", "--datasrc", 
             "/path/to/katana/crawls/"]
        }
@@ -129,7 +129,7 @@ SiteOne
    { 
      "mcpServers": {
        "webcrawl": {
-         "command": "mcp-server-webcrawl",
+         "command": "/path/to/mcp-server-webcrawl",
           "args": ["--crawler", "siteone", "--datasrc", 
             "/path/to/siteone/archives/"]     
        }
@@ -151,11 +151,11 @@ You can set up multiple **mcp-server-webcrawl** connections under the ``mcpServe
    { 
      "mcpServers": {
        "webcrawl_warc": {
-         "command": "mcp-server-webcrawl",
+         "command": "/path/to/mcp-server-webcrawl",
           "args": ["--crawler", "warc", "--datasrc", "/path/to/warc/archives/"]     
        },
        "webcrawl_wget": {
-         "command": "mcp-server-webcrawl",
+         "command": "/path/to/mcp-server-webcrawl",
           "args": ["--crawler", "wget", "--datasrc", "/path/to/wget/archives/"]     
        }
      }

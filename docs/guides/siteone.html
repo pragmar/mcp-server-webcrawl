@@ -1,0 +1,232 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SiteOne MCP Setup Guide &mdash; mcp-server-webcrawl  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=888ff710"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Usage" href="../usage.html" />
+    <link rel="prev" title="Katana MCP Setup Guide" href="katana.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            mcp-server-webcrawl
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../guides.html">Setup Guides</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="wget.html">wget MCP Setup Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="warc.html">WARC MCP Setup Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interrobot.html">InterroBot MCP Setup Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="katana.html">Katana MCP Setup Guide</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">SiteOne MCP Setup Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">mcp_server_webcrawl</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">mcp-server-webcrawl</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../guides.html">Setup Guides</a></li>
+      <li class="breadcrumb-item active">SiteOne MCP Setup Guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guides/siteone.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="siteone-mcp-setup-guide">
+<h1>SiteOne MCP Setup Guide<a class="headerlink" href="#siteone-mcp-setup-guide" title="Link to this heading"></a></h1>
+<p>Instructions for setting up <a class="reference external" href="https://pragmar.com/mcp-server-webcrawl/">mcp-server-webcrawl</a> with SiteOne crawler.
+This allows your LLM (e.g. Claude Desktop) to search content and metadata from websites you’ve crawled using SiteOne.</p>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/uqEEqVsofhc" frameborder="0" allowfullscreen></iframe><p>Follow along with the video, or the step-action guide below.</p>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<p>Before you begin, ensure you have:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://claude.ai/download">Claude Desktop</a> installed</p></li>
+<li><p><a class="reference external" href="https://python.org">Python</a> 3.10 or later installed</p></li>
+<li><p><a class="reference external" href="https://crawler.siteone.io">SiteOne Crawler</a> installed</p></li>
+<li><p>Basic familiarity with command line interfaces</p></li>
+</ul>
+</section>
+<section id="what-is-siteone">
+<h2>What is SiteOne?<a class="headerlink" href="#what-is-siteone" title="Link to this heading"></a></h2>
+<p>SiteOne is a graphical web crawler that offers:</p>
+<ul class="simple">
+<li><p>User-friendly desktop interface for setting up and managing crawls</p></li>
+<li><p>Offline website generation capabilities</p></li>
+<li><p>Comprehensive crawl reporting</p></li>
+<li><p>Intuitive controls for non-technical users</p></li>
+</ul>
+</section>
+<section id="installation-steps">
+<h2>Installation Steps<a class="headerlink" href="#installation-steps" title="Link to this heading"></a></h2>
+<section id="install-mcp-server-web-crawl">
+<h3>1. Install MCP Server Web Crawl<a class="headerlink" href="#install-mcp-server-web-crawl" title="Link to this heading"></a></h3>
+<p>Open your terminal or command line and install the package:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">mcp</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">webcrawl</span>
+</pre></div>
+</div>
+<p>Verify installation was successful:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mcp</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">webcrawl</span> <span class="o">--</span><span class="n">version</span>
+</pre></div>
+</div>
+</section>
+<section id="create-crawls-with-siteone">
+<h3>2. Create Crawls with SiteOne<a class="headerlink" href="#create-crawls-with-siteone" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p>Open SiteOne Crawler application</p></li>
+<li><p>Enter a URL to crawl (e.g., example.com)</p></li>
+<li><p><strong>Important</strong>: Check the “Generate offline website” option (this is required for MCP integration)</p></li>
+<li><p>Click the start button to begin crawling</p></li>
+<li><p>Repeat for additional sites as needed (e.g., pragmar.com)</p></li>
+<li><p>Note the directory where SiteOne is storing the generated offline content (this is shown in the application)</p></li>
+</ol>
+</section>
+<section id="configure-claude-desktop">
+<h3>3. Configure Claude Desktop<a class="headerlink" href="#configure-claude-desktop" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p>Open Claude Desktop</p></li>
+<li><p>Go to <strong>File → Settings → Developer → Edit Config</strong></p></li>
+<li><p>Add the following configuration (modify paths as needed):</p></li>
+</ol>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;webcrawl&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/mcp-server-webcrawl&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--crawler&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;siteone&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--datasrc&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;/path/to/siteone/archives/&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>On Windows, use <code class="docutils literal notranslate"><span class="pre">&quot;mcp-server-webcrawl&quot;</span></code> as the command</p></li>
+<li><p>On macOS, use the absolute path (output of <code class="docutils literal notranslate"><span class="pre">which</span> <span class="pre">mcp-server-webcrawl</span></code>)</p></li>
+<li><p>Change <code class="docutils literal notranslate"><span class="pre">/path/to/siteone/archives/</span></code> to the actual path where SiteOne stores offline website content</p></li>
+</ul>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>Save the file and <strong>completely exit</strong> Claude Desktop (not just close the window)</p></li>
+<li><p>Restart Claude Desktop</p></li>
+</ol>
+</section>
+<section id="verify-and-use">
+<h3>4. Verify and Use<a class="headerlink" href="#verify-and-use" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p>In Claude Desktop, you should now see MCP tools available under Search and Tools</p></li>
+<li><p>Ask Claude to list your crawled sites:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Can you list the crawled sites available?
+</pre></div>
+</div>
+</li>
+<li><p>Try searching content from your crawls:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Can you find information about [topic] on [crawled site]?
+</pre></div>
+</div>
+</li>
+<li><p>Explore specific topics on your crawled sites:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">I</span><span class="s1">&#39;m interested in AppStat on pragmar.com. Can you tell me about it?</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>If Claude doesn’t show MCP tools after restart, verify your configuration file is correctly formatted</p></li>
+<li><p>Ensure Python and mcp-server-webcrawl are properly installed</p></li>
+<li><p>Check that your SiteOne archives path in the configuration is correct</p></li>
+<li><p>Make sure the “Generate offline website” option was checked when creating crawls</p></li>
+<li><p>Verify that each crawl completed successfully and files were saved to the expected location</p></li>
+<li><p>Remember that the first time you use a function, Claude will ask for permission</p></li>
+</ul>
+<p>For more details, including API documentation and other crawler options, visit the <a class="reference external" href="https://github.com/pragmar/mcp_server_webcrawl">mcp-server-webcrawl documentation</a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="katana.html" class="btn btn-neutral float-left" title="Katana MCP Setup Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../usage.html" class="btn btn-neutral float-right" title="Usage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, pragmar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

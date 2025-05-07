@@ -1,14 +1,16 @@
 .. image:: _static/images/mcpswc.svg
-   :alt: MCP Server Webcrawl
+   :alt: mcp-server-webcrawl heading
    :align: center
    :width: 100%
 
 .. raw:: html
 
    <div style="text-align: center; margin-bottom: 2em;">
-     <a href="https://pragmar.com/mcp-server-webcrawl/" style="margin: 0 10px;">Website</a> |
-     <a href="https://github.com/pragmar/mcp_server_webcrawl" style="margin: 0 10px;">Github</a> |
-     <a href="https://pragmar.github.io/mcp_server_webcrawl/" style="margin: 0 10px;">Docs</a>
+     <a href="https://pragmar.com/mcp-server-webcrawl/" style="margin: 0 4px;">Website</a> |
+     <a href="https://github.com/pragmar/mcp_server_webcrawl" style="margin: 0 4px;">Github</a> |
+     <a href="https://pragmar.github.io/mcp_server_webcrawl/" style="margin: 0 4px;">Docs</a> |
+     <a href="https://pypi.org/project/mcp-server-webcrawl/" style="margin: 0 4px;">PyPi</a>
+
    </div>
 
 mcp-server-webcrawl
@@ -32,7 +34,7 @@ a variety of web crawlers:
 
 .. code-block:: bash
 
-   pip install mcp_server_webcrawl
+   pip install mcp-server-webcrawl
 
 
 .. toctree::
@@ -40,6 +42,7 @@ a variety of web crawlers:
    :caption: Contents:
 
    installation
+   guides
    usage
    modules
 
