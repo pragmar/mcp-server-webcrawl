@@ -1,9 +1,10 @@
 from datetime import datetime
-from typing import Optional, Final
+from typing import Final
 
 from mcp_server_webcrawl.models import METADATA_VALUE_TYPE
+from mcp_server_webcrawl.utils import isoformat_zulu
 
-SITES_TOOL_NAME: str = "webcrawl_sites"
+SITES_TOOL_NAME: Final[str] = "webcrawl_sites"
 SITES_FIELDS_REQUIRED: Final[list[str]] = ["id", "url"]
 SITES_FIELDS_DEFAULT: Final[list[str]] = SITES_FIELDS_REQUIRED + ["created", "modified"]
 
@@ -15,11 +16,11 @@ class SiteResult:
     def __init__(
         self,
         id: int,
-        url: Optional[str] = None,
-        created: Optional[datetime] = None,
-        modified: Optional[datetime] = None,
-        robots: Optional[str] = None,
-        metadata: Optional[dict[str, METADATA_VALUE_TYPE]] = None
+        url: str | None = None,
+        created: datetime | None = None,
+        modified: datetime | None = None,
+        robots: str | None = None,
+        metadata: dict[str, METADATA_VALUE_TYPE] | None = None
     ):
         """
         Initialize a SiteResult instance.
@@ -46,8 +47,8 @@ class SiteResult:
         result: dict[str, METADATA_VALUE_TYPE] = {
             "id": self.id,
             "url": self.url,
-            "created": self.created.isoformat() if self.created else None,
-            "modified": self.modified.isoformat() if self.modified else None,
+            "created": isoformat_zulu(self.created) if self.created else None,
+            "modified": isoformat_zulu(self.modified) if self.modified else None,
             "robots": self.robots,
             "metadata": self.metadata if self.metadata else None,
         }
@@ -70,6 +71,8 @@ class SiteResult:
             set to None if not already present
         """
         # None self annihilates in filter, forcefields can force their existence, as null
-        result = {k: None for k in forcefields}
+        result = {}
+        if forcefields:
+            result = {k: None for k in forcefields}
         result.update(self.to_dict())
         return result

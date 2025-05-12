@@ -31,3 +31,4 @@ sphinx/_static/images/generated/
 **/__pycache__/
 .coverage
 htmlcov/
+soho.nascom.nasa.com/

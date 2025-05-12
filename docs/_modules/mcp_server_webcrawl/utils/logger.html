@@ -42,6 +42,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
@@ -61,6 +62,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../utils.html">mcp_server_webcrawl.utils</a></li>
       <li class="breadcrumb-item active">mcp_server_webcrawl.utils.logger</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -72,7 +74,6 @@
              
   <h1>Source code for mcp_server_webcrawl.utils.logger</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">logging</span>
-
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
 
@@ -88,17 +89,17 @@
 <span class="k">def</span> <span class="nf">get_logger_configuration</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get log name, path, and level (in that order)</span>
-<span class="sd">    </span>
+
 <span class="sd">    Returns:</span>
 <span class="sd">        tuple[str, Path, int]: A tuple containing name, path, and level</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">log_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">DEFAULT_LOG_PATH</span>    
+    <span class="n">log_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">DEFAULT_LOG_PATH</span>
     <span class="n">log_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_LOG_LEVEL</span>
 
     <span class="n">log_level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span> <span class="k">if</span> <span class="n">DEBUG</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="s2">&quot;LOG_LEVEL&quot;</span><span class="p">,</span> <span class="n">DEFAULT_LOG_LEVEL</span><span class="p">)</span>
     <span class="n">log_path</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="s2">&quot;LOG_PATH&quot;</span><span class="p">,</span> <span class="n">DEFAULT_LOG_PATH</span><span class="p">)</span>
-    
+
     <span class="k">return</span> <span class="p">(</span><span class="n">DEFAULT_LOG_KEY</span><span class="p">,</span> <span class="n">log_path</span><span class="p">,</span> <span class="n">log_level</span><span class="p">)</span></div>
 
 
@@ -107,7 +108,7 @@
 <span class="k">def</span> <span class="nf">get_logger</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get logger, usually in order to write to it</span>
-<span class="sd">    </span>
+
 <span class="sd">    Returns:</span>
 <span class="sd">        Logger: a writable logging object (error/warn/info/debug)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -121,17 +122,17 @@
 <span class="k">def</span> <span class="nf">initialize_logger</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Validate and set up logger for writing</span>
-<span class="sd">    </span>
+
 <span class="sd">    Returns:</span>
 <span class="sd">        None</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="p">(</span><span class="n">log_name</span><span class="p">,</span> <span class="n">log_path</span><span class="p">,</span> <span class="n">log_level</span><span class="p">)</span> <span class="o">=</span> <span class="n">get_logger_configuration</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">log_level</span> <span class="o">==</span> <span class="n">logging</span><span class="o">.</span><span class="n">NOTSET</span><span class="p">:</span>
-        <span class="c1"># don&#39;t set up anything, named logging will effectively evaporate </span>
+        <span class="c1"># don&#39;t set up anything, named logging will effectively evaporate</span>
         <span class="c1"># todo: needs reality check</span>
-        <span class="k">return</span> 
-    
+        <span class="k">return</span>
+
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">log_level</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">log_level</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;LOG_LEVEL must be set&quot;</span>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">log_path</span><span class="p">,</span> <span class="n">Path</span><span class="p">),</span> <span class="s2">&quot;LOG_PATH must be a Path object&quot;</span>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">log_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">log_name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;LOG_NAME must be a non-empty string&quot;</span>
@@ -143,11 +144,11 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">assert</span> <span class="n">log_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">log_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">is_dir</span><span class="p">(),</span> \
             <span class="sa">f</span><span class="s2">&quot;Custom parent directory `</span><span class="si">{</span><span class="n">log_path</span><span class="o">.</span><span class="n">parent</span><span class="si">}</span><span class="s2">` does not exist or is not a directory&quot;</span>
-    
+
     <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">log_path</span><span class="p">),</span> <span class="n">filemode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">log_level</span><span class="p">,</span>
         <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> - </span><span class="si">%(name)s</span><span class="s2"> - </span><span class="si">%(levelname)s</span><span class="s2"> - </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">,</span>
         <span class="n">datefmt</span><span class="o">=</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
-    
+
     <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">log_name</span><span class="p">)</span>
 
     <span class="c1"># just set a few ops back, concurrent logger might not be ready</span>

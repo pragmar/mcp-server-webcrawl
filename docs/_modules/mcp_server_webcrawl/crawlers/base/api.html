@@ -42,6 +42,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
@@ -73,19 +74,20 @@
              
   <h1>Source code for mcp_server_webcrawl.crawlers.base.api</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">json</span>
-
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Final</span>
 
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.adapter</span> <span class="kn">import</span> <span class="n">IndexState</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models</span> <span class="kn">import</span> <span class="n">METADATA_VALUE_TYPE</span><span class="p">,</span> <span class="n">UTC</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">ResourceResultType</span><span class="p">,</span> <span class="n">ResourceResult</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">ResourceResult</span><span class="p">,</span> <span class="n">ResourceResultType</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="n">SiteResult</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils</span> <span class="kn">import</span> <span class="n">isoformat_zulu</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
 
-<span class="n">OVERRIDE_ERROR_MESSAGE</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;BaseCrawler subclasses must implement </span><span class="se">\</span>
+<span class="n">OVERRIDE_ERROR_MESSAGE</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;BaseCrawler subclasses must implement </span><span class="se">\</span>
 <span class="s2">the following methods: handle_list_tools, handle_call_tool&quot;</span>
 
 <div class="viewcode-block" id="BaseJsonApiEncoder">
@@ -111,6 +113,11 @@
             <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__dict__</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">datetime</span><span class="p">):</span>
+            <span class="c1"># Convert UTC datetime to ISO format with &#39;Z&#39; suffix</span>
+            <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="n">tzinfo</span><span class="o">.</span><span class="n">utcoffset</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="o">==</span> <span class="n">timedelta</span><span class="p">(</span><span class="mi">0</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">isoformat_zulu</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">isoformat_zulu</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></div>
 </div>
 
@@ -127,7 +134,7 @@
 
 <div class="viewcode-block" id="BaseJsonApi.__init__">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.api.BaseJsonApi.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">index_state</span><span class="p">:</span> <span class="n">IndexState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Construct with the arguments of creation (aoc), these will be echoed back in</span>
 <span class="sd">        JSON response. This is an object that collapses into json on json dumps. This is</span>
@@ -143,7 +150,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">meta_generator</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">__version__</span><span class="si">}</span><span class="s2">)&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">meta_generated</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta_generated</span> <span class="o">=</span> <span class="n">isoformat_zulu</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta_index</span> <span class="o">=</span> <span class="n">index_state</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SiteResult</span> <span class="o">|</span> <span class="n">ResourceResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_results_total</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_results_offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
@@ -225,6 +233,9 @@
             <span class="p">},</span>
             <span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">to_forcefield_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="s2">&quot;fields&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">&quot;to_forcefield_dict&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">]</span>
         <span class="p">}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">response</span><span class="p">[</span><span class="s2">&quot;__meta__&quot;</span><span class="p">][</span><span class="s2">&quot;index&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta_index</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_errors</span><span class="p">:</span>
             <span class="n">response</span><span class="p">[</span><span class="s2">&quot;__meta__&quot;</span><span class="p">][</span><span class="s2">&quot;errors&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_errors</span>

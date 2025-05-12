@@ -1,74 +1,107 @@
+import anyio
+import re
 import sqlite3
 import traceback
-import re
-import anyio
 
-from urllib.parse import urlparse
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Final
+from urllib.parse import urlparse
 
-from mcp.types import TextContent, ImageContent, EmbeddedResource, Tool
-
-from mcp.server.models import InitializationOptions
 from mcp.server import NotificationOptions, Server
-from mcp_server_webcrawl.models.resources import ResourceResult, ResourceResultType
-from mcp_server_webcrawl.crawlers.base.api import BaseJsonApi
-from mcp_server_webcrawl.models.resources import RESOURCES_TOOL_NAME
-from mcp_server_webcrawl.models.sites import SITES_TOOL_NAME
-from mcp_server_webcrawl.utils.logger import get_logger
-from mcp_server_webcrawl.utils.blobs import ThumbnailManager
+from mcp.server.models import InitializationOptions
+from mcp.types import EmbeddedResource, ImageContent, TextContent, Tool
 
-OVERRIDE_ERROR_MESSAGE: str = """BaseCrawler subclasses must implement the following \
+from mcp_server_webcrawl.crawlers.base.api import BaseJsonApi
+from mcp_server_webcrawl.crawlers.base.adapter import IndexState
+from mcp_server_webcrawl.models import METADATA_VALUE_TYPE
+from mcp_server_webcrawl.models.resources import (
+    ResourceResult,
+    ResourceResultType,
+    RESOURCES_DEFAULT_FIELD_MAPPING,
+    RESOURCES_TOOL_NAME,
+)
+from mcp_server_webcrawl.models.sites import SITES_TOOL_NAME
+from mcp_server_webcrawl.utils.blobs import ThumbnailManager
+from mcp_server_webcrawl.utils.logger import get_logger
+
+OVERRIDE_ERROR_MESSAGE: Final[str] = """BaseCrawler subclasses must implement the following \
 methods: handle_list_tools, handle_call_tool, at minimum."""
 
 logger = get_logger()
 
+
 class BaseCrawler:
     """
     Base crawler class that implements MCP server functionality.
-    
-    This class provides the foundation for specialized crawlers to interact with 
+
+    This class provides the foundation for specialized crawlers to interact with
     the MCP server and handle tool operations for web resources.
     """
 
-    def __init__(self, datasrc: str):
+    def __init__(
+        self,
+        datasrc: Path,
+        get_sites_func: Callable,
+        get_resources_func: Callable,
+        resource_field_mapping: dict[str, str] = RESOURCES_DEFAULT_FIELD_MAPPING,
+    ) -> None:
         """
-        Initialize the BaseCrawler with a data source.
-        
+        Initialize the IndexedCrawler with a data source path and required adapter functions.
+
         Args:
-            datasrc: String path to the database
+            datasrc: Path to the data source
+            get_sites_func: Function to retrieve sites from the data source
+            get_resources_func: Function to retrieve resources from the data source
+            resource_field_mapping: Mapping of resource field names to display names
         """
-        # avoid circular import
+
         from mcp_server_webcrawl import __name__ as module_name, __version__ as module_version
+
+        assert datasrc is not None, f"{self.__class__.__name__} needs a datasrc, regardless of action"
+        assert callable(get_sites_func), f"{self.__class__.__name__} requires a callable get_sites_func"
+        assert callable(get_resources_func), f"{self.__class__.__name__} requires a callable get_resources_func"
+        assert isinstance(resource_field_mapping, dict), f"{self.__class__.__name__} resource_field_mapping must be a dict"
+
+        self._datasrc: Path = Path(datasrc)
+        self._thumbnails = False
 
         self._module_name: str = module_name
         self._module_version: str = module_version
-        self.datasrc: Path = Path(datasrc)
-        self.thumbnails = False
+
         self._server = Server(self._module_name)
         self._server.list_tools()(self.mcp_list_tools)
         self._server.call_tool()(self.mcp_call_tool)
-        # untapped features: list_prompts/get_prompt | list_resources/get_resources
-        # currently focused on tools (search and retrieval)
         self._server.list_prompts()(self.mcp_list_prompts)
         self._server.list_resources()(self.mcp_list_resources)
 
+        self._resource_field_mapping = resource_field_mapping
+        self._adapter_get_sites = get_sites_func
+        self._adapter_get_resources = get_resources_func
+
+    @property
+    def datasrc(self) -> Path:
+        return self._datasrc
+
+    @property
+    def thumbnails(self) -> bool:
+        return self._thumbnails
+
     async def mcp_list_prompts(self) -> list:
-        """List available prompts (currently none)."""            
+        """List available prompts (currently none)."""
         return []
 
     async def mcp_list_resources(self) -> list:
         """List available resources (currently none)."""
         return []
-    
+
     async def serve(self, stdin: anyio.AsyncFile[str] | None, stdout: anyio.AsyncFile[str] | None) -> dict[str, Any]:
         """
         Launch the awaitable server.
-        
+
         Args:
             stdin: Input stream for the server
             stdout: Output stream for the server
-            
+
         Returns:
             The MCP server over stdio
         """
@@ -79,7 +112,7 @@ class BaseCrawler:
     def get_initialization_options(self) -> InitializationOptions:
         """
         Get the MCP initialization object.
-        
+
         Returns:
             Dictionary containing project information
         """
@@ -90,7 +123,7 @@ class BaseCrawler:
     def get_sites_api_json(self, **kwargs) -> str:
         """
         Get sites API result as JSON.
-        
+
         Returns:
             JSON string of sites API results
         """
@@ -100,47 +133,102 @@ class BaseCrawler:
     def get_resources_api_json(self, **kwargs) -> str:
         """
         Get resources API result as JSON.
-        
+
         Returns:
             JSON string of resources API results
         """
         json_result = self.get_resources_api(**kwargs)
         return json_result.to_json()
 
-    def get_sites_api(self, ids: Optional[list[int]] = None, fields: Optional[list[str]] = None) -> str:
-        """
-        Get sites API object.
-        
-        Args:
-            ids: Optional list of site IDs
-            fields: Optional list of fields to include
-            
-        Raises:
-            NotImplementedError: This method must be implemented by subclasses
-        """
-        # each crawler subclass must provide this method
-        raise NotImplementedError(OVERRIDE_ERROR_MESSAGE)
+    def get_sites_api(
+            self,
+            ids: list[int] | None = None,
+            fields: list[str] | None = None,
+    ) -> BaseJsonApi:
+        sites = self._adapter_get_sites(self._datasrc, ids=ids, fields=fields)
 
-    def get_resources_api(self, querystring: str) -> str:
-        """
-        Get resources API object.
-        
-        Args:
-            querystring: Query string for filtering resources
-            
-        Raises:
-            NotImplementedError: This method must be implemented by subclasses
-        """
-        # each crawler subclass must provide this method
-        raise NotImplementedError(OVERRIDE_ERROR_MESSAGE)
+        # sites_args = {k: v for k, v in locals().items() if k != "self"}
+        sites_kwargs = {
+            "ids": ids,
+            "fields": fields,
+        }
+
+        # print(resources_args)
+        json_result = BaseJsonApi("GetProjects", sites_kwargs)
+        json_result.set_results(sites, len(sites), 0, len(sites))
+        return json_result
+
+    def get_resources_api(
+        self,
+        ids: list[int] | None = None,
+        sites: list[int] | None = None,
+        query: str = "",
+        types: list[str] | None = None,
+        fields: list[str] | None = None,
+        statuses: list[int] | None = None,
+        sort: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> BaseJsonApi:
+        resources_kwargs: dict[str, METADATA_VALUE_TYPE] = {
+            "ids": ids,
+            "sites": sites,
+            "query": query,
+            "types": types,
+            "fields": fields,
+            "statuses": statuses,
+            "sort": sort,
+            "limit": limit,
+            "offset": offset,
+        }
+
+        def no_results() -> BaseJsonApi:
+            api_result = BaseJsonApi("GetResources", resources_kwargs, index_state=IndexState())
+            api_result.set_results([], 0, 0, limit)
+            return api_result
+
+        if not sites:
+            all_sites = self._adapter_get_sites(self._datasrc)
+            if not all_sites:
+                return no_results()
+            # set to default of all sites if not specified
+            sites = [site.id for site in all_sites]
+
+        # sometimes the AI gets it in their head this is a good idea
+        # but they mean no query, it can get tedious
+        if query.strip in ('""',"''", "``", "*"):
+            query = ""
+
+        site_matches = self._adapter_get_sites(self._datasrc, ids=sites)
+        if not site_matches:
+            return no_results()
+
+        # convert to enums
+        resource_types = self._convert_to_resource_types(types)
+        results, total, index_state = self._adapter_get_resources(
+            self._datasrc,
+            ids=ids,
+            sites=sites,
+            query=query,
+            types=resource_types,
+            fields=fields,
+            statuses=statuses,
+            sort=sort,
+            limit=limit,
+            offset=offset,
+        )
+        # TODO: figure out how to get index_state from manager if exists
+        api_result = BaseJsonApi("GetResources", resources_kwargs, index_state=index_state)
+        api_result.set_results(results, total, offset, limit)
+        return api_result
 
     async def mcp_list_tools(self) -> list[Tool]:
         """
         List available tools.
-        
+
         Returns:
             List of available tools
-            
+
         Raises:
             NotImplementedError: This method must be implemented by subclasses
         """
@@ -152,14 +240,14 @@ class BaseCrawler:
         """
         Handle tool execution requests. You can override this or super(), then tweak.
         Basically, it is a passthrough.
-        
+
         Args:
             name: Name of the tool to call
             arguments: Arguments to pass to the tool
-            
+
         Returns:
             List of content objects resulting from the tool execution
-            
+
         Raises:
             ValueError: If the specified tool does not exist
         """
@@ -176,15 +264,15 @@ class BaseCrawler:
             elif name == RESOURCES_TOOL_NAME:
 
                 # because this process happens after the normal filtering, it is flagged for later
-                self.thumbnails = False if not arguments or "thumbnails" not in arguments else arguments["thumbnails"]
-                
+                self._thumbnails = False if not arguments or "thumbnails" not in arguments else arguments["thumbnails"]
+
                 # regular args pass through to the result
                 query = "" if not arguments or "query" not in arguments else arguments["query"]
                 ids = [] if not arguments or "ids" not in arguments else arguments["ids"]
                 sites = [] if not arguments or "sites" not in arguments else arguments["sites"]
                 types = [] if not arguments or "types" not in arguments else arguments["types"]
                 fields = [] if not arguments or "fields" not in arguments else arguments["fields"]
-                statuses = [] if not arguments or "statuses" not in arguments else arguments["statuses"]                
+                statuses = [] if not arguments or "statuses" not in arguments else arguments["statuses"]
                 sort = None if not arguments or "sort" not in arguments else arguments["sort"]
                 limit = 20 if not arguments or "limit" not in arguments else arguments["limit"]
                 offset = 0 if not arguments or "offset" not in arguments else arguments["offset"]
@@ -200,13 +288,13 @@ class BaseCrawler:
                     offset=offset
                 )
 
-                # build mcp response, imagedata is a different content type, and is 
+                # build mcp response, imagedata is a different content type, and is
                 # collected independent of the archive data
                 results_json = api_result.to_json()
                 mcp_result = [TextContent(type="text", text=results_json)]
-                if self.thumbnails:                    
-                    crawl_results: list[ResourceResult] = api_result.get_results()                    
-                    mcp_result += self.get_thumbnails(crawl_results) or []                
+                if self._thumbnails:
+                    crawl_results: list[ResourceResult] = api_result.get_results()
+                    mcp_result += self.get_thumbnails(crawl_results) or []
 
                 return mcp_result
             else:
@@ -216,11 +304,11 @@ class BaseCrawler:
             return [TextContent(type="text", text=f"mcp_call_tool/database\n{str(ex)}\n{traceback.format_exc()}")]
         except Exception as ex:
             return [TextContent(type="text", text=f"mcp_call_tool/exception\n{str(ex)}\n{traceback.format_exc()}")]
-    
+
     def get_thumbnails(self, results: list[ResourceResult]) -> list[ImageContent]:
-        
+
         thumbnails_result: list[ImageContent] = []
-        if self.thumbnails:
+        if self._thumbnails:
             image_paths = list(set([result.url for result in results if result.url and result.type == ResourceResultType.IMAGE]))
             valid_paths = []
             for path in image_paths:
@@ -231,7 +319,7 @@ class BaseCrawler:
                 elif re.search(r"\.(jpg|jpeg|png|gif|bmp|webp)$", path, re.IGNORECASE):
                     clean_path: str = path.split("?")[0]
                     valid_paths.append(clean_path)
-            
+
             if valid_paths:
                 try:
                     thumbnail_manager = ThumbnailManager()
@@ -246,23 +334,22 @@ class BaseCrawler:
                     # print(thumbnail_data)
                 except Exception as ex:
                     logger.error(f"Error fetching thumbnails: {ex}\n{traceback.format_exc()}")
-        
+
         return thumbnails_result
-    
-    def _convert_to_resource_types(self, types: Optional[list[str]]) -> Optional[list[ResourceResultType]]:
+
+    def _convert_to_resource_types(self, types: list[str] | None) -> list[ResourceResultType] | None:
         """
         Convert string type values to ResourceResultType enums.  Silently ignore invalid type strings.
-        
+
         Args:
             types: Optional list of string type values
-            
+
         Returns:
             Optional list of ResourceResultType enums, or None if no valid types
         """
         if not types:
             return None
-        
+
         result = [rt for rt in ResourceResultType if rt.value in types]
         return result if result else None
-
 

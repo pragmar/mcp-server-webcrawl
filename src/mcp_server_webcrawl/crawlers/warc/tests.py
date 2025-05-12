@@ -17,7 +17,7 @@ class WarcTests(BaseCrawlerTests):
         Set up the test environment with fixture data.
         """
         super().setUp()
-        self._datasrc = get_fixture_directory() / "warc" 
+        self._datasrc = get_fixture_directory() / "warc"
 
     def test_warc_pulse(self):
         """
@@ -35,7 +35,7 @@ class WarcTests(BaseCrawlerTests):
         self.assertTrue(sites_json.total >= 2)
         site_one_json = crawler.get_sites_api(ids=[EXAMPLE_WARC_ID])
         self.assertTrue(site_one_json.total == 1)
-        
+
         pragmar_field_json = crawler.get_sites_api(ids=[PRAGMAR_WARC_ID], fields=["created", "modified"])
         pragmar_field_result = pragmar_field_json._results[0].to_dict()
         self.assertTrue("created" in pragmar_field_result)
@@ -46,7 +46,7 @@ class WarcTests(BaseCrawlerTests):
         Test resource retrieval API functionality with various parameters.
         """
         crawler = WarcCrawler(self._datasrc)
-        
+
         # basic resource retrieval with default parameters
         resources_json = crawler.get_resources_api()
         self.assertTrue(resources_json.total > 0)
@@ -54,7 +54,7 @@ class WarcTests(BaseCrawlerTests):
         # query parameter (search for specific content)
         query_resources = crawler.get_resources_api(sites=[PRAGMAR_WARC_ID], query="appstat", fields=["content", "headers"])
         self.assertTrue(query_resources.total > 0, "Search query should return results")
-        
+
         # ensure the term exists somewhere in the resource data - could be URL, content, headers, etc.
         for resource in query_resources._results:
             resource_dict = resource.to_dict()
@@ -80,7 +80,7 @@ class WarcTests(BaseCrawlerTests):
 
         # type filtering for HTML pages
         html_resources = crawler.get_resources_api(
-            sites=[PRAGMAR_WARC_ID], 
+            sites=[PRAGMAR_WARC_ID],
             types=[ResourceResultType.PAGE.value]
         )
         self.assertTrue(html_resources.total > 0, "HTML filtering should return results")
@@ -132,7 +132,7 @@ class WarcTests(BaseCrawlerTests):
             sort="+url",
             limit=3
         )
-        
+
         if combined_resources.total > 0:
             for resource in combined_resources._results:
                 self.assertEqual(resource.site, PRAGMAR_WARC_ID)
@@ -140,7 +140,7 @@ class WarcTests(BaseCrawlerTests):
                 resource_dict = resource.to_dict()
                 self.assertIn("content", resource_dict)
                 self.assertIn("headers", resource_dict)
-        
+
         # multisite
         multisite_resources = crawler.get_resources_api(
             sites=[EXAMPLE_WARC_ID, PRAGMAR_WARC_ID],
@@ -148,27 +148,27 @@ class WarcTests(BaseCrawlerTests):
             sort="+url",
             limit=100
         )
-        
+
         self.assertTrue(multisite_resources.total > 0, "Multi-site search should return results")
-        
+
         # track which sites we find results from
         found_sites = set()
         for resource in multisite_resources._results:
             found_sites.add(resource.site)
-            
+
         # verify we got results from both sites
         self.assertEqual(
-            len(found_sites), 
-            2, 
+            len(found_sites),
+            2,
             "Should have results from both sites"
         )
         self.assertIn(
-            EXAMPLE_WARC_ID, 
-            found_sites, 
+            EXAMPLE_WARC_ID,
+            found_sites,
             "Should have results from example.com"
         )
         self.assertIn(
-            PRAGMAR_WARC_ID, 
-            found_sites, 
+            PRAGMAR_WARC_ID,
+            found_sites,
             "Should have results from pragmar.com"
         )

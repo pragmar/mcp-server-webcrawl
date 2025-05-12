@@ -1,5 +1,4 @@
 import datetime
-from typing import Union
 
 # obscene to place this everywhere, contain it
 try:
@@ -10,4 +9,4 @@ except AttributeError:
     UTC = timezone.utc
 
 # this is what is acceptable metadata content for crawl results
-METADATA_VALUE_TYPE = Union[str, int, float, bool, list[str], list[int], list[float], None]
+METADATA_VALUE_TYPE = str | int | float | bool | list[str] | list[int] | list[float] | None

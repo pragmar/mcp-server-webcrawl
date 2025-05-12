@@ -42,6 +42,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
@@ -73,6 +74,7 @@
              
   <h1>Source code for mcp_server_webcrawl.crawlers.interrobot.tests</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">asyncio</span>
+<span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
 
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.tests</span> <span class="kn">import</span> <span class="n">BaseCrawlerTests</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.interrobot.crawler</span> <span class="kn">import</span> <span class="n">InterroBotCrawler</span>
@@ -125,18 +127,14 @@
 <span class="sd">        Test thumbnail generation for image resources.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
-        <span class="n">image_id</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># https://www.dolekemp96.org/left.gif</span>
+
+        <span class="n">image_id</span> <span class="o">=</span> <span class="mi">68</span>
         <span class="n">thumbnail_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
             <span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="n">image_id</span><span class="p">],</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">thumbnail_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Should find exactly one resource&quot;</span><span class="p">)</span></div>
 
-        <span class="c1"># TODO needs rewrite</span>
-        <span class="c1"># print(asyncio.run(crawler.mcp_call_tool(</span>
-        <span class="c1">#     name=&quot;webcrawl_search&quot;,</span>
-        <span class="c1">#     arguments={&quot;fields&quot;: [&quot;created&quot;, &quot;modified&quot;], &quot;types&quot;: [&quot;img&quot;], &quot;thumbnails&quot;: True, &quot;limit&quot;: 2}</span>
-        <span class="c1"># )))</span>
-    
+
 <div class="viewcode-block" id="InterroBotTests.test_interrobot_sites">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_sites">[docs]</a>
     <span class="k">def</span> <span class="nf">test_interrobot_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -260,7 +258,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">status_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Status filtering should return results&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">status_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">&quot;All resources should have status 200&quot;</span><span class="p">)</span>
-        
+
         <span class="c1"># multiple statuses</span>
         <span class="n">multi_status_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">statuses</span><span class="o">=</span><span class="p">[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">404</span><span class="p">,</span> <span class="mi">500</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">multi_status_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Multiple status filtering should return results&quot;</span><span class="p">)</span>
@@ -279,14 +277,14 @@
         <span class="n">random1_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sort</span><span class="o">=</span><span class="s2">&quot;?&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">random1_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Database should contain resources&quot;</span><span class="p">)</span>
         <span class="n">random1_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">random1_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">]</span>
-        
+
         <span class="n">random2_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sort</span><span class="o">=</span><span class="s2">&quot;?&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">random2_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Random sort should return results&quot;</span><span class="p">)</span>
         <span class="n">random2_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">random2_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">]</span>
-        
+
         <span class="k">if</span> <span class="n">random2_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;=</span> <span class="mi">10</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span>
-                <span class="n">random1_ids</span><span class="p">,</span> 
+                <span class="n">random1_ids</span><span class="p">,</span>
                 <span class="n">random2_ids</span><span class="p">,</span>
                 <span class="sa">f</span><span class="s2">&quot;Random sort should produce different order than standard sort.</span><span class="se">\n</span><span class="s2">Standard: </span><span class="si">{</span><span class="n">random1_ids</span><span class="si">}</span><span class="se">\n</span><span class="s2">Random: </span><span class="si">{</span><span class="n">random2_ids</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>

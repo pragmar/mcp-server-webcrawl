@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any, Optional
 
 from mcp_server_webcrawl.crawlers.base.indexed import IndexedCrawler
 from mcp_server_webcrawl.crawlers.wget.adapter import get_sites, get_resources
@@ -26,5 +25,5 @@ class WgetCrawler(IndexedCrawler):
         """
         assert datasrc is not None, f"WgetCrawler needs a datasrc, regardless of action"
         assert datasrc.is_dir(), "WgetCrawler datasrc must be a directory"
-        
+
         super().__init__(datasrc, get_sites, get_resources)

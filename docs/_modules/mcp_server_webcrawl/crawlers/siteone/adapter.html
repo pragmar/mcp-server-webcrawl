@@ -42,6 +42,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
@@ -78,18 +79,20 @@
 
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">closing</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.adapter</span> <span class="kn">import</span> <span class="n">BaseManager</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.adapter</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseManager</span><span class="p">,</span>
+    <span class="n">IndexState</span><span class="p">,</span>
+    <span class="n">IndexStatus</span><span class="p">,</span>
+    <span class="n">INDEXED_BATCH_SIZE</span><span class="p">,</span>
+    <span class="n">INDEXED_RESOURCE_DEFAULT_PROTOCOL</span><span class="p">,</span>
+    <span class="n">INDEXED_TYPE_MAPPING</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ResourceResult</span><span class="p">,</span>
     <span class="n">ResourceResultType</span><span class="p">,</span>
     <span class="n">RESOURCES_LIMIT_DEFAULT</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.indexed</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">INDEXED_TYPE_MAPPING</span><span class="p">,</span> 
-    <span class="n">INDEXED_RESOURCE_DEFAULT_PROTOCOL</span>
 <span class="p">)</span>
 
 <span class="c1"># heads up. SiteOne uses wget adapters, this is unintuitive but reasonable as SiteOne</span>
@@ -115,21 +118,33 @@
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.siteone.html#mcp_server_webcrawl.crawlers.siteone.adapter.SiteOneManager.__init__">[docs]</a>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the SiteOne manager with empty cache and statistics.&quot;&quot;&quot;</span>
+
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></div>
 
 
+    <span class="k">def</span> <span class="nf">_extract_log_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract metadata from SiteOne log files.</span>
 
-    <span class="k">def</span> <span class="nf">_load_site_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="sd">        Args:</span>
+<span class="sd">            directory: Path to the site directory</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (success log data, error log data) dictionaries</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">directory_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">directory</span><span class="o">.</span><span class="n">name</span>
-
-        <span class="c1"># target SiteOne text log for additional metadata beyond wget</span>
         <span class="n">log_data</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">log_http_error_data</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="n">log_pattern</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;output.</span><span class="si">{</span><span class="n">directory_name</span><span class="si">}</span><span class="s2">.*.txt&quot;</span>
         <span class="n">log_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">directory</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">log_pattern</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">log_files</span><span class="p">:</span>
-            <span class="n">log_latest</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">log_files</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">log_files</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">log_data</span><span class="p">,</span> <span class="n">log_http_error_data</span>
+
+        <span class="n">log_latest</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">log_files</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_latest</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_file</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">log_file</span><span class="p">:</span>
                     <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">)]</span>
@@ -179,30 +194,82 @@
                     <span class="k">elif</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;Redirected URLs&quot;</span><span class="p">:</span>
                         <span class="c1"># stop processing we&#39;re through HTTP requests</span>
                         <span class="k">break</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing log file </span><span class="si">{</span><span class="n">log_latest</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">log_data</span><span class="p">,</span> <span class="n">log_http_error_data</span>
+
+    <span class="k">def</span> <span class="nf">_load_site_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+            <span class="n">site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">index_state</span><span class="p">:</span> <span class="n">IndexState</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load a SiteOne directory into the database with parallel processing and batch insertions.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            connection: SQLite connection</span>
+<span class="sd">            directory: Path to the SiteOne directory</span>
+<span class="sd">            site_id: ID for the site</span>
+<span class="sd">            index_state: IndexState object for tracking progress</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">directory</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">directory</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Directory not found or not a directory: </span><span class="si">{</span><span class="n">directory</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">INDEXING</span><span class="p">)</span>
+
+        <span class="n">log_data</span><span class="p">,</span> <span class="n">log_http_error_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_log_metadata</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+
+        <span class="n">file_paths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">filename</span> <span class="o">==</span> <span class="s2">&quot;robots.txt&quot;</span> <span class="ow">or</span> <span class="p">(</span><span class="n">filename</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;output.&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.txt&quot;</span><span class="p">)):</span>
+                    <span class="k">continue</span>
+                <span class="n">file_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="n">filename</span><span class="p">)</span>
+
+        <span class="n">processed_urls</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
         <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">())</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">file_paths</span><span class="p">),</span> <span class="n">INDEXED_BATCH_SIZE</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">index_state</span><span class="o">.</span><span class="n">is_timeout</span><span class="p">():</span>
+                    <span class="n">index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">PARTIAL</span><span class="p">)</span>
+                    <span class="k">return</span>
 
-            <span class="n">processed_urls</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="n">batch_paths</span> <span class="o">=</span> <span class="n">file_paths</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">INDEXED_BATCH_SIZE</span><span class="p">]</span>
+                <span class="n">batch_insert_data</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">file_contents</span> <span class="o">=</span> <span class="n">BaseManager</span><span class="o">.</span><span class="n">read_files</span><span class="p">(</span><span class="n">batch_paths</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">file_path</span> <span class="ow">in</span> <span class="n">batch_paths</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_siteone_record</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">directory</span><span class="p">,</span> <span class="n">log_data</span><span class="p">,</span> <span class="n">file_contents</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">file_path</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+                            <span class="n">record</span><span class="p">,</span> <span class="n">url</span> <span class="o">=</span> <span class="n">result</span>
+                            <span class="n">batch_insert_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+                            <span class="n">processed_urls</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                                <span class="n">index_state</span><span class="o">.</span><span class="n">increment_processed</span><span class="p">()</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
-                <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">filename</span> <span class="o">==</span> <span class="s2">&quot;robots.txt&quot;</span> <span class="ow">or</span> <span class="n">filename</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;output.&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.txt&quot;</span><span class="p">):</span>
-                        <span class="k">continue</span>
-                    <span class="n">file_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="n">filename</span>
-                    <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_siteone_file</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">directory</span><span class="p">,</span> <span class="n">log_data</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">url</span><span class="p">:</span>
-                        <span class="n">processed_urls</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">batch_insert_data</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;BEGIN TRANSACTION&quot;</span><span class="p">)</span>
+                        <span class="n">cursor</span><span class="o">.</span><span class="n">executemany</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                            INSERT INTO ResourcesFullText (</span>
+<span class="s2">                                Id, Project, Url, Type, Status,</span>
+<span class="s2">                                Headers, Content, Size, Time</span>
+<span class="s2">                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)</span>
+<span class="s2">                        &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">batch_insert_data</span><span class="p">)</span>
+                        <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;COMMIT&quot;</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;ROLLBACK&quot;</span><span class="p">)</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error during batch insert: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-            <span class="c1"># add HTTP errors not already processed (wget did not download, limited data)</span>
+            <span class="c1"># Process HTTP errors not already processed</span>
+            <span class="n">error_batch</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">url</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">log_http_error_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">url</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">processed_urls</span><span class="p">:</span>
                     <span class="n">size</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;size&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-                    <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">                        INSERT INTO ResourcesFullText (</span>
-<span class="s2">                            Id, Project, Url, Type, Status,</span>
-<span class="s2">                            Headers, Content, Size, Time</span>
-<span class="s2">                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)</span>
-<span class="s2">                    &quot;&quot;&quot;</span><span class="p">,</span> <span class="p">(</span>
+                    <span class="n">error_record</span> <span class="o">=</span> <span class="p">(</span>
                         <span class="n">BaseManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="n">url</span><span class="p">),</span>
                         <span class="n">site_id</span><span class="p">,</span>
                         <span class="n">url</span><span class="p">,</span>
@@ -210,95 +277,134 @@
                         <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">],</span>
                         <span class="n">BaseManager</span><span class="o">.</span><span class="n">get_basic_headers</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">),</span>
                         <span class="s2">&quot;&quot;</span><span class="p">,</span>     <span class="c1"># no content</span>
-                        <span class="n">size</span><span class="p">,</span>   <span class="c1"># no size</span>
+                        <span class="n">size</span><span class="p">,</span>   <span class="c1"># size from log</span>
                         <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span>
-                    <span class="p">))</span>
+                    <span class="p">)</span>
+                    <span class="n">error_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">error_record</span><span class="p">)</span>
 
-            <span class="n">connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">index_state</span><span class="o">.</span><span class="n">increment_processed</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_process_siteone_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cursor</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Cursor</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
-                             <span class="n">site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">base_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">log_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+                    <span class="c1"># Process error records in batches too</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">error_batch</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">INDEXED_BATCH_SIZE</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;BEGIN TRANSACTION&quot;</span><span class="p">)</span>
+                            <span class="n">cursor</span><span class="o">.</span><span class="n">executemany</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                                INSERT INTO ResourcesFullText (</span>
+<span class="s2">                                    Id, Project, Url, Type, Status,</span>
+<span class="s2">                                    Headers, Content, Size, Time</span>
+<span class="s2">                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)</span>
+<span class="s2">                            &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">error_batch</span><span class="p">)</span>
+                            <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;COMMIT&quot;</span><span class="p">)</span>
+                            <span class="n">error_batch</span> <span class="o">=</span> <span class="p">[]</span>
+                        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                            <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;ROLLBACK&quot;</span><span class="p">)</span>
+                            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error during error batch insert: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Insert any remaining error records</span>
+            <span class="k">if</span> <span class="n">error_batch</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;BEGIN TRANSACTION&quot;</span><span class="p">)</span>
+                    <span class="n">cursor</span><span class="o">.</span><span class="n">executemany</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                        INSERT INTO ResourcesFullText (</span>
+<span class="s2">                            Id, Project, Url, Type, Status,</span>
+<span class="s2">                            Headers, Content, Size, Time</span>
+<span class="s2">                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)</span>
+<span class="s2">                    &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">error_batch</span><span class="p">)</span>
+                    <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;COMMIT&quot;</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;ROLLBACK&quot;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error during final error batch insert: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">index_state</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">IndexStatus</span><span class="o">.</span><span class="n">INDEXING</span><span class="p">:</span>
+                <span class="n">index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">COMPLETE</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_prepare_siteone_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">base_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+                            <span class="n">log_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Process a single file and insert it into the database with log metadata.</span>
+<span class="sd">        Prepare a record for batch insertion from a SiteOne file.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            cursor: SQLite cursor</span>
 <span class="sd">            file_path: Path to the file</span>
 <span class="sd">            site_id: ID for the site</span>
 <span class="sd">            base_dir: Base directory for the capture</span>
 <span class="sd">            log_data: Dictionary of metadata from logs keyed by URL</span>
+<span class="sd">            content: Optional pre-loaded file content</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            str: URL of the resource that was added to the database</span>
+<span class="sd">            Tuple of (record tuple, URL) or None if processing fails</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># relative url path from file path (similar to wget)</span>
-        <span class="n">relative_path</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">base_dir</span><span class="p">)</span>
-        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">INDEXED_RESOURCE_DEFAULT_PROTOCOL</span><span class="si">}{</span><span class="n">base_dir</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">relative_path</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;/&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="n">file_size</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span>
-        <span class="n">decruftified_path</span> <span class="o">=</span> <span class="n">BaseManager</span><span class="o">.</span><span class="n">decruft_path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-        <span class="n">extension</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">decruftified_path</span><span class="p">)</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="n">wget_static_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\.[0-9a-f]{8,}\.&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># generate relative url path from file path (similar to wget)</span>
+            <span class="n">relative_path</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">base_dir</span><span class="p">)</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">INDEXED_RESOURCE_DEFAULT_PROTOCOL</span><span class="si">}{</span><span class="n">base_dir</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">relative_path</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;/&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">file_size</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span>
+            <span class="n">decruftified_path</span> <span class="o">=</span> <span class="n">BaseManager</span><span class="o">.</span><span class="n">decruft_path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">file_path</span><span class="p">))</span>
+            <span class="n">extension</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">decruftified_path</span><span class="p">)</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="n">wget_static_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\.[0-9a-f]{8,}\.&quot;</span><span class="p">)</span>
 
-        <span class="c1"># look up metadata from log if available, otherwise use defaults</span>
-        <span class="n">metadata</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">wget_aliases</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span>
-            <span class="n">url</span><span class="p">,</span>
-            <span class="n">url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;index.html&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-            <span class="n">url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.html&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">),</span>
-            <span class="n">url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.html&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-            <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">wget_static_pattern</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
-        <span class="p">]))</span>
+            <span class="c1"># look up metadata from log if available, otherwise use defaults</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">wget_aliases</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span>
+                <span class="n">url</span><span class="p">,</span>
+                <span class="n">url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;index.html&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+                <span class="n">url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.html&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">),</span>
+                <span class="n">url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.html&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+                <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">wget_static_pattern</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+            <span class="p">]))</span>
 
-        <span class="k">for</span> <span class="n">wget_alias</span> <span class="ow">in</span> <span class="n">wget_aliases</span><span class="p">:</span>
-            <span class="n">metadata</span> <span class="o">=</span> <span class="n">log_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">wget_alias</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">break</span>
+            <span class="k">for</span> <span class="n">wget_alias</span> <span class="ow">in</span> <span class="n">wget_aliases</span><span class="p">:</span>
+                <span class="n">metadata</span> <span class="o">=</span> <span class="n">log_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">wget_alias</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">break</span>
 
-        <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
 
-        <span class="n">status_code</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
-        <span class="n">response_time</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="n">log_type</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>        
+            <span class="n">status_code</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+            <span class="n">response_time</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">log_type</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="n">log_type</span><span class="p">:</span>
-            <span class="c1"># no type for redirects, but more often than not pages</span>
-            <span class="n">type_mapping</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;html&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
-                <span class="s2">&quot;redirect&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
-                <span class="s2">&quot;image&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
-                <span class="s2">&quot;js&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="p">,</span>
-                <span class="s2">&quot;css&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="p">,</span>
-                <span class="s2">&quot;video&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">,</span>
-                <span class="s2">&quot;audio&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">AUDIO</span><span class="p">,</span>
-                <span class="s2">&quot;pdf&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PDF</span><span class="p">,</span>
-                <span class="s2">&quot;other&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">,</span>
-                <span class="s2">&quot;font&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">,</span>
-            <span class="p">}</span>
-            <span class="n">resource_type</span> <span class="o">=</span> <span class="n">type_mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">log_type</span><span class="p">,</span> <span class="n">INDEXED_TYPE_MAPPING</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">extension</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># fallback to extension-based mapping</span>
-            <span class="n">resource_type</span> <span class="o">=</span> <span class="n">INDEXED_TYPE_MAPPING</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">extension</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">log_type</span><span class="p">:</span>
+                <span class="c1"># no type for redirects, but more often than not pages</span>
+                <span class="n">type_mapping</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;html&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
+                    <span class="s2">&quot;redirect&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
+                    <span class="s2">&quot;image&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+                    <span class="s2">&quot;js&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="p">,</span>
+                    <span class="s2">&quot;css&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="p">,</span>
+                    <span class="s2">&quot;video&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">,</span>
+                    <span class="s2">&quot;audio&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">AUDIO</span><span class="p">,</span>
+                    <span class="s2">&quot;pdf&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PDF</span><span class="p">,</span>
+                    <span class="s2">&quot;other&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">,</span>
+                    <span class="s2">&quot;font&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">,</span>
+                <span class="p">}</span>
+                <span class="n">resource_type</span> <span class="o">=</span> <span class="n">type_mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">log_type</span><span class="p">,</span> <span class="n">INDEXED_TYPE_MAPPING</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">extension</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># fallback to extension-based mapping</span>
+                <span class="n">resource_type</span> <span class="o">=</span> <span class="n">INDEXED_TYPE_MAPPING</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">extension</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">)</span>
 
-        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">            INSERT INTO ResourcesFullText (</span>
-<span class="s2">                Id, Project, Url, Type, Status,</span>
-<span class="s2">                Headers, Content, Size, Time</span>
-<span class="s2">            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)</span>
-<span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="p">(</span>
-            <span class="n">BaseManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="n">url</span><span class="p">),</span>
-            <span class="n">site_id</span><span class="p">,</span>
-            <span class="n">url</span><span class="p">,</span>
-            <span class="n">resource_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-            <span class="n">status_code</span><span class="p">,</span>  <span class="c1"># possibly from log</span>
-            <span class="n">BaseManager</span><span class="o">.</span><span class="n">get_basic_headers</span><span class="p">(</span><span class="n">file_size</span><span class="p">,</span> <span class="n">resource_type</span><span class="p">),</span>
-            <span class="n">BaseManager</span><span class="o">.</span><span class="n">read_file_contents</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">resource_type</span><span class="p">),</span>
-            <span class="n">file_size</span><span class="p">,</span>
-            <span class="n">response_time</span>  <span class="c1"># possibly from log</span>
-        <span class="p">))</span>
+            <span class="c1"># Use pre-loaded content if available, otherwise rely on read_file_contents</span>
+            <span class="n">file_content</span> <span class="o">=</span> <span class="n">content</span>
+            <span class="k">if</span> <span class="n">file_content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">file_content</span> <span class="o">=</span> <span class="n">BaseManager</span><span class="o">.</span><span class="n">read_file_contents</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">resource_type</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">url</span></div>
+            <span class="n">record</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">BaseManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="n">url</span><span class="p">),</span>
+                <span class="n">site_id</span><span class="p">,</span>
+                <span class="n">url</span><span class="p">,</span>
+                <span class="n">resource_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">status_code</span><span class="p">,</span>  <span class="c1"># possibly from log</span>
+                <span class="n">BaseManager</span><span class="o">.</span><span class="n">get_basic_headers</span><span class="p">(</span><span class="n">file_size</span><span class="p">,</span> <span class="n">resource_type</span><span class="p">),</span>
+                <span class="n">file_content</span><span class="p">,</span>
+                <span class="n">file_size</span><span class="p">,</span>
+                <span class="n">response_time</span>  <span class="c1"># possibly from log</span>
+            <span class="p">)</span>
 
+            <span class="k">return</span> <span class="n">record</span><span class="p">,</span> <span class="n">url</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error preparing record for file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
 
 
 <span class="n">manager</span><span class="p">:</span> <span class="n">SiteOneManager</span> <span class="o">=</span> <span class="n">SiteOneManager</span><span class="p">()</span>
@@ -307,16 +413,16 @@
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.siteone.html#mcp_server_webcrawl.crawlers.siteone.adapter.get_resources">[docs]</a>
 <span class="k">def</span> <span class="nf">get_resources</span><span class="p">(</span>
     <span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
-    <span class="n">ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">sites</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sites</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">statuses</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">sort</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">statuses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sort</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">RESOURCES_LIMIT_DEFAULT</span><span class="p">,</span>
-    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">],</span> <span class="nb">int</span><span class="p">,</span> <span class="n">IndexState</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get resources from wget directories using in-memory SQLite.</span>
 
@@ -335,6 +441,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        Tuple of (list of ResourceResult objects, total count)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">return</span> <span class="n">get_resources_with_manager</span><span class="p">(</span><span class="n">manager</span><span class="p">,</span> <span class="n">datasrc</span><span class="p">,</span> <span class="n">ids</span><span class="p">,</span> <span class="n">sites</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">types</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">statuses</span><span class="p">,</span> <span class="n">sort</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span></div>
 
 </pre></div>

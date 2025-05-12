@@ -4,18 +4,20 @@ import sqlite3
 
 from contextlib import closing
 from pathlib import Path
-from typing import Any, Optional, Tuple
 
-from mcp_server_webcrawl.crawlers.base.adapter import BaseManager
+from mcp_server_webcrawl.crawlers.base.adapter import (
+    BaseManager,
+    IndexState,
+    IndexStatus,
+    INDEXED_BATCH_SIZE,
+    INDEXED_RESOURCE_DEFAULT_PROTOCOL,
+    INDEXED_TYPE_MAPPING
+)
 from mcp_server_webcrawl.utils.logger import get_logger
 from mcp_server_webcrawl.models.resources import (
     ResourceResult,
     ResourceResultType,
     RESOURCES_LIMIT_DEFAULT,
-)
-from mcp_server_webcrawl.crawlers.base.indexed import (
-    INDEXED_TYPE_MAPPING, 
-    INDEXED_RESOURCE_DEFAULT_PROTOCOL
 )
 
 # heads up. SiteOne uses wget adapters, this is unintuitive but reasonable as SiteOne
@@ -37,20 +39,32 @@ class SiteOneManager(BaseManager):
 
     def __init__(self) -> None:
         """Initialize the SiteOne manager with empty cache and statistics."""
+
         super().__init__()
 
+    def _extract_log_metadata(self, directory: Path) -> tuple[dict, dict]:
+        """
+        Extract metadata from SiteOne log files.
 
-    def _load_site_data(self, connection: sqlite3.Connection, directory: Path, site_id: int) -> None:
+        Args:
+            directory: Path to the site directory
+
+        Returns:
+            Tuple of (success log data, error log data) dictionaries
+        """
         directory_name: str = directory.name
-
-        # target SiteOne text log for additional metadata beyond wget
         log_data = {}
         log_http_error_data = {}
 
         log_pattern: str = f"output.{directory_name}.*.txt"
         log_files = list(Path(directory.parent).glob(log_pattern))
-        if log_files:
-            log_latest = max(log_files, key=lambda p: p.stat().st_mtime)
+
+        if not log_files:
+            return log_data, log_http_error_data
+
+        log_latest = max(log_files, key=lambda p: p.stat().st_mtime)
+
+        try:
             with open(log_latest, "r", encoding="utf-8") as log_file:
                 for line in log_file:
                     parts = [part.strip() for part in line.split("|")]
@@ -100,30 +114,82 @@ class SiteOneManager(BaseManager):
                     elif line.strip() == "Redirected URLs":
                         # stop processing we're through HTTP requests
                         break
+        except Exception as e:
+            logger.error(f"Error processing log file {log_latest}: {e}")
+
+        return log_data, log_http_error_data
+
+    def _load_site_data(self, connection: sqlite3.Connection, directory: Path,
+            site_id: int, index_state: IndexState = None) -> None:
+        """
+        Load a SiteOne directory into the database with parallel processing and batch insertions.
+
+        Args:
+            connection: SQLite connection
+            directory: Path to the SiteOne directory
+            site_id: ID for the site
+            index_state: IndexState object for tracking progress
+        """
+
+        if not directory.exists() or not directory.is_dir():
+            logger.error(f"Directory not found or not a directory: {directory}")
+            return
+
+        if index_state is not None:
+            index_state.set_status(IndexStatus.INDEXING)
+
+        log_data, log_http_error_data = self._extract_log_metadata(directory)
+
+        file_paths = []
+        for root, _, files in os.walk(directory):
+            for filename in files:
+                if filename == "robots.txt" or (filename.startswith("output.") and filename.endswith(".txt")):
+                    continue
+                file_paths.append(Path(root) / filename)
+
+        processed_urls = set()
 
         with closing(connection.cursor()) as cursor:
+            for i in range(0, len(file_paths), INDEXED_BATCH_SIZE):
+                if index_state is not None and index_state.is_timeout():
+                    index_state.set_status(IndexStatus.PARTIAL)
+                    return
 
-            processed_urls = set()
+                batch_paths = file_paths[i:i+INDEXED_BATCH_SIZE]
+                batch_insert_data = []
+                file_contents = BaseManager.read_files(batch_paths)
+                for file_path in batch_paths:
+                    try:
+                        result = self._prepare_siteone_record(file_path, site_id, directory, log_data, file_contents.get(file_path))
+                        if result:
+                            record, url = result
+                            batch_insert_data.append(record)
+                            processed_urls.add(url)
+                            if index_state is not None:
+                                index_state.increment_processed()
+                    except Exception as e:
+                        logger.error(f"Error processing file {file_path}: {e}")
 
-            for root, _, files in os.walk(directory):
-                for filename in files:
-                    if filename == "robots.txt" or filename.startswith("output.") and filename.endswith(".txt"):
-                        continue
-                    file_path = Path(root) / filename
-                    url = self._process_siteone_file(cursor, file_path, site_id, directory, log_data)
-                    if url:
-                        processed_urls.add(url)
+                if batch_insert_data:
+                    try:
+                        connection.execute("BEGIN TRANSACTION")
+                        cursor.executemany("""
+                            INSERT INTO ResourcesFullText (
+                                Id, Project, Url, Type, Status,
+                                Headers, Content, Size, Time
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, batch_insert_data)
+                        connection.execute("COMMIT")
+                    except Exception as e:
+                        connection.execute("ROLLBACK")
+                        logger.error(f"Error during batch insert: {e}")
 
-            # add HTTP errors not already processed (wget did not download, limited data)
+            # Process HTTP errors not already processed
+            error_batch = []
             for url, meta in log_http_error_data.items():
                 if url not in processed_urls:
                     size = meta.get("size", 0)
-                    cursor.execute("""
-                        INSERT INTO ResourcesFullText (
-                            Id, Project, Url, Type, Status,
-                            Headers, Content, Size, Time
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (
+                    error_record = (
                         BaseManager.string_to_id(url),
                         site_id,
                         url,
@@ -131,110 +197,149 @@ class SiteOneManager(BaseManager):
                         meta["status"],
                         BaseManager.get_basic_headers(size, ResourceResultType.OTHER),
                         "",     # no content
-                        size,   # no size
+                        size,   # size from log
                         meta["time"]
-                    ))
+                    )
+                    error_batch.append(error_record)
 
-            connection.commit()
+                    if index_state is not None:
+                        index_state.increment_processed()
 
-    def _process_siteone_file(self, cursor: sqlite3.Cursor, file_path: Path,
-                             site_id: int, base_dir: Path, log_data: dict) -> str:
+                    # Process error records in batches too
+                    if len(error_batch) >= INDEXED_BATCH_SIZE:
+                        try:
+                            connection.execute("BEGIN TRANSACTION")
+                            cursor.executemany("""
+                                INSERT INTO ResourcesFullText (
+                                    Id, Project, Url, Type, Status,
+                                    Headers, Content, Size, Time
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """, error_batch)
+                            connection.execute("COMMIT")
+                            error_batch = []
+                        except Exception as e:
+                            connection.execute("ROLLBACK")
+                            logger.error(f"Error during error batch insert: {e}")
+
+            # Insert any remaining error records
+            if error_batch:
+                try:
+                    connection.execute("BEGIN TRANSACTION")
+                    cursor.executemany("""
+                        INSERT INTO ResourcesFullText (
+                            Id, Project, Url, Type, Status,
+                            Headers, Content, Size, Time
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, error_batch)
+                    connection.execute("COMMIT")
+                except Exception as e:
+                    connection.execute("ROLLBACK")
+                    logger.error(f"Error during final error batch insert: {e}")
+
+            if index_state is not None and index_state.status == IndexStatus.INDEXING:
+                index_state.set_status(IndexStatus.COMPLETE)
+
+    def _prepare_siteone_record(self, file_path: Path, site_id: int, base_dir: Path,
+                            log_data: dict, content: str = None) -> tuple[tuple, str] | None:
         """
-        Process a single file and insert it into the database with log metadata.
+        Prepare a record for batch insertion from a SiteOne file.
 
         Args:
-            cursor: SQLite cursor
             file_path: Path to the file
             site_id: ID for the site
             base_dir: Base directory for the capture
             log_data: Dictionary of metadata from logs keyed by URL
+            content: Optional pre-loaded file content
 
         Returns:
-            str: URL of the resource that was added to the database
+            Tuple of (record tuple, URL) or None if processing fails
         """
-        # relative url path from file path (similar to wget)
-        relative_path = file_path.relative_to(base_dir)
-        url = f"{INDEXED_RESOURCE_DEFAULT_PROTOCOL}{base_dir.name}/{str(relative_path).replace(os.sep, '/')}"
-        file_size = file_path.stat().st_size
-        decruftified_path = BaseManager.decruft_path(file_path)
-        extension = Path(decruftified_path).suffix.lower()
-        wget_static_pattern = re.compile(r"\.[0-9a-f]{8,}\.")
+        try:
+            # generate relative url path from file path (similar to wget)
+            relative_path = file_path.relative_to(base_dir)
+            url = f"{INDEXED_RESOURCE_DEFAULT_PROTOCOL}{base_dir.name}/{str(relative_path).replace(os.sep, '/')}"
+            file_size = file_path.stat().st_size
+            decruftified_path = BaseManager.decruft_path(str(file_path))
+            extension = Path(decruftified_path).suffix.lower()
+            wget_static_pattern = re.compile(r"\.[0-9a-f]{8,}\.")
 
-        # look up metadata from log if available, otherwise use defaults
-        metadata = None
-        wget_aliases = list(set([
-            url,
-            url.replace("index.html", ""),
-            url.replace(".html", "/"),
-            url.replace(".html", ""),
-            re.sub(wget_static_pattern, ".", url)
-        ]))
+            # look up metadata from log if available, otherwise use defaults
+            metadata = None
+            wget_aliases = list(set([
+                url,
+                url.replace("index.html", ""),
+                url.replace(".html", "/"),
+                url.replace(".html", ""),
+                re.sub(wget_static_pattern, ".", url)
+            ]))
 
-        for wget_alias in wget_aliases:
-            metadata = log_data.get(wget_alias, None)
-            if metadata is not None:
-                break
+            for wget_alias in wget_aliases:
+                metadata = log_data.get(wget_alias, None)
+                if metadata is not None:
+                    break
 
-        if metadata is None:
-            metadata = {}
+            if metadata is None:
+                metadata = {}
 
-        status_code = metadata.get("status", 200)
-        response_time = metadata.get("time", 0)
-        log_type = metadata.get("type", "").lower()        
+            status_code = metadata.get("status", 200)
+            response_time = metadata.get("time", 0)
+            log_type = metadata.get("type", "").lower()
 
-        if log_type:
-            # no type for redirects, but more often than not pages
-            type_mapping = {
-                "html": ResourceResultType.PAGE,
-                "redirect": ResourceResultType.PAGE,
-                "image": ResourceResultType.IMAGE,
-                "js": ResourceResultType.SCRIPT,
-                "css": ResourceResultType.CSS,
-                "video": ResourceResultType.VIDEO,
-                "audio": ResourceResultType.AUDIO,
-                "pdf": ResourceResultType.PDF,
-                "other": ResourceResultType.OTHER,
-                "font": ResourceResultType.OTHER,
-            }
-            resource_type = type_mapping.get(log_type, INDEXED_TYPE_MAPPING.get(extension, ResourceResultType.OTHER))
-        else:
-            # fallback to extension-based mapping
-            resource_type = INDEXED_TYPE_MAPPING.get(extension, ResourceResultType.OTHER)
+            if log_type:
+                # no type for redirects, but more often than not pages
+                type_mapping = {
+                    "html": ResourceResultType.PAGE,
+                    "redirect": ResourceResultType.PAGE,
+                    "image": ResourceResultType.IMAGE,
+                    "js": ResourceResultType.SCRIPT,
+                    "css": ResourceResultType.CSS,
+                    "video": ResourceResultType.VIDEO,
+                    "audio": ResourceResultType.AUDIO,
+                    "pdf": ResourceResultType.PDF,
+                    "other": ResourceResultType.OTHER,
+                    "font": ResourceResultType.OTHER,
+                }
+                resource_type = type_mapping.get(log_type, INDEXED_TYPE_MAPPING.get(extension, ResourceResultType.OTHER))
+            else:
+                # fallback to extension-based mapping
+                resource_type = INDEXED_TYPE_MAPPING.get(extension, ResourceResultType.OTHER)
 
-        cursor.execute("""
-            INSERT INTO ResourcesFullText (
-                Id, Project, Url, Type, Status,
-                Headers, Content, Size, Time
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            BaseManager.string_to_id(url),
-            site_id,
-            url,
-            resource_type.value,
-            status_code,  # possibly from log
-            BaseManager.get_basic_headers(file_size, resource_type),
-            BaseManager.read_file_contents(file_path, resource_type),
-            file_size,
-            response_time  # possibly from log
-        ))
+            # Use pre-loaded content if available, otherwise rely on read_file_contents
+            file_content = content
+            if file_content is None:
+                file_content = BaseManager.read_file_contents(file_path, resource_type)
 
-        return url
+            record = (
+                BaseManager.string_to_id(url),
+                site_id,
+                url,
+                resource_type.value,
+                status_code,  # possibly from log
+                BaseManager.get_basic_headers(file_size, resource_type),
+                file_content,
+                file_size,
+                response_time  # possibly from log
+            )
 
+            return record, url
+        except Exception as e:
+            logger.error(f"Error preparing record for file {file_path}: {e}")
+            return None
 
 manager: SiteOneManager = SiteOneManager()
 
 def get_resources(
     datasrc: Path,
-    ids: Optional[list[int]] = None,
-    sites: Optional[list[int]] = None,
+    ids: list[int] | None = None,
+    sites: list[int] | None = None,
     query: str = "",
-    types: Optional[list[ResourceResultType]] = None,
-    fields: Optional[list[str]] = None,
-    statuses: Optional[list[int]] = None,
-    sort: Optional[str] = None,
+    types: list[ResourceResultType] | None = None,
+    fields: list[str] | None = None,
+    statuses: list[int] | None = None,
+    sort: str | None = None,
     limit: int = RESOURCES_LIMIT_DEFAULT,
-    offset: int = 0
-) -> Tuple[list[ResourceResult], int]:
+    offset: int = 0,
+) -> tuple[list[ResourceResult], int, IndexState]:
     """
     Get resources from wget directories using in-memory SQLite.
 
@@ -253,4 +358,5 @@ def get_resources(
     Returns:
         Tuple of (list of ResourceResult objects, total count)
     """
+
     return get_resources_with_manager(manager, datasrc, ids, sites, query, types, fields, statuses, sort, limit, offset)

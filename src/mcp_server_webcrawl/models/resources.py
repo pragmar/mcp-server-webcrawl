@@ -1,8 +1,9 @@
 from enum import Enum
-from typing import Final, Optional
+from typing import Final
 from datetime import datetime
 
 from mcp_server_webcrawl.models import METADATA_VALUE_TYPE
+from mcp_server_webcrawl.utils import isoformat_zulu
 
 RESOURCES_TOOL_NAME: str = "webcrawl_search"
 RESOURCES_LIMIT_DEFAULT: int = 20
@@ -11,6 +12,19 @@ RESOURCES_LIMIT_MAX: int = 100
 RESOURCES_FIELDS_REQUIRED: Final[list[str]] = ["id", "url", "site", "type", "status"]
 RESOURCES_FIELDS_DEFAULT: Final[list[str]] = RESOURCES_FIELDS_REQUIRED + ["created", "modified"]
 RESOURCES_SORT_OPTIONS_DEFAULT: Final[list[str]] = ["+id", "-id", "+url", "-url", "+status", "-status", "?"]
+
+RESOURCES_DEFAULT_FIELD_MAPPING: Final[dict[str, str]] = {
+    "id": "Id",
+    "site": "Project",
+    "url": "Url",
+    "name": "Name",
+    "status": "Status",
+    "size": "Size",
+    "type": "Type",
+    "headers": "Headers",
+    "content": "Content",
+    "time": "Time"
+}
 
 class ResourceResultType(Enum):
     """
@@ -47,18 +61,18 @@ class ResourceResult:
         self,
         id: int,
         url: str,
-        site: Optional[int] = None,
-        crawl: Optional[int] = None,
+        site: int | None = None,
+        crawl: int | None = None,
         type: ResourceResultType = ResourceResultType.UNDEFINED,
-        name: Optional[str] = None,
-        headers: Optional[str] = None,
-        content: Optional[str] = None,
-        created: Optional[datetime] = None,
-        modified: Optional[datetime] = None,
-        status: Optional[int] = None,
-        size: Optional[int] = None,
-        time: Optional[int] = None,
-        metadata: Optional[dict[str, METADATA_VALUE_TYPE]] = None,
+        name: str | None = None,
+        headers: str | None = None,
+        content: str | None = None,
+        created: datetime | None = None,
+        modified: datetime | None = None,
+        status: int | None = None,
+        size: int | None = None,
+        time: int | None = None,
+        metadata: dict[str, METADATA_VALUE_TYPE] | None = None,
     ):
         """
         Initialize a ResourceResult instance.
@@ -109,8 +123,8 @@ class ResourceResult:
             "name": self.name,
             "headers": self.headers,
             "content": self.content,
-            "created": self.created.isoformat() if self.created else None,
-            "modified": self.modified.isoformat() if self.modified else None,
+            "created": isoformat_zulu(self.created) if self.created else None,
+            "modified": isoformat_zulu(self.modified) if self.modified else None,
             "status": self.status,
             "size": self.size,
             "time": self.time,
@@ -119,8 +133,19 @@ class ResourceResult:
 
         return {k: v for k, v in result.items() if v is not None and not (k == "metadata" and v == {})}
 
-    def to_forcefield_dict(self, forcefields=[]) -> dict[str, METADATA_VALUE_TYPE]:
-        # None self annihilates in filter, forcefields can force their existence, as null
-        result = {k: None for k in forcefields}
+    def to_forcefield_dict(self, forcefields=None) -> dict[str, METADATA_VALUE_TYPE]:
+        """
+        Create a dictionary with forced fields set to None if not present in the object.
+
+        Args:
+            forcefields: List of field names that should be included in the result
+                        even if they're not present in the object data
+
+        Returns:
+            Dictionary containing object data with forced fields included
+        """
+        result = {}
+        if forcefields:
+            result = {k: None for k in forcefields}
         result.update(self.to_dict())
         return result

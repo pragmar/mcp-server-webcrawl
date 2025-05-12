@@ -45,7 +45,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides.html">Setup Guides</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">mcp-server-webcrawl Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">mcp_server_webcrawl</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="mcp_server_webcrawl.html">mcp_server_webcrawl package</a></li>
 </ul>
@@ -228,7 +228,7 @@ Only caches the count integer values, as these are reusable and light.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>statement</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – SQL statement</p></li>
-<li><p><strong>params</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><em>Any</em></a><em>]</em>) – Query parameters</p></li>
+<li><p><strong>params</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em>) – Query parameters</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -248,7 +248,7 @@ Only caches the count integer values, as these are reusable and light.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>statement</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – SQL statement</p></li>
-<li><p><strong>params</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><em>Any</em></a><em>]</em>) – Query parameters</p></li>
+<li><p><strong>params</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em>) – Query parameters</p></li>
 <li><p><strong>count</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Count value to cache</p></li>
 </ul>
 </dd>
@@ -304,6 +304,16 @@ Only caches the count integer values, as these are reusable and light.</p>
 </section>
 <section id="module-mcp_server_webcrawl.utils">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mcp_server_webcrawl.utils" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.utils.isoformat_zulu">
+<span class="sig-name descname"><span class="pre">isoformat_zulu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/utils.html#isoformat_zulu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.utils.isoformat_zulu" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dt</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.13)"><em>datetime</em></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 

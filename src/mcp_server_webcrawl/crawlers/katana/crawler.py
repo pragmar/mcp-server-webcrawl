@@ -15,7 +15,7 @@ class KatanaCrawler(IndexedCrawler):
     def __init__(self, datasrc: Path):
         """
         Initialize the HTTP text crawler with a data source directory.
-        
+
         Args:
             datasrc: The input argument as Path, it must be a directory containing
                     subdirectories with HTTP text files

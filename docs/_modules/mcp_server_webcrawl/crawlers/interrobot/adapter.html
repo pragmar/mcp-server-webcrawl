@@ -42,6 +42,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
@@ -75,23 +76,24 @@
 <span></span><span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">sqlite3</span>
 <span class="kn">import</span> <span class="nn">traceback</span>
-
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">closing</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">Logger</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Final</span>
 
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="n">SiteResult</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">ResourceResult</span><span class="p">,</span> <span class="n">ResourceResultType</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.adapter</span> <span class="kn">import</span> <span class="n">IndexState</span><span class="p">,</span> <span class="n">IndexStatus</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">RESOURCES_LIMIT_DEFAULT</span><span class="p">,</span>
-    <span class="n">RESOURCES_LIMIT_MAX</span><span class="p">,</span> 
+    <span class="n">ResourceResult</span><span class="p">,</span>
+    <span class="n">ResourceResultType</span><span class="p">,</span>
     <span class="n">RESOURCES_FIELDS_REQUIRED</span><span class="p">,</span>
+    <span class="n">RESOURCES_LIMIT_DEFAULT</span><span class="p">,</span>
+    <span class="n">RESOURCES_LIMIT_MAX</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="n">SiteResult</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
 
-<span class="n">INTERROBOT_RESOURCE_FIELD_MAPPING</span> <span class="o">=</span> <span class="p">{</span>
+<span class="n">INTERROBOT_RESOURCE_FIELD_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;ResourcesFullText.Id&quot;</span><span class="p">,</span>
     <span class="s2">&quot;site&quot;</span><span class="p">:</span> <span class="s2">&quot;ResourcesFullText.Project&quot;</span><span class="p">,</span>
     <span class="s2">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;Resources.Created&quot;</span><span class="p">,</span>
@@ -106,8 +108,8 @@
     <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="s2">&quot;ResourcesFullText.Time&quot;</span>
 <span class="p">}</span>
 
-<span class="n">INTERROBOT_SITE_FIELD_REQUIRED</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;url&quot;</span><span class="p">])</span>
-<span class="n">INTERROBOT_SITE_FIELD_MAPPING</span> <span class="o">=</span> <span class="p">{</span>
+<span class="n">INTERROBOT_SITE_FIELD_REQUIRED</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;url&quot;</span><span class="p">])</span>
+<span class="n">INTERROBOT_SITE_FIELD_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;Project.Id&quot;</span><span class="p">,</span>
     <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;Project.Url&quot;</span><span class="p">,</span>
     <span class="s2">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;Project.Created&quot;</span><span class="p">,</span>
@@ -115,7 +117,7 @@
     <span class="s2">&quot;robots&quot;</span><span class="p">:</span> <span class="s2">&quot;Project.RobotsText&quot;</span><span class="p">,</span>
 <span class="p">}</span>
 
-<span class="n">INTERROBOT_SORT_MAPPING</span> <span class="o">=</span> <span class="p">{</span>
+<span class="n">INTERROBOT_SORT_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;+id&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;ResourcesFullText.Id&quot;</span><span class="p">,</span> <span class="s2">&quot;ASC&quot;</span><span class="p">),</span>
     <span class="s2">&quot;-id&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;ResourcesFullText.Id&quot;</span><span class="p">,</span> <span class="s2">&quot;DESC&quot;</span><span class="p">),</span>
     <span class="s2">&quot;+url&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;ResourcesFullText.Url&quot;</span><span class="p">,</span> <span class="s2">&quot;ASC&quot;</span><span class="p">),</span>
@@ -125,7 +127,7 @@
     <span class="s2">&quot;?&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;ResourcesFullText.Id&quot;</span><span class="p">,</span> <span class="s2">&quot;?&quot;</span><span class="p">),</span>
 <span class="p">}</span>
 
-<span class="n">INTERROBOT_TYPE_MAPPING</span> <span class="o">=</span> <span class="p">{</span>
+<span class="n">INTERROBOT_TYPE_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="mi">0</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">UNDEFINED</span><span class="p">,</span>
     <span class="mi">1</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
     <span class="mi">2</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">,</span>  <span class="c1"># Fixed</span>
@@ -144,7 +146,7 @@
     <span class="mi">15</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">DOC</span>
 <span class="p">}</span>
 
-<span class="n">INTERROBOT_TYPE_TO_KEY</span> <span class="o">=</span> <span class="p">{</span>
+<span class="n">INTERROBOT_TYPE_TO_KEY</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">UNDEFINED</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">:</span> <span class="s2">&quot;html&quot;</span><span class="p">,</span>
     <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">FRAME</span><span class="p">:</span> <span class="s2">&quot;iframe&quot;</span><span class="p">,</span>
@@ -161,16 +163,16 @@
     <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">:</span> <span class="s2">&quot;other&quot;</span>
 <span class="p">}</span>
 
-<span class="n">INTERROBOT_TYPE_TO_INT</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">INTERROBOT_TYPE_MAPPING</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+<span class="n">INTERROBOT_TYPE_TO_INT</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">INTERROBOT_TYPE_MAPPING</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
 <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
 
 <div class="viewcode-block" id="iso_to_datetime">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.adapter.iso_to_datetime">[docs]</a>
-<span class="k">def</span> <span class="nf">iso_to_datetime</span><span class="p">(</span><span class="n">dt_string</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">iso_to_datetime</span><span class="p">(</span><span class="n">dt_string</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert ISO string to datetime.</span>
-<span class="sd">    </span>
+
 <span class="sd">    python&lt;=3.10 struggles with zulu and fractions of seconds, will</span>
 <span class="sd">    throw. smooth out the iso string, second precision isn&#39;t key here</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -216,7 +218,7 @@
     <span class="n">fields_joined</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">qualified_fields</span><span class="p">)</span>
 
     <span class="c1"># build query components</span>
-    <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">ids_clause</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
 
     <span class="c1"># handle id filtering</span>
@@ -227,7 +229,7 @@
 
     <span class="c1"># build and execute query</span>
     <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;SELECT </span><span class="si">{</span><span class="n">fields_joined</span><span class="si">}</span><span class="s2"> FROM Projects AS Project</span><span class="si">{</span><span class="n">ids_clause</span><span class="si">}</span><span class="s2"> ORDER BY Project.Url ASC&quot;</span>
-    <span class="n">dict_results</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">__sql</span><span class="p">(</span><span class="n">datasrc</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+    <span class="n">dict_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="n">__sql</span><span class="p">(</span><span class="n">datasrc</span><span class="p">,</span> <span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
 
     <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SiteResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">dict_results</span><span class="p">:</span>
@@ -249,16 +251,16 @@
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.adapter.get_resources">[docs]</a>
 <span class="k">def</span> <span class="nf">get_resources</span><span class="p">(</span>
     <span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
-    <span class="n">ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">sites</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sites</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">statuses</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">sort</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">statuses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sort</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">RESOURCES_LIMIT_DEFAULT</span><span class="p">,</span>
-    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">],</span> <span class="nb">int</span><span class="p">,</span> <span class="n">IndexState</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get resources based on the provided parameters.</span>
 
@@ -280,7 +282,7 @@
 <span class="sd">            - Total count of matching resources</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">where_clauses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">from_clause</span> <span class="o">=</span> <span class="s2">&quot;ResourcesFullText LEFT JOIN Resources ON ResourcesFullText.Id = Resources.Id&quot;</span>
 
@@ -372,22 +374,24 @@
         <span class="p">)</span>
         <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">total_count</span></div>
+    <span class="n">remote_index_state</span> <span class="o">=</span> <span class="n">IndexState</span><span class="p">()</span>
+    <span class="n">remote_index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">REMOTE</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">total_count</span><span class="p">,</span> <span class="n">remote_index_state</span></div>
 
 
-<span class="k">def</span> <span class="nf">__sql</span><span class="p">(</span><span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="k">def</span> <span class="nf">__sql</span><span class="p">(</span><span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Execute a SQL query against the database.</span>
-<span class="sd">    </span>
+
 <span class="sd">    Args:</span>
 <span class="sd">        datasrc: Path to the database</span>
 <span class="sd">        statement: SQL statement to execute</span>
 <span class="sd">        params: Optional parameters for the SQL statement</span>
-<span class="sd">        </span>
+
 <span class="sd">    Returns:</span>
 <span class="sd">        List of dictionaries containing the query results</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    
+
     <span class="k">try</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">statement</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;SELECT&quot;</span><span class="p">):</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Unauthorized SQL statement&quot;</span><span class="p">)</span>

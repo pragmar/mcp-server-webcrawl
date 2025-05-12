@@ -1,17 +1,18 @@
 import json
-
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import time
-from typing import Any
+from typing import Any, Final
 
+from mcp_server_webcrawl.crawlers.base.adapter import IndexState
 from mcp_server_webcrawl.models import METADATA_VALUE_TYPE, UTC
-from mcp_server_webcrawl.models.resources import ResourceResultType, ResourceResult
+from mcp_server_webcrawl.models.resources import ResourceResult, ResourceResultType
 from mcp_server_webcrawl.models.sites import SiteResult
+from mcp_server_webcrawl.utils import isoformat_zulu
 from mcp_server_webcrawl.utils.logger import get_logger
 
 logger = get_logger()
 
-OVERRIDE_ERROR_MESSAGE: str = "BaseCrawler subclasses must implement \
+OVERRIDE_ERROR_MESSAGE: Final[str] = "BaseCrawler subclasses must implement \
 the following methods: handle_list_tools, handle_call_tool"
 
 class BaseJsonApiEncoder(json.JSONEncoder):
@@ -33,6 +34,11 @@ class BaseJsonApiEncoder(json.JSONEncoder):
             return obj.__dict__
         elif isinstance(obj, ResourceResultType):
             return obj.value
+        elif isinstance(obj, datetime):
+            # Convert UTC datetime to ISO format with 'Z' suffix
+            if obj.tzinfo is not None and obj.tzinfo.utcoffset(obj) == timedelta(0):
+                return isoformat_zulu(obj)
+            return isoformat_zulu(obj)
         return super().default(obj)
 
 class BaseJsonApi:
@@ -43,7 +49,7 @@ class BaseJsonApi:
     results, and error handling.
     """
 
-    def __init__(self, method: str, args: dict[str, Any]):
+    def __init__(self, method: str, args: dict[str, Any], index_state: IndexState | None = None):
         """
         Construct with the arguments of creation (aoc), these will be echoed back in
         JSON response. This is an object that collapses into json on json dumps. This is
@@ -59,7 +65,8 @@ class BaseJsonApi:
         self.method = method
         self.args = args
         self.meta_generator = f"{__name__} ({__version__})"
-        self.meta_generated = datetime.now(UTC).isoformat()
+        self.meta_generated = isoformat_zulu(datetime.now(UTC))
+        self.meta_index = index_state.to_dict() if index_state is not None else None
         self._results: list[SiteResult | ResourceResult] = []
         self._results_total: int = 0
         self._results_offset: int = 0
@@ -129,6 +136,9 @@ class BaseJsonApi:
             },
             "results": [r.to_forcefield_dict(self.args["fields"]) if hasattr(r, "to_forcefield_dict") else r for r in self._results]
         }
+
+        if self.meta_index is not None:
+            response["__meta__"]["index"] = self.meta_index
 
         if self._errors:
             response["__meta__"]["errors"] = self._errors

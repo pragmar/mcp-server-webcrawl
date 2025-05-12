@@ -42,6 +42,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
@@ -61,6 +62,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../utils.html">mcp_server_webcrawl.utils</a></li>
       <li class="breadcrumb-item active">mcp_server_webcrawl.utils.tools</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -71,28 +73,25 @@
            <div itemprop="articleBody">
              
   <h1>Source code for mcp_server_webcrawl.utils.tools</h1><div class="highlight"><pre>
-<span></span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
-<span class="kn">from</span> <span class="nn">mcp.types</span> <span class="kn">import</span> <span class="n">Tool</span>
+<span></span><span class="kn">from</span> <span class="nn">mcp.types</span> <span class="kn">import</span> <span class="n">Tool</span>
+
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ResourceResultType</span><span class="p">,</span>
+    <span class="n">RESOURCES_FIELDS_DEFAULT</span><span class="p">,</span>
     <span class="n">RESOURCES_FIELDS_REQUIRED</span><span class="p">,</span>
+    <span class="n">RESOURCES_SORT_OPTIONS_DEFAULT</span><span class="p">,</span>
+    <span class="n">RESOURCES_TOOL_NAME</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">SiteResult</span><span class="p">,</span> 
-    <span class="n">SITES_TOOL_NAME</span><span class="p">,</span> 
+    <span class="n">SiteResult</span><span class="p">,</span>
     <span class="n">SITES_FIELDS_DEFAULT</span><span class="p">,</span>
     <span class="n">SITES_FIELDS_REQUIRED</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">RESOURCES_TOOL_NAME</span><span class="p">,</span> 
-    <span class="n">RESOURCES_FIELDS_DEFAULT</span><span class="p">,</span>
-    <span class="n">RESOURCES_SORT_OPTIONS_DEFAULT</span><span class="p">,</span>
+    <span class="n">SITES_TOOL_NAME</span><span class="p">,</span>
 <span class="p">)</span>
 
 <div class="viewcode-block" id="get_crawler_tools">
 <a class="viewcode-back" href="../../../mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.tools.get_crawler_tools">[docs]</a>
-<span class="k">def</span> <span class="nf">get_crawler_tools</span><span class="p">(</span><span class="n">sites</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">SiteResult</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">get_crawler_tools</span><span class="p">(</span><span class="n">sites</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SiteResult</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generate crawler tools based on available sites.</span>
 
@@ -163,9 +162,9 @@
                         <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Fulltext search query string. Leave empty to return all resources when &quot;</span>
                             <span class="s2">&quot;filtering on other fields and you will get better precision. &quot;</span>
                             <span class="s2">&quot;Extremely useful tips to guide query construction follows. &quot;</span>
-                            <span class="s2">&quot;Be explicit—a query MUST use one of these formats: (1) single keyword, (2) quoted phrase: </span><span class="se">\&quot;</span><span class="s2">keyword1 keyword2</span><span class="se">\&quot;</span><span class="s2">, (3) &quot;</span> 
-                            <span class="s2">&quot;explicit AND: keyword1 AND keyword2, (4) explicit OR: keyword1 OR keyword2, or (5) advanced boolean: (keyword1 AND keyword2) &quot;</span> 
-                            <span class="s2">&quot;OR (keyword3 NOT keyword4). &quot;</span> 
+                            <span class="s2">&quot;Be explicit—a query MUST use one of these formats: (1) single keyword, (2) quoted phrase: </span><span class="se">\&quot;</span><span class="s2">keyword1 keyword2</span><span class="se">\&quot;</span><span class="s2">, (3) &quot;</span>
+                            <span class="s2">&quot;explicit AND: keyword1 AND keyword2, (4) explicit OR: keyword1 OR keyword2, or (5) advanced boolean: (keyword1 AND keyword2) &quot;</span>
+                            <span class="s2">&quot;OR (keyword3 NOT keyword4). &quot;</span>
                             <span class="s2">&quot;WARNING, space-separated keywords without quotes or operators will not work correctly.&quot;</span>
                             <span class="s2">&quot;Supports fulltext and boolean operators, syntax and capabilities consistent with &quot;</span>
                             <span class="s2">&quot;SQLite FTS5 in boolean mode. Supports AND, OR, NOT operators, quoted phrases, &quot;</span>
@@ -231,7 +230,7 @@
                         <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Support for base64 encoded data for image thumbnails. &quot;</span>
                             <span class="s2">&quot;Default is false. This creates small thumbnails that enable basic &quot;</span>
                             <span class="s2">&quot;image recognition while keeping token output minimal. Only works for image &quot;</span>
-                            <span class="s2">&quot;(&quot;&quot;img&quot;&quot;) types, which is filterable in types field. Svg format is not &quot;</span> 
+                            <span class="s2">&quot;(&quot;&quot;img&quot;&quot;) types, which is filterable in types field. Svg format is not &quot;</span>
                             <span class="s2">&quot;currently supported.&quot;</span><span class="p">)</span>
                     <span class="p">},</span>
                 <span class="p">},</span>

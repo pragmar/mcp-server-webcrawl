@@ -42,6 +42,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
@@ -61,6 +62,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../utils.html">mcp_server_webcrawl.utils</a></li>
       <li class="breadcrumb-item active">mcp_server_webcrawl.utils.querycache</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -74,8 +76,6 @@
 <span></span><span class="kn">import</span> <span class="nn">hashlib</span>
 <span class="kn">import</span> <span class="nn">time</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
-
 <div class="viewcode-block" id="QueryCountCache">
 <a class="viewcode-back" href="../../../mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.querycache.QueryCountCache">[docs]</a>
 <span class="k">class</span> <span class="nc">QueryCountCache</span><span class="p">:</span>
@@ -88,7 +88,7 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">max</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">250</span><span class="p">,</span> <span class="n">ttl</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">900</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize the query count cache.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Parameters:</span>
 <span class="sd">            max: Maximum number of entries to store in the cache</span>
 <span class="sd">            ttl: Time-to-live for cache entries in seconds</span>
@@ -98,50 +98,50 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_max</span> <span class="o">=</span> <span class="nb">max</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ttl</span> <span class="o">=</span> <span class="n">ttl</span></div>
 
-    
-    <span class="k">def</span> <span class="nf">_hash_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">_hash_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate a hash key from a query statement and parameters.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Parameters:</span>
 <span class="sd">            statement: SQL statement</span>
 <span class="sd">            params: Query parameters</span>
-<span class="sd">            </span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            MD5 hash of the combined query string</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">statement</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">params</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-    
+
 <div class="viewcode-block" id="QueryCountCache.get">
 <a class="viewcode-back" href="../../../mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.querycache.QueryCountCache.get">[docs]</a>
-    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get a cached count result if available and not expired.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Parameters:</span>
 <span class="sd">            statement: SQL statement</span>
 <span class="sd">            params: Query parameters</span>
-<span class="sd">            </span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            Cached count value or None if not found or expired</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hash_query</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>         
+        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hash_query</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timestamps</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ttl</span><span class="p">:</span>                 
+            <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timestamps</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ttl</span><span class="p">:</span>
                 <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
                 <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timestamps</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-                <span class="k">return</span> <span class="kc">None</span>             
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>         
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
-    
+
 <div class="viewcode-block" id="QueryCountCache.set">
 <a class="viewcode-back" href="../../../mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.querycache.QueryCountCache.set">[docs]</a>
-    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">],</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Store a count result in the cache.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Parameters:</span>
 <span class="sd">            statement: SQL statement</span>
 <span class="sd">            params: Query parameters</span>
@@ -153,13 +153,13 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span>
             <span class="n">oldest_key</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_timestamps</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timestamps</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
             <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">oldest_key</span><span class="p">]</span>
-            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timestamps</span><span class="p">[</span><span class="n">oldest_key</span><span class="p">]</span>         
-        
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timestamps</span><span class="p">[</span><span class="n">oldest_key</span><span class="p">]</span>
+
         <span class="c1"># store new entry</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">count</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_timestamps</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span></div>
 
-    
+
 <div class="viewcode-block" id="QueryCountCache.clear">
 <a class="viewcode-back" href="../../../mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.querycache.QueryCountCache.clear">[docs]</a>
     <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>

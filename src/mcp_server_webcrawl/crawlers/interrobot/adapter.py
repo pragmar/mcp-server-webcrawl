@@ -1,23 +1,24 @@
 import re
 import sqlite3
 import traceback
-
 from contextlib import closing
 from datetime import datetime
 from logging import Logger
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any, Final
 
-from mcp_server_webcrawl.models.sites import SiteResult
-from mcp_server_webcrawl.models.resources import ResourceResult, ResourceResultType
-from mcp_server_webcrawl.utils.logger import get_logger
+from mcp_server_webcrawl.crawlers.base.adapter import IndexState, IndexStatus
 from mcp_server_webcrawl.models.resources import (
-    RESOURCES_LIMIT_DEFAULT,
-    RESOURCES_LIMIT_MAX, 
+    ResourceResult,
+    ResourceResultType,
     RESOURCES_FIELDS_REQUIRED,
+    RESOURCES_LIMIT_DEFAULT,
+    RESOURCES_LIMIT_MAX,
 )
+from mcp_server_webcrawl.models.sites import SiteResult
+from mcp_server_webcrawl.utils.logger import get_logger
 
-INTERROBOT_RESOURCE_FIELD_MAPPING = {
+INTERROBOT_RESOURCE_FIELD_MAPPING: Final[dict[str, str]] = {
     "id": "ResourcesFullText.Id",
     "site": "ResourcesFullText.Project",
     "created": "Resources.Created",
@@ -32,8 +33,8 @@ INTERROBOT_RESOURCE_FIELD_MAPPING = {
     "time": "ResourcesFullText.Time"
 }
 
-INTERROBOT_SITE_FIELD_REQUIRED = set(["id", "url"])
-INTERROBOT_SITE_FIELD_MAPPING = {
+INTERROBOT_SITE_FIELD_REQUIRED: Final[set[str]] = set(["id", "url"])
+INTERROBOT_SITE_FIELD_MAPPING: Final[dict[str, str]] = {
     "id": "Project.Id",
     "url": "Project.Url",
     "created": "Project.Created",
@@ -41,7 +42,7 @@ INTERROBOT_SITE_FIELD_MAPPING = {
     "robots": "Project.RobotsText",
 }
 
-INTERROBOT_SORT_MAPPING = {
+INTERROBOT_SORT_MAPPING: Final[dict[str, tuple[str, str]]] = {
     "+id": ("ResourcesFullText.Id", "ASC"),
     "-id": ("ResourcesFullText.Id", "DESC"),
     "+url": ("ResourcesFullText.Url", "ASC"),
@@ -51,7 +52,7 @@ INTERROBOT_SORT_MAPPING = {
     "?": ("ResourcesFullText.Id", "?"),
 }
 
-INTERROBOT_TYPE_MAPPING = {
+INTERROBOT_TYPE_MAPPING: Final[dict[int, ResourceResultType]] = {
     0: ResourceResultType.UNDEFINED,
     1: ResourceResultType.PAGE,
     2: ResourceResultType.OTHER,  # Fixed
@@ -70,7 +71,7 @@ INTERROBOT_TYPE_MAPPING = {
     15: ResourceResultType.DOC
 }
 
-INTERROBOT_TYPE_TO_KEY = {
+INTERROBOT_TYPE_TO_KEY: Final[dict[ResourceResultType, str]] = {
     ResourceResultType.UNDEFINED: "",
     ResourceResultType.PAGE: "html",
     ResourceResultType.FRAME: "iframe",
@@ -87,14 +88,14 @@ INTERROBOT_TYPE_TO_KEY = {
     ResourceResultType.OTHER: "other"
 }
 
-INTERROBOT_TYPE_TO_INT = {v: k for k, v in INTERROBOT_TYPE_MAPPING.items()}
+INTERROBOT_TYPE_TO_INT: Final[dict[ResourceResultType, int]] = {v: k for k, v in INTERROBOT_TYPE_MAPPING.items()}
 
 logger: Logger = get_logger()
 
-def iso_to_datetime(dt_string: Optional[str]) -> datetime:
+def iso_to_datetime(dt_string: str | None) -> datetime:
     """
     Convert ISO string to datetime.
-    
+
     python<=3.10 struggles with zulu and fractions of seconds, will
     throw. smooth out the iso string, second precision isn't key here
     """
@@ -137,7 +138,7 @@ def get_sites(datasrc: Path, ids=None, fields=None) -> list[SiteResult]:
     fields_joined: str = ", ".join(qualified_fields)
 
     # build query components
-    params: dict[str, Any] = {}
+    params: dict[str, int | str] = {}
     ids_clause: str = ""
 
     # handle id filtering
@@ -148,7 +149,7 @@ def get_sites(datasrc: Path, ids=None, fields=None) -> list[SiteResult]:
 
     # build and execute query
     statement: str = f"SELECT {fields_joined} FROM Projects AS Project{ids_clause} ORDER BY Project.Url ASC"
-    dict_results: dict = __sql(datasrc, statement, params)
+    dict_results: list[dict[str, int | str | None]] = __sql(datasrc, statement, params)
 
     results: list[SiteResult] = []
     for row in dict_results:
@@ -167,16 +168,16 @@ def get_sites(datasrc: Path, ids=None, fields=None) -> list[SiteResult]:
 
 def get_resources(
     datasrc: Path,
-    ids: Optional[list[int]] = None,
-    sites: Optional[list[int]] = None,
+    ids: list[int] | None = None,
+    sites: list[int] | None = None,
     query: str = "",
-    types: Optional[list[ResourceResultType]] = None,
-    fields: Optional[list[str]] = None,
-    statuses: Optional[list[int]] = None,
-    sort: Optional[str] = None,
+    types: list[ResourceResultType] | None = None,
+    fields: list[str] | None = None,
+    statuses: list[int] | None = None,
+    sort: str | None = None,
     limit: int = RESOURCES_LIMIT_DEFAULT,
-    offset: int = 0
-) -> Tuple[list[ResourceResult], int]:
+    offset: int = 0,
+) -> tuple[list[ResourceResult], int, IndexState]:
     """
     Get resources based on the provided parameters.
 
@@ -198,7 +199,7 @@ def get_resources(
             - Total count of matching resources
     """
 
-    params: dict[str, Any] = {}
+    params: dict[str, int | str] = {}
     where_clauses: list[str] = []
     from_clause = "ResourcesFullText LEFT JOIN Resources ON ResourcesFullText.Id = Resources.Id"
 
@@ -290,21 +291,23 @@ def get_resources(
         )
         results.append(result)
 
-    return results, total_count
+    remote_index_state = IndexState()
+    remote_index_state.set_status(IndexStatus.REMOTE)
+    return results, total_count, remote_index_state
 
-def __sql(datasrc: Path, statement: str, params: Optional[dict[str, Any]] = None) -> list[dict[str, Any]]:
+def __sql(datasrc: Path, statement: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     """
     Execute a SQL query against the database.
-    
+
     Args:
         datasrc: Path to the database
         statement: SQL statement to execute
         params: Optional parameters for the SQL statement
-        
+
     Returns:
         List of dictionaries containing the query results
     """
-    
+
     try:
         if not statement.strip().upper().startswith("SELECT"):
             logger.error("Unauthorized SQL statement")

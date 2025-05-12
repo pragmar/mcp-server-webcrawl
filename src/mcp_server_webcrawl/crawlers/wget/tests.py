@@ -33,11 +33,11 @@ class WgetTests(BaseCrawlerTests):
         Test site retrieval API functionality.
         """
         crawler = WgetCrawler(self._datasrc)
-        
+
         # all sites
         sites_json = crawler.get_sites_api()
         self.assertTrue(sites_json.total >= 2)
-        
+
         # single site
         site_one_json = crawler.get_sites_api(ids=[EXAMPLE_SITE_ID])
         self.assertTrue(site_one_json.total == 1)
@@ -53,7 +53,7 @@ class WgetTests(BaseCrawlerTests):
         Test resource retrieval API functionality with various parameters.
         """
         crawler = WgetCrawler(self._datasrc)
-        
+
         resources_json = crawler.get_resources_api()
         self.assertTrue(resources_json.total > 0)
 
@@ -64,7 +64,7 @@ class WgetTests(BaseCrawlerTests):
             fields=["content", "headers"]
         )
         self.assertTrue(query_resources.total > 0, "Search query should return results")
-        
+
         # search term exists in returned resources
         for resource in query_resources._results:
             resource_dict = resource.to_dict()
@@ -125,11 +125,12 @@ class WgetTests(BaseCrawlerTests):
         custom_fields = ["content", "headers", "time"]
         field_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
+            types=[ResourceResultType.PAGE.value],
             fields=custom_fields
         )
         self.assertTrue(field_resources.total > 0)
         resource_dict = field_resources._results[0].to_dict()
-        
+
         for field in custom_fields:
             self.assertIn(field, resource_dict, f"Field '{field}' should be in response")
 
@@ -172,7 +173,7 @@ class WgetTests(BaseCrawlerTests):
             sort="+url",
             limit=3
         )
-        
+
         if combined_resources.total > 0:
             for resource in combined_resources._results:
                 self.assertEqual(resource.site, PRAGMAR_SITE_ID)
@@ -188,14 +189,14 @@ class WgetTests(BaseCrawlerTests):
             sort="+url",
             limit=100
         )
-        
+
         self.assertTrue(multisite_resources.total > 0, "Multi-site search should return results")
-        
+
         # which sites we find results from
         found_sites = set()
         for resource in multisite_resources._results:
             found_sites.add(resource.site)
-            
+
         # we got results from both sites
         self.assertEqual(
             len(found_sites),
@@ -218,18 +219,18 @@ class WgetTests(BaseCrawlerTests):
         Test the random sort functionality using the '?' sort parameter.
         """
         crawler = WgetCrawler(self._datasrc)
-        
+
         random1_resources = crawler.get_resources_api(sites=[PRAGMAR_SITE_ID], sort="?", limit=20)
         self.assertTrue(random1_resources.total > 0, "Database should contain resources")
         random1_ids = [r.id for r in random1_resources._results]
-        
+
         random2_resources = crawler.get_resources_api(sites=[PRAGMAR_SITE_ID], sort="?", limit=20)
         self.assertTrue(random2_resources.total > 0, "Random sort should return results")
         random2_ids = [r.id for r in random2_resources._results]
-        
+
         if random2_resources.total >= 10:
             self.assertNotEqual(
-                random1_ids, 
+                random1_ids,
                 random2_ids,
                 f"Random sort should produce different order than standard sort.\nStandard: {random1_ids}\nRandom: {random2_ids}"
             )

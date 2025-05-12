@@ -46,7 +46,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides.html">Setup Guides</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">mcp-server-webcrawl Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">mcp_server_webcrawl</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="mcp_server_webcrawl.html">mcp_server_webcrawl package</a></li>
 </ul>
@@ -178,39 +178,32 @@ offset: Number of results to skip for pagination</p>
 <dd><p>Bases: <a class="reference internal" href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler" title="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseCrawler</span></code></a></p>
 <p>A crawler implementation for InterroBot data sources.
 Provides functionality for accessing and searching web content from InterroBot.</p>
-<p>Initialize the InterroBotCrawler with a data source path.</p>
+<p>Initialize the IndexedCrawler with a data source path and required adapter functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>datasrc</strong> – Path to the data source</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>datasrc</strong> – Path to the data source</p></li>
+<li><p><strong>get_sites_func</strong> – Function to retrieve sites from the data source</p></li>
+<li><p><strong>get_resources_func</strong> – Function to retrieve resources from the data source</p></li>
+<li><p><strong>resource_field_mapping</strong> – Mapping of resource field names to display names</p></li>
+</ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.interrobot.crawler.InterroBotCrawler.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasrc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/interrobot/crawler.html#InterroBotCrawler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.interrobot.crawler.InterroBotCrawler.__init__" title="Link to this definition"></a></dt>
-<dd><p>Initialize the InterroBotCrawler with a data source path.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>datasrc</strong> – Path to the data source</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.interrobot.crawler.InterroBotCrawler.mcp_call_tool">
-<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mcp_call_tool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arguments</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/interrobot/crawler.html#InterroBotCrawler.mcp_call_tool"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.interrobot.crawler.InterroBotCrawler.mcp_call_tool" title="Link to this definition"></a></dt>
-<dd><p>Handle tool execution requests.</p>
+<dd><p>Initialize the IndexedCrawler with a data source path and required adapter functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Name of the tool to call</p></li>
-<li><p><strong>arguments</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><em>Any</em></a><em>] </em><em>| </em><em>None</em>) – Arguments to pass to the tool</p></li>
+<li><p><strong>datasrc</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>Path</em></a>) – Path to the data source</p></li>
+<li><p><strong>get_sites_func</strong> – Function to retrieve sites from the data source</p></li>
+<li><p><strong>get_resources_func</strong> – Function to retrieve resources from the data source</p></li>
+<li><p><strong>resource_field_mapping</strong> – Mapping of resource field names to display names</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of content objects</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a>[<em>TextContent</em> | <em>ImageContent</em> | <em>EmbeddedResource</em>]</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -225,53 +218,6 @@ Provides functionality for accessing and searching web content from InterroBot.<
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a>[<em>Tool</em>]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.interrobot.crawler.InterroBotCrawler.get_sites_api">
-<span class="sig-name descname"><span class="pre">get_sites_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/interrobot/crawler.html#InterroBotCrawler.get_sites_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.interrobot.crawler.InterroBotCrawler.get_sites_api" title="Link to this definition"></a></dt>
-<dd><p>Retrieve site information from the InterroBot data source.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ids</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – Optional list of site IDs to filter</p></li>
-<li><p><strong>fields</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – Optional list of fields to include in the response</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>API response object containing site information</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.api.BaseJsonApi" title="mcp_server_webcrawl.crawlers.base.api.BaseJsonApi"><em>BaseJsonApi</em></a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.interrobot.crawler.InterroBotCrawler.get_resources_api">
-<span class="sig-name descname"><span class="pre">get_resources_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sites</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">statuses</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/interrobot/crawler.html#InterroBotCrawler.get_resources_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.interrobot.crawler.InterroBotCrawler.get_resources_api" title="Link to this definition"></a></dt>
-<dd><p>Get resources in JSON format based on the provided parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ids</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – Optional list of resource ids to retrieve specific resources directly</p></li>
-<li><p><strong>sites</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – Optional list of project ids to filter search results to a specific site</p></li>
-<li><p><strong>query</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Search query string</p></li>
-<li><p><strong>types</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – Optional filter for specific resource types</p></li>
-<li><p><strong>fields</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – List of additional fields to include in the response</p></li>
-<li><p><strong>statuses</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – Optional list of HTTP status codes to filter results</p></li>
-<li><p><strong>sort</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><em>None</em>) – Sort order for results</p></li>
-<li><p><strong>limit</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Maximum number of results to return</p></li>
-<li><p><strong>offset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Number of results to skip for pagination</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>JSON string containing the results</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.api.BaseJsonApi" title="mcp_server_webcrawl.crawlers.base.api.BaseJsonApi"><em>BaseJsonApi</em></a></p>
 </dd>
 </dl>
 </dd></dl>

@@ -1,8 +1,6 @@
 import hashlib
 import time
 
-from typing import Any, Optional
-
 class QueryCountCache:
     """
     A cache for storing total count results from database queries.
@@ -11,7 +9,7 @@ class QueryCountCache:
     def __init__(self, max: int = 250, ttl: int = 900):
         """
         Initialize the query count cache.
-        
+
         Parameters:
             max: Maximum number of entries to store in the cache
             ttl: Time-to-live for cache entries in seconds
@@ -20,45 +18,45 @@ class QueryCountCache:
         self._timestamps: dict[str, float] = {}
         self._max = max
         self._ttl = ttl
-    
-    def _hash_query(self, statement: str, params: dict[str, Any]) -> str:
+
+    def _hash_query(self, statement: str, params: dict[str, int | str]) -> str:
         """
         Generate a hash key from a query statement and parameters.
-        
+
         Parameters:
             statement: SQL statement
             params: Query parameters
-            
+
         Returns:
             MD5 hash of the combined query string
         """
         query = f"{statement}:{str(params)}"
         return hashlib.md5(query.encode()).hexdigest()
-    
-    def get(self, statement: str, params: dict[str, Any]) -> Optional[int]:
+
+    def get(self, statement: str, params: dict[str, int | str]) -> int | None:
         """
         Get a cached count result if available and not expired.
-        
+
         Parameters:
             statement: SQL statement
             params: Query parameters
-            
+
         Returns:
             Cached count value or None if not found or expired
         """
-        key = self._hash_query(statement, params)         
+        key = self._hash_query(statement, params)
         if key in self._cache:
-            if time.time() - self._timestamps[key] > self._ttl:                 
+            if time.time() - self._timestamps[key] > self._ttl:
                 del self._cache[key]
                 del self._timestamps[key]
-                return None             
-            return self._cache[key]         
+                return None
+            return self._cache[key]
         return None
-    
-    def set(self, statement: str, params: dict[str, Any], count: int) -> None:
+
+    def set(self, statement: str, params: dict[str, int | str], count: int) -> None:
         """
         Store a count result in the cache.
-        
+
         Parameters:
             statement: SQL statement
             params: Query parameters
@@ -70,12 +68,12 @@ class QueryCountCache:
         if len(self._cache) >= self._max and key not in self._cache:
             oldest_key = min(self._timestamps, key=lambda k: self._timestamps[k])
             del self._cache[oldest_key]
-            del self._timestamps[oldest_key]         
-        
+            del self._timestamps[oldest_key]
+
         # store new entry
         self._cache[key] = count
         self._timestamps[key] = time.time()
-    
+
     def clear(self) -> None:
         """
         Clear all entries from the cache.

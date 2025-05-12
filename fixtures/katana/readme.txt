@@ -8,3 +8,7 @@ katana -v
                 projectdiscovery.io
 
 [INF] Current katana version v1.1.2 (latest)
+
+The odd looking nested hosts (example.com/example.com) are correct,
+Katana will create host directories inside the main crawl, but 
+pragmar.com and example.com are both self-hosted, so there's only one. 

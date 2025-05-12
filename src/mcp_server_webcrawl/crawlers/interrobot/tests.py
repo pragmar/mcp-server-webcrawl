@@ -1,4 +1,5 @@
 import asyncio
+from pprint import pprint
 
 from mcp_server_webcrawl.crawlers.base.tests import BaseCrawlerTests
 from mcp_server_webcrawl.crawlers.interrobot.crawler import InterroBotCrawler
@@ -38,17 +39,13 @@ class InterroBotTests(BaseCrawlerTests):
         Test thumbnail generation for image resources.
         """
         crawler = InterroBotCrawler(self.fixture_path)
-        image_id = 3  # https://www.dolekemp96.org/left.gif
+
+        image_id = 68
         thumbnail_resources = crawler.get_resources_api(
             ids=[image_id],
         )
         self.assertEqual(thumbnail_resources.total, 1, "Should find exactly one resource")
-        # TODO needs rewrite
-        # print(asyncio.run(crawler.mcp_call_tool(
-        #     name="webcrawl_search",
-        #     arguments={"fields": ["created", "modified"], "types": ["img"], "thumbnails": True, "limit": 2}
-        # )))
-    
+
     def test_interrobot_sites(self):
         """
         Test site retrieval API functionality.
@@ -167,7 +164,7 @@ class InterroBotTests(BaseCrawlerTests):
         self.assertTrue(status_resources.total > 0, "Status filtering should return results")
         for resource in status_resources._results:
             self.assertEqual(resource.status, 200, "All resources should have status 200")
-        
+
         # multiple statuses
         multi_status_resources = crawler.get_resources_api(statuses=[200, 404, 500])
         self.assertTrue(multi_status_resources.total > 0, "Multiple status filtering should return results")
@@ -183,14 +180,14 @@ class InterroBotTests(BaseCrawlerTests):
         random1_resources = crawler.get_resources_api(sort="?", limit=20)
         self.assertTrue(random1_resources.total > 0, "Database should contain resources")
         random1_ids = [r.id for r in random1_resources._results]
-        
+
         random2_resources = crawler.get_resources_api(sort="?", limit=20)
         self.assertTrue(random2_resources.total > 0, "Random sort should return results")
         random2_ids = [r.id for r in random2_resources._results]
-        
+
         if random2_resources.total >= 10:
             self.assertNotEqual(
-                random1_ids, 
+                random1_ids,
                 random2_ids,
                 f"Random sort should produce different order than standard sort.\nStandard: {random1_ids}\nRandom: {random2_ids}"
             )

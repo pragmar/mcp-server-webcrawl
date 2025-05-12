@@ -42,6 +42,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
@@ -72,20 +73,21 @@
              
   <h1>Source code for mcp_server_webcrawl.main</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.crawler</span> <span class="kn">import</span> <span class="n">BaseCrawler</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
+
 <span class="kn">from</span> <span class="nn">mcp.server.stdio</span> <span class="kn">import</span> <span class="n">stdio_server</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">initialize_logger</span>
+
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.crawler</span> <span class="kn">import</span> <span class="n">BaseCrawler</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span><span class="p">,</span> <span class="n">initialize_logger</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.server</span> <span class="kn">import</span> <span class="n">initialize_mcp_server</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
 
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../mcp_server_webcrawl.html#mcp_server_webcrawl.main.main">[docs]</a>
-<span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">crawler</span><span class="p">:</span> <span class="n">BaseCrawler</span><span class="p">,</span> <span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>    
+<span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">crawler</span><span class="p">:</span> <span class="n">BaseCrawler</span><span class="p">,</span> <span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
     <span class="n">initialize_logger</span><span class="p">()</span>
     <span class="n">initialize_mcp_server</span><span class="p">()</span>
-    <span class="k">async</span> <span class="k">with</span> <span class="n">stdio_server</span><span class="p">()</span> <span class="k">as</span> <span class="p">(</span><span class="n">read_stream</span><span class="p">,</span> <span class="n">write_stream</span><span class="p">):</span>        
+    <span class="k">async</span> <span class="k">with</span> <span class="n">stdio_server</span><span class="p">()</span> <span class="k">as</span> <span class="p">(</span><span class="n">read_stream</span><span class="p">,</span> <span class="n">write_stream</span><span class="p">):</span>
         <span class="n">crawler</span> <span class="o">=</span> <span class="n">crawler</span><span class="p">(</span><span class="n">datasrc</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MCP webcrawl server initialized with adapter </span><span class="si">{</span><span class="n">crawler</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;datasrc: </span><span class="si">{</span><span class="n">datasrc</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>

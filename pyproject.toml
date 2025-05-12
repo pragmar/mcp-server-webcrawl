@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mcp-server-webcrawl"
-description = "Multiagent MCP server for webcrawl content"
+description = "MCP server for search and retrieval of web crawler content"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -27,7 +27,7 @@ dynamic = ["version"]
 mcp-server-webcrawl = "mcp_server_webcrawl:main"
 
 [project.urls]
-Homepage = "https://github.com/pragmar/mcp_server_webcrawl"
+Homepage = "https://pragmar.com/mcp-server-webcrawl/"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

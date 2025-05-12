@@ -1,4 +1,3 @@
-from typing import Any, Optional
 from pathlib import Path
 
 from mcp_server_webcrawl.crawlers.base.indexed import IndexedCrawler
@@ -16,9 +15,11 @@ class WarcCrawler(IndexedCrawler):
     def __init__(self, datasrc: Path):
         """
         Initialize the WARC crawler with a data source directory.
+        Supported file types: .txt, .warc, and .warc.gz
 
         Args:
             datasrc: The input argument as Path, must be a directory containing WARC files
+
 
         Raises:
             AssertionError: If datasrc is None or not a directory

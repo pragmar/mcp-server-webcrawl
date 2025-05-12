@@ -46,7 +46,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides.html">Setup Guides</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">mcp-server-webcrawl Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">mcp_server_webcrawl</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="mcp_server_webcrawl.html">mcp_server_webcrawl package</a></li>
 </ul>
@@ -236,8 +236,16 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.models.resources.ResourceResult.to_forcefield_dict">
-<span class="sig-name descname"><span class="pre">to_forcefield_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forcefields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/models/resources.html#ResourceResult.to_forcefield_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.models.resources.ResourceResult.to_forcefield_dict" title="Link to this definition"></a></dt>
-<dd><dl class="field-list simple">
+<span class="sig-name descname"><span class="pre">to_forcefield_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forcefields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/models/resources.html#ResourceResult.to_forcefield_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.models.resources.ResourceResult.to_forcefield_dict" title="Link to this definition"></a></dt>
+<dd><p>Create a dictionary with forced fields set to None if not present in the object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>forcefields</strong> – List of field names that should be included in the result
+even if they’re not present in the object data</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary containing object data with forced fields included</p>
+</dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)">dict</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)">float</a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)">bool</a> | <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a>] | <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a>] | <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)">float</a>] | None]</p>
 </dd>

@@ -1,18 +1,19 @@
 <p align="center">
-  <img src="sphinx/_static/images/mcpswc.svg" alt="MCP Server Webcrawl" width="100%">
+  <img src="sphinx/_static/images/mcpswc.svg" alt="MCP Server Webcrawl" width="80%">
 </p>
 
 <p align="center">
   <a href="https://pragmar.com/mcp-server-webcrawl/" style="margin: 0 10px;">Website</a> |
   <a href="https://github.com/pragmar/mcp-server-webcrawl" style="margin: 0 10px;">Github</a> |
-  <a href="https://pragmar.github.io/mcp-server-webcrawl/" style="margin: 0 10px;">Docs</a>
+  <a href="https://pragmar.github.io/mcp-server-webcrawl/" style="margin: 0 10px;">Docs</a> |
+  <a href="https://pypi.org/project/mcp-server-webcrawl/" style="margin: 0 10px;">PyPi</a>
 </p>
 
 # mcp-server-webcrawl
 
-Bridge the gap between your web crawl and AI language models using Model Context Protocol (MCP). 
-With **mcp-server-webcrawl**, your AI client filters and analyzes web content under your direction or autonomously. The server includes a full-text search interface with boolean support, resource filtering by type, HTTP status, 
-and more. 
+Bridge the gap between your web crawl and AI language models using Model Context Protocol (MCP).
+With **mcp-server-webcrawl**, your AI client filters and analyzes web content under your direction or autonomously. The server includes a full-text search interface with boolean support, resource filtering by type, HTTP status,
+and more.
 
 **mcp-server-webcrawl** provides the LLM a complete menu with which to search your web content, and works with
 a variety of web crawlers:
@@ -35,7 +36,6 @@ pip install mcp-server-webcrawl
 * Fulltext search support
 * Filter by type, status, and more
 * Multi-crawler compatible
-* Quick MCP configuration
 * ChatGPT support coming soon
 
 ## MCP Configuration
@@ -45,19 +45,23 @@ From the Claude Desktop menu, navigate to File > Settings > Developer. Click Edi
 You can set up more mcp-server-webcrawl connections under mcpServers as needed.
 
 ```json
-{ 
+{
   "mcpServers": {
     "webcrawl": {
-      "command": "mcp-server-webcrawl",
+      "command": [varies by OS/env, see below],
        "args": [varies by crawler, see below]
     }
   }
 }
 ```
 
-### Important Note for macOS Users
+For step-by-step setup, refer to the [Setup Guides](https://pragmar.github.io/mcp-server-webcrawl/guides.html).
 
-On macOS, you must use the absolute path to the `mcp-server-webcrawl` executable in the `command` field, rather than just the command name. This is different from Windows configuration.
+### Windows vs. macOS
+
+On Windows with Python installed on path, the command should simply be `mcp-server-webcrawl`.
+
+On macOS, you must use the absolute path to the `mcp-server-webcrawl` executable in the `command` field, rather than just the command name.
 
 For example:
 

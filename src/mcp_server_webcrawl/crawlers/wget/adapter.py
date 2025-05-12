@@ -4,13 +4,22 @@ import sqlite3
 from contextlib import closing
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Final, Optional, Set, Tuple
+from typing import Final
 
-from mcp_server_webcrawl.crawlers.base.adapter import BaseManager, SitesGroup
-from mcp_server_webcrawl.utils.logger import get_logger
+from mcp_server_webcrawl.crawlers.base.adapter import (
+    BaseManager,
+    IndexState,
+    IndexStatus,
+    SitesGroup,
+    INDEXED_BATCH_SIZE,
+    INDEXED_RESOURCE_DEFAULT_PROTOCOL,
+    INDEXED_SORT_MAPPING,
+    INDEXED_TYPE_MAPPING
+)
 from mcp_server_webcrawl.models.resources import (
     ResourceResult,
     ResourceResultType,
+    RESOURCES_DEFAULT_FIELD_MAPPING,
     RESOURCES_FIELDS_REQUIRED,
     RESOURCES_LIMIT_DEFAULT,
     RESOURCES_LIMIT_MAX,
@@ -20,17 +29,12 @@ from mcp_server_webcrawl.models.sites import (
     SITES_FIELDS_DEFAULT,
     SITES_FIELDS_REQUIRED,
 )
-from mcp_server_webcrawl.crawlers.base.indexed import (
-    INDEXED_RESOURCE_FIELD_MAPPING,
-    INDEXED_RESOURCE_DEFAULT_PROTOCOL,
-    INDEXED_SORT_MAPPING,
-    INDEXED_TYPE_MAPPING,
-)
+from mcp_server_webcrawl.utils.logger import get_logger
 
 # "http-client-cache", "result-storage" are technically SiteOne ignores
 # but this is the only modification to an otherwise clean alias of wget
 # a complete breakout of SiteOne subclassing isn't necessary yet
-WGET_IGNORE_DIRECTORIES = ("http-client-cache", "result-storage",)
+WGET_IGNORE_DIRECTORIES: Final[list[str]] = ["http-client-cache", "result-storage"]
 
 logger = get_logger()
 
@@ -44,73 +48,133 @@ class WgetManager(BaseManager):
         """Initialize the wget manager with empty cache and statistics."""
         super().__init__()
 
-    def _load_site_data(self, connection: sqlite3.Connection, directory: Path, site_id: int) -> None:
+    def _load_site_data(self, connection: sqlite3.Connection, directory: Path,
+        site_id: int, index_state: IndexState = None) -> None:
         """
-        Load a wget directory into the database.
+        Load a wget directory into the database with parallel processing and batch SQL insertions.
 
         Args:
             connection: SQLite connection
             directory: Path to the wget directory
             site_id: id for the site
+            index_state: IndexState object for tracking progress
         """
-        with closing(connection.cursor()) as cursor:
-            for root, _, files in os.walk(directory):
-                for filename in files:
-                    if filename == "robots.txt":
-                        continue
-                    file_path = Path(root) / filename
-                    self._process_wget_file(cursor, file_path, site_id, directory)
-            connection.commit()
+        if not directory.exists() or not directory.is_dir():
+            logger.error(f"Directory not found or not a directory: {directory}")
+            return
 
-    def _process_wget_file(self, cursor: sqlite3.Cursor, file_path: Path, site_id: int, base_dir: Path) -> None:
+        if index_state is not None:
+            index_state.set_status(IndexStatus.INDEXING)
+
+        # Collect all files to process
+        file_paths = []
+        for root, _, files in os.walk(directory):
+            for filename in files:
+                if filename == "robots.txt":
+                    continue
+
+                rel_path = Path(root).relative_to(directory)
+                ignore_file = False
+                for ignore_dir in WGET_IGNORE_DIRECTORIES:
+                    if ignore_dir in str(rel_path):
+                        ignore_file = True
+                        break
+
+                if not ignore_file:
+                    file_paths.append(Path(root) / filename)
+
+        with closing(connection.cursor()) as cursor:
+            for i in range(0, len(file_paths), INDEXED_BATCH_SIZE):
+                if index_state is not None and index_state.is_timeout():
+                    index_state.set_status(IndexStatus.PARTIAL)
+                    return
+                batch_paths = file_paths[i:i+INDEXED_BATCH_SIZE]
+                file_contents = BaseManager.read_files(batch_paths)
+                batch_insert_data = []
+
+                for file_path in batch_paths:
+                    try:
+                        record = self._prepare_wget_record(file_path, site_id, directory, file_contents.get(file_path))
+                        if record:
+                            batch_insert_data.append(record)
+                            if index_state is not None:
+                                index_state.increment_processed()
+                    except Exception as e:
+                        logger.error(f"Error processing file {file_path}: {e}")
+
+                if batch_insert_data:
+                    try:
+                        connection.execute("BEGIN TRANSACTION")
+                        cursor.executemany("""
+                            INSERT INTO ResourcesFullText (
+                                Id, Project, Url, Type, Status,
+                                Headers, Content, Size, Time
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, batch_insert_data)
+                        connection.execute("COMMIT")
+                    except Exception as e:
+                        connection.execute("ROLLBACK")
+                        logger.error(f"Error during batch insert: {e}")
+
+            if index_state is not None and index_state.status == IndexStatus.INDEXING:
+                index_state.set_status(IndexStatus.COMPLETE)
+
+    def _prepare_wget_record(self, file_path: Path, site_id: int, base_dir: Path, content: str = None) -> tuple | None:
         """
-        Process a single wget file and insert it into the database.
+        Prepare a record for batch insertion from a wget file.
 
         Args:
-            cursor: SQLite cursor
             file_path: Path to the wget file
             site_id: id for the site
             base_dir: Base directory for the wget capture
+            content: Optional pre-loaded file content
+
+        Returns:
+            Tuple of values ready for insertion, or None if processing fails
         """
-        # generate relative url path from file path
-        relative_path = file_path.relative_to(base_dir)
-        url = f"{INDEXED_RESOURCE_DEFAULT_PROTOCOL}{base_dir.name}/{str(relative_path).replace(os.sep, '/')}"
+        try:
+            # generate relative url path from file path
+            relative_path = file_path.relative_to(base_dir)
+            url = f"{INDEXED_RESOURCE_DEFAULT_PROTOCOL}{base_dir.name}/{str(relative_path).replace(os.sep, '/')}"
 
-        # clean up the file path - strip wget artifacts
-        decruftified_path = BaseManager.decruft_path(file_path)
+            # clean up the file path - strip wget artifacts
+            decruftified_path = BaseManager.decruft_path(str(file_path))
 
-        # get the final extension for type mapping
-        extension = Path(decruftified_path).suffix.lower()
-        resource_type = INDEXED_TYPE_MAPPING.get(extension, ResourceResultType.OTHER)
+            # get the final extension for type mapping
+            extension = Path(decruftified_path).suffix.lower()
+            resource_type = INDEXED_TYPE_MAPPING.get(extension, ResourceResultType.OTHER)
 
-        # get file stats
-        stat = file_path.stat()
-        file_size = stat.st_size
+            # get file stats
+            stat = file_path.stat()
+            file_size = stat.st_size
 
-        cursor.execute("""
-            INSERT INTO ResourcesFullText (
-                Id, Project, Url, Type, Status,
-                Headers, Content, Size, Time
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            BaseManager.string_to_id(url),
-            site_id,
-            url,
-            resource_type.value,
-            200,
-            BaseManager.get_basic_headers(file_size, resource_type),
-            BaseManager.read_file_contents(file_path, resource_type),
-            file_size,
-            0
-        ))
+            # Use pre-loaded content if available, otherwise rely on read_file_contents
+            file_content = content
+            if file_content is None:
+                file_content = BaseManager.read_file_contents(file_path, resource_type)
+
+            return (
+                BaseManager.string_to_id(url),
+                site_id,
+                url,
+                resource_type.value,
+                200,
+                BaseManager.get_basic_headers(file_size, resource_type),
+                file_content,
+                file_size,
+                0
+            )
+        except Exception as e:
+            logger.error(f"Error preparing record for file {file_path}: {e}")
+            return None
 
 
 manager: WgetManager = WgetManager()
 
 def get_sites(
     datasrc: Path,
-    ids: Optional[list[int]] = None,
-    fields: Optional[list[str]] = None
+    ids: list[int] | None = None,
+    fields: list[str] | None = None
 ) -> list[SiteResult]:
     """
     List wget directories in the datasrc directory as sites.
@@ -129,9 +193,9 @@ def get_sites(
         logger.error(f"Directory not found ({datasrc})")
         return []
 
-    selected_fields: Set[str] = set(SITES_FIELDS_REQUIRED)
+    selected_fields: set[str] = set(SITES_FIELDS_REQUIRED)
     if fields:
-        valid_fields: Set[str] = set(SITES_FIELDS_DEFAULT)
+        valid_fields: set[str] = set(SITES_FIELDS_DEFAULT)
         selected_fields.update(f for f in fields if f in valid_fields)
     else:
         selected_fields.update(SITES_FIELDS_DEFAULT)
@@ -172,16 +236,16 @@ def get_sites(
 
 def get_resources(
     datasrc: Path,
-    ids: Optional[list[int]] = None,
-    sites: Optional[list[int]] = None,
+    ids: list[int] | None = None,
+    sites: list[int] | None = None,
     query: str = "",
-    types: Optional[list[ResourceResultType]] = None,
-    fields: Optional[list[str]] = None,
-    statuses: Optional[list[int]] = None,
-    sort: Optional[str] = None,
+    types: list[ResourceResultType] | None = None,
+    fields: list[str] | None = None,
+    statuses: list[int] | None = None,
+    sort: str | None = None,
     limit: int = RESOURCES_LIMIT_DEFAULT,
-    offset: int = 0
-) -> Tuple[list[ResourceResult], int]:
+    offset: int = 0,
+) -> tuple[list[ResourceResult], int, IndexState]:
     """
     Get resources from wget directories using in-memory SQLite.
 
@@ -206,16 +270,16 @@ def get_resources(
 def get_resources_with_manager(
     crawl_manager: BaseManager,
     datasrc: Path,
-    ids: Optional[list[int]] = None,
-    sites: Optional[list[int]] = None,
+    ids: list[int] | None = None,
+    sites: list[int] | None = None,
     query: str = "",
-    types: Optional[list[ResourceResultType]] = None,
-    fields: Optional[list[str]] = None,
-    statuses: Optional[list[int]] = None,
-    sort: Optional[str] = None,
+    types: list[ResourceResultType] | None = None,
+    fields: list[str] | None = None,
+    statuses: list[int] | None = None,
+    sort: str | None = None,
     limit: int = RESOURCES_LIMIT_DEFAULT,
-    offset: int = 0
-) -> Tuple[list[ResourceResult], int]:
+    offset: int = 0,
+) -> tuple[list[ResourceResult], int, IndexState]:
     """
     Get resources from directories using in-memory SQLite with the specified manager.
 
@@ -239,32 +303,38 @@ def get_resources_with_manager(
         Returns empty results if sites is empty or not provided.
         If the database is being built, it will log a message and return empty results.
     """
+    null_result: tuple[list[ResourceResult], int, IndexState | None] = [], 0, None
+
+
     if not sites or len(sites) == 0:
-        return [], 0
+        return null_result
 
     site_results = get_sites(datasrc, ids=sites)
     if not site_results:
-        return [], 0
+        return null_result
 
     site_paths = [Path(datasrc) / site.url.split("/")[-2] for site in site_results]
     sites_group = SitesGroup(sites, site_paths)
-    connection: sqlite3.Connection = crawl_manager.get_connection(sites_group)
+    connection: sqlite3.Connection
+    connection_index_state: IndexState
+    connection, connection_index_state = crawl_manager.get_connection(sites_group)
+
     if connection is None:
         # database is currently being built
         logger.info(f"Database for sites {sites} is currently being built, try again later")
-        return [], 0
+        return null_result
 
     limit = min(max(1, limit), RESOURCES_LIMIT_MAX)
-    selected_fields: Set[str] = set(RESOURCES_FIELDS_REQUIRED)
+    selected_fields: set[str] = set(RESOURCES_FIELDS_REQUIRED)
     if fields:
-        selected_fields.update(f for f in fields if f in INDEXED_RESOURCE_FIELD_MAPPING)
+        selected_fields.update(f for f in fields if f in RESOURCES_DEFAULT_FIELD_MAPPING)
 
     # convert to qualified field names
-    qualified_fields: list[str] = [INDEXED_RESOURCE_FIELD_MAPPING[f] for f in selected_fields]
+    qualified_fields: list[str] = [RESOURCES_DEFAULT_FIELD_MAPPING[f] for f in selected_fields]
     fields_joined: str = ", ".join(qualified_fields)
 
     # build query components
-    params: dict[str, Any] = {}
+    params: dict[str, int | str] = {}
     where_clauses: list[str] = []
 
     if ids:
@@ -348,7 +418,7 @@ def get_resources_with_manager(
 
     except sqlite3.Error as e:
         logger.error(f"SQLite error in wget adapter: {e}")
-        return [], 0
+        return null_result
 
-    return results, total_count
+    return results, total_count, connection_index_state
 

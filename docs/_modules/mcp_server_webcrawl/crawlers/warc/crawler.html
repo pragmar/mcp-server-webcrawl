@@ -42,6 +42,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
@@ -72,8 +73,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for mcp_server_webcrawl.crawlers.warc.crawler</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.indexed</span> <span class="kn">import</span> <span class="n">IndexedCrawler</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.warc.adapter</span> <span class="kn">import</span> <span class="n">get_sites</span><span class="p">,</span> <span class="n">get_resources</span>
@@ -94,9 +94,11 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize the WARC crawler with a data source directory.</span>
+<span class="sd">        Supported file types: .txt, .warc, and .warc.gz</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            datasrc: The input argument as Path, must be a directory containing WARC files</span>
+
 
 <span class="sd">        Raises:</span>
 <span class="sd">            AssertionError: If datasrc is None or not a directory</span>

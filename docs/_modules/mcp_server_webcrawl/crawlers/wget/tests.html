@@ -42,6 +42,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
@@ -117,11 +118,11 @@
 <span class="sd">        Test site retrieval API functionality.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">crawler</span> <span class="o">=</span> <span class="n">WgetCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
-        
+
         <span class="c1"># all sites</span>
         <span class="n">sites_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">sites_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
-        
+
         <span class="c1"># single site</span>
         <span class="n">site_one_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="n">EXAMPLE_SITE_ID</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">site_one_json</span><span class="o">.</span><span class="n">total</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
@@ -140,7 +141,7 @@
 <span class="sd">        Test resource retrieval API functionality with various parameters.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">crawler</span> <span class="o">=</span> <span class="n">WgetCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
-        
+
         <span class="n">resources_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">resources_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
 
@@ -151,7 +152,7 @@
             <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">]</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">query_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Search query should return results&quot;</span><span class="p">)</span>
-        
+
         <span class="c1"># search term exists in returned resources</span>
         <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">query_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
             <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
@@ -212,11 +213,12 @@
         <span class="n">custom_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">]</span>
         <span class="n">field_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
             <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
+            <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="p">],</span>
             <span class="n">fields</span><span class="o">=</span><span class="n">custom_fields</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">field_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">field_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-        
+
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">custom_fields</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">resource_dict</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Field &#39;</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">&#39; should be in response&quot;</span><span class="p">)</span>
 
@@ -259,7 +261,7 @@
             <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;+url&quot;</span><span class="p">,</span>
             <span class="n">limit</span><span class="o">=</span><span class="mi">3</span>
         <span class="p">)</span>
-        
+
         <span class="k">if</span> <span class="n">combined_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">combined_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">site</span><span class="p">,</span> <span class="n">PRAGMAR_SITE_ID</span><span class="p">)</span>
@@ -275,14 +277,14 @@
             <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;+url&quot;</span><span class="p">,</span>
             <span class="n">limit</span><span class="o">=</span><span class="mi">100</span>
         <span class="p">)</span>
-        
+
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">multisite_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Multi-site search should return results&quot;</span><span class="p">)</span>
-        
+
         <span class="c1"># which sites we find results from</span>
         <span class="n">found_sites</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">multisite_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
             <span class="n">found_sites</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">site</span><span class="p">)</span>
-            
+
         <span class="c1"># we got results from both sites</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">found_sites</span><span class="p">),</span>
@@ -308,18 +310,18 @@
 <span class="sd">        Test the random sort functionality using the &#39;?&#39; sort parameter.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">crawler</span> <span class="o">=</span> <span class="n">WgetCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
-        
+
         <span class="n">random1_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span> <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;?&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">random1_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Database should contain resources&quot;</span><span class="p">)</span>
         <span class="n">random1_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">random1_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">]</span>
-        
+
         <span class="n">random2_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span> <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;?&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">random2_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Random sort should return results&quot;</span><span class="p">)</span>
         <span class="n">random2_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">random2_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">]</span>
-        
+
         <span class="k">if</span> <span class="n">random2_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;=</span> <span class="mi">10</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span>
-                <span class="n">random1_ids</span><span class="p">,</span> 
+                <span class="n">random1_ids</span><span class="p">,</span>
                 <span class="n">random2_ids</span><span class="p">,</span>
                 <span class="sa">f</span><span class="s2">&quot;Random sort should produce different order than standard sort.</span><span class="se">\n</span><span class="s2">Standard: </span><span class="si">{</span><span class="n">random1_ids</span><span class="si">}</span><span class="se">\n</span><span class="s2">Random: </span><span class="si">{</span><span class="n">random2_ids</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>

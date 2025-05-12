@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>mcp_server_webcrawl.crawlers &mdash; mcp-server-webcrawl  documentation</title>
+  <title>mcp_server_webcrawl.utils &mdash; mcp-server-webcrawl  documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
 
@@ -62,7 +62,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
-      <li class="breadcrumb-item active">mcp_server_webcrawl.crawlers</li>
+      <li class="breadcrumb-item active">mcp_server_webcrawl.utils</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -71,17 +71,14 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for mcp_server_webcrawl.crawlers</h1><div class="highlight"><pre>
-<span></span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+  <h1>Source code for mcp_server_webcrawl.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 
-<div class="viewcode-block" id="get_fixture_directory">
-<a class="viewcode-back" href="../../mcp_server_webcrawl.crawlers.html#mcp_server_webcrawl.crawlers.get_fixture_directory">[docs]</a>
-<span class="k">def</span> <span class="nf">get_fixture_directory</span><span class="p">():</span>
-    <span class="n">modroot</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span>
-    <span class="c1"># assumes git project structure to locate fixtures</span>
-    <span class="k">assert</span> <span class="n">modroot</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;mcp-server-webcrawl&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;expected modroot mcp_server_webcrawl, got </span><span class="si">{</span><span class="n">modroot</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="k">return</span> <span class="n">modroot</span> <span class="o">/</span> <span class="s2">&quot;fixtures&quot;</span></div>
+<div class="viewcode-block" id="isoformat_zulu">
+<a class="viewcode-back" href="../../mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.isoformat_zulu">[docs]</a>
+<span class="k">def</span> <span class="nf">isoformat_zulu</span><span class="p">(</span><span class="n">dt</span><span class="p">:</span> <span class="n">datetime</span><span class="p">):</span>
+    <span class="c1"># python 3.10 considerations, needs this </span>
+    <span class="k">return</span> <span class="n">dt</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;+00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;Z&quot;</span><span class="p">)</span></div>
 
 </pre></div>
 

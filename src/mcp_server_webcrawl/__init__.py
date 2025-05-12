@@ -11,7 +11,7 @@ from argparse import ArgumentParser
 from mcp_server_webcrawl.utils.cli import get_help_short_message, get_help_long_message
 from mcp_server_webcrawl.settings import DEBUG
 
-__version__: str = "0.7.10"
+__version__: str = "0.8.0"
 __name__: str = "mcp-server-webcrawl"
 
 if DEBUG:
@@ -38,7 +38,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.run_tests:
-        is_development: bool = Path(__file__).parent.parent.parent.name == "mcp_server_webcrawl"
+        is_development: bool = Path(__file__).parent.parent.parent.name == "mcp-server-webcrawl"
         if not is_development:
             sys.stderr.write("Unable to run tests, fixtures development directory not found.\n")
             sys.exit(1)

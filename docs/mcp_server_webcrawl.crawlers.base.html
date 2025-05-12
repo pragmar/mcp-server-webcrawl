@@ -46,7 +46,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides.html">Setup Guides</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">mcp-server-webcrawl Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">mcp_server_webcrawl</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="mcp_server_webcrawl.html">mcp_server_webcrawl package</a></li>
 </ul>
@@ -87,6 +87,135 @@
 </section>
 <section id="module-mcp_server_webcrawl.crawlers.base.adapter">
 <span id="mcp-server-webcrawl-crawlers-base-adapter-module"></span><h2>mcp_server_webcrawl.crawlers.base.adapter module<a class="headerlink" href="#module-mcp_server_webcrawl.crawlers.base.adapter" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexStatus">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">IndexStatus</span></span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/adapter.html#IndexStatus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a></p>
+<p>An enumeration.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.UNDEFINED">
+<span class="sig-name descname"><span class="pre">UNDEFINED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.UNDEFINED" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.IDLE">
+<span class="sig-name descname"><span class="pre">IDLE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'idle'</span></em><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.IDLE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.INDEXING">
+<span class="sig-name descname"><span class="pre">INDEXING</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'indexing'</span></em><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.INDEXING" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.PARTIAL">
+<span class="sig-name descname"><span class="pre">PARTIAL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'partial'</span></em><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.PARTIAL" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.COMPLETE">
+<span class="sig-name descname"><span class="pre">COMPLETE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'complete'</span></em><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.COMPLETE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.REMOTE">
+<span class="sig-name descname"><span class="pre">REMOTE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'remote'</span></em><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.REMOTE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.FAILED">
+<span class="sig-name descname"><span class="pre">FAILED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'failed'</span></em><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.FAILED" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexState">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">IndexState</span></span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/adapter.html#IndexState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexState" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Shared state between crawler and manager for indexing progress</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexState.status">
+<span class="sig-name descname"><span class="pre">status</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus" title="mcp_server_webcrawl.crawlers.base.adapter.IndexStatus"><span class="pre">IndexStatus</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexState.status" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexState.processed">
+<span class="sig-name descname"><span class="pre">processed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexState.processed" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexState.time_start">
+<span class="sig-name descname"><span class="pre">time_start</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.13)"><span class="pre">datetime</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexState.time_start" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexState.time_end">
+<span class="sig-name descname"><span class="pre">time_end</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.13)"><span class="pre">datetime</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexState.time_end" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexState.set_status">
+<span class="sig-name descname"><span class="pre">set_status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">status</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/adapter.html#IndexState.set_status"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexState.set_status" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>status</strong> (<a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus" title="mcp_server_webcrawl.crawlers.base.adapter.IndexStatus"><em>IndexStatus</em></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexState.increment_processed">
+<span class="sig-name descname"><span class="pre">increment_processed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/adapter.html#IndexState.increment_processed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexState.increment_processed" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexState.duration">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">duration</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></em><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexState.duration" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexState.is_timeout">
+<span class="sig-name descname"><span class="pre">is_timeout</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/adapter.html#IndexState.is_timeout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexState.is_timeout" title="Link to this definition"></a></dt>
+<dd><p>Check if the indexing operation has exceeded the timeout threshold</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexState.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/adapter.html#IndexState.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexState.to_dict" title="Link to this definition"></a></dt>
+<dd><p>Convert the IndexState to a dictionary representation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.IndexState.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">status</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">IndexStatus.UNDEFINED</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">processed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexState.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>status</strong> (<a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus" title="mcp_server_webcrawl.crawlers.base.adapter.IndexStatus"><em>IndexStatus</em></a>) – </p></li>
+<li><p><strong>processed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+<li><p><strong>time_start</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.13)"><em>datetime</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>time_end</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.13)"><em>datetime</em></a><em> | </em><em>None</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.SitesGroup">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SitesGroup</span></span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/adapter.html#SitesGroup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.SitesGroup" title="Link to this definition"></a></dt>
@@ -215,6 +344,19 @@ suitable for a database primary key.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.BaseManager.read_files">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">read_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paths</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/adapter.html#BaseManager.read_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.read_files" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>paths</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>Path</em></a><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)">dict</a>[<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>Path</em></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a> | None]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.BaseManager.read_file_contents">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">read_file_contents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/adapter.html#BaseManager.read_file_contents"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.read_file_contents" title="Link to this definition"></a></dt>
 <dd><p>Read content from text files with better error handling and encoding detection.</p>
@@ -245,17 +387,17 @@ suitable for a database primary key.</p>
 <dd><p>Get database connection for sites in the group, creating if needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>sites_group</strong> – Group of sites to connect to</p></li>
-<li><p><strong>group</strong> (<a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.adapter.SitesGroup" title="mcp_server_webcrawl.crawlers.base.adapter.SitesGroup"><em>SitesGroup</em></a>) – </p></li>
-</ul>
+<dd class="field-odd"><p><strong>group</strong> (<a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.adapter.SitesGroup" title="mcp_server_webcrawl.crawlers.base.adapter.SitesGroup"><em>SitesGroup</em></a>) – Group of sites to connect to</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>SQLite connection to in-memory database with data loaded
-or None if the database is currently being built</p>
+<dd class="field-even"><p><dl class="simple">
+<dt>Tuple of (SQLite connection to in-memory database with data loaded or None if building,</dt><dd><p>IndexState associated with this database)</p>
+</dd>
+</dl>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection" title="(in Python v3.13)"><em>Connection</em></a> | None</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)">tuple</a>[<a class="reference external" href="https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection" title="(in Python v3.13)"><em>Connection</em></a> | None, <a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexState" title="mcp_server_webcrawl.crawlers.base.adapter.IndexState"><em>IndexState</em></a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -348,7 +490,7 @@ done with everything within implementing to_dict.</p>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.api.BaseJsonApi.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/api.html#BaseJsonApi.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.api.BaseJsonApi.__init__" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/api.html#BaseJsonApi.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.api.BaseJsonApi.__init__" title="Link to this definition"></a></dt>
 <dd><p>Construct with the arguments of creation (aoc), these will be echoed back in
 JSON response. This is an object that collapses into json on json dumps. This is
 done with everything within implementing to_dict.</p>
@@ -357,6 +499,7 @@ done with everything within implementing to_dict.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – API method name</p></li>
 <li><p><strong>args</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><em>Any</em></a><em>]</em>) – Dictionary of API arguments</p></li>
+<li><p><strong>index_state</strong> (<a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.adapter.IndexState" title="mcp_server_webcrawl.crawlers.base.adapter.IndexState"><em>IndexState</em></a><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -456,22 +599,45 @@ done with everything within implementing to_dict.</p>
 <p>Base crawler class that implements MCP server functionality.</p>
 <p>This class provides the foundation for specialized crawlers to interact with
 the MCP server and handle tool operations for web resources.</p>
-<p>Initialize the BaseCrawler with a data source.</p>
+<p>Initialize the IndexedCrawler with a data source path and required adapter functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>datasrc</strong> – String path to the database</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>datasrc</strong> – Path to the data source</p></li>
+<li><p><strong>get_sites_func</strong> – Function to retrieve sites from the data source</p></li>
+<li><p><strong>get_resources_func</strong> – Function to retrieve resources from the data source</p></li>
+<li><p><strong>resource_field_mapping</strong> – Mapping of resource field names to display names</p></li>
+</ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasrc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/crawler.html#BaseCrawler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.__init__" title="Link to this definition"></a></dt>
-<dd><p>Initialize the BaseCrawler with a data source.</p>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasrc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_sites_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_resources_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_field_mapping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'content':</span> <span class="pre">'Content',</span> <span class="pre">'headers':</span> <span class="pre">'Headers',</span> <span class="pre">'id':</span> <span class="pre">'Id',</span> <span class="pre">'name':</span> <span class="pre">'Name',</span> <span class="pre">'site':</span> <span class="pre">'Project',</span> <span class="pre">'size':</span> <span class="pre">'Size',</span> <span class="pre">'status':</span> <span class="pre">'Status',</span> <span class="pre">'time':</span> <span class="pre">'Time',</span> <span class="pre">'type':</span> <span class="pre">'Type',</span> <span class="pre">'url':</span> <span class="pre">'Url'}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/crawler.html#BaseCrawler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialize the IndexedCrawler with a data source path and required adapter functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>datasrc</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – String path to the database</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>datasrc</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>Path</em></a>) – Path to the data source</p></li>
+<li><p><strong>get_sites_func</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.13)"><em>Callable</em></a>) – Function to retrieve sites from the data source</p></li>
+<li><p><strong>get_resources_func</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.13)"><em>Callable</em></a>) – Function to retrieve resources from the data source</p></li>
+<li><p><strong>resource_field_mapping</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em>) – Mapping of resource field names to display names</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.datasrc">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">datasrc</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a></em><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.datasrc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.thumbnails">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">thumbnails</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></em><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.thumbnails" title="Link to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.mcp_list_prompts">
@@ -560,36 +726,38 @@ the MCP server and handle tool operations for web resources.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.get_sites_api">
 <span class="sig-name descname"><span class="pre">get_sites_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/crawler.html#BaseCrawler.get_sites_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.get_sites_api" title="Link to this definition"></a></dt>
-<dd><p>Get sites API object.</p>
-<dl class="field-list simple">
+<dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ids</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – Optional list of site IDs</p></li>
-<li><p><strong>fields</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – Optional list of fields to include</p></li>
+<li><p><strong>ids</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>fields</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#NotImplementedError" title="(in Python v3.13)"><strong>NotImplementedError</strong></a> – This method must be implemented by subclasses</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a></p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.api.BaseJsonApi" title="mcp_server_webcrawl.crawlers.base.api.BaseJsonApi"><em>BaseJsonApi</em></a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.get_resources_api">
-<span class="sig-name descname"><span class="pre">get_resources_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">querystring</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/crawler.html#BaseCrawler.get_resources_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.get_resources_api" title="Link to this definition"></a></dt>
-<dd><p>Get resources API object.</p>
-<dl class="field-list simple">
+<span class="sig-name descname"><span class="pre">get_resources_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sites</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">statuses</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/crawler.html#BaseCrawler.get_resources_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.get_resources_api" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>querystring</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Query string for filtering resources</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ids</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>sites</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>query</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p></li>
+<li><p><strong>types</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>fields</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>statuses</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>sort</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>limit</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+<li><p><strong>offset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+</ul>
 </dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#NotImplementedError" title="(in Python v3.13)"><strong>NotImplementedError</strong></a> – This method must be implemented by subclasses</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a></p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.api.BaseJsonApi" title="mcp_server_webcrawl.crawlers.base.api.BaseJsonApi"><em>BaseJsonApi</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -690,26 +858,6 @@ Shares commonality between specialized crawlers.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.indexed.IndexedCrawler.mcp_call_tool">
-<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mcp_call_tool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arguments</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/indexed.html#IndexedCrawler.mcp_call_tool"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.indexed.IndexedCrawler.mcp_call_tool" title="Link to this definition"></a></dt>
-<dd><p>Call a tool with the given name and arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Tool name to call</p></li>
-<li><p><strong>arguments</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><em>Any</em></a><em>] </em><em>| </em><em>None</em>) – Tool arguments</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of content objects</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a>[<em>TextContent</em> | <em>ImageContent</em> | <em>EmbeddedResource</em>]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.indexed.IndexedCrawler.mcp_list_tools">
 <em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mcp_list_tools</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/indexed.html#IndexedCrawler.mcp_list_tools"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.indexed.IndexedCrawler.mcp_list_tools" title="Link to this definition"></a></dt>
 <dd><p>List available tools for this crawler.</p>
@@ -719,54 +867,6 @@ Shares commonality between specialized crawlers.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a>[<em>Tool</em>]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.indexed.IndexedCrawler.get_sites_api">
-<span class="sig-name descname"><span class="pre">get_sites_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/indexed.html#IndexedCrawler.get_sites_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.indexed.IndexedCrawler.get_sites_api" title="Link to this definition"></a></dt>
-<dd><p>Get sites API object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ids</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – Optional list of site IDs</p></li>
-<li><p><strong>fields</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – Optional list of fields to include</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#NotImplementedError" title="(in Python v3.13)"><strong>NotImplementedError</strong></a> – This method must be implemented by subclasses</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.api.BaseJsonApi" title="mcp_server_webcrawl.crawlers.base.api.BaseJsonApi"><em>BaseJsonApi</em></a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.indexed.IndexedCrawler.get_resources_api">
-<span class="sig-name descname"><span class="pre">get_resources_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sites</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">statuses</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/indexed.html#IndexedCrawler.get_resources_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.indexed.IndexedCrawler.get_resources_api" title="Link to this definition"></a></dt>
-<dd><p>Get resources API object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>querystring</strong> – Query string for filtering resources</p></li>
-<li><p><strong>ids</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>sites</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>query</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p></li>
-<li><p><strong>types</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>fields</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>statuses</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>sort</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>limit</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
-<li><p><strong>offset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#NotImplementedError" title="(in Python v3.13)"><strong>NotImplementedError</strong></a> – This method must be implemented by subclasses</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.api.BaseJsonApi" title="mcp_server_webcrawl.crawlers.base.api.BaseJsonApi"><em>BaseJsonApi</em></a></p>
 </dd>
 </dl>
 </dd></dl>

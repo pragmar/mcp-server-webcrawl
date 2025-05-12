@@ -42,6 +42,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
@@ -72,70 +73,103 @@
            <div itemprop="articleBody">
              
   <h1>Source code for mcp_server_webcrawl.crawlers.base.crawler</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">sqlite3</span>
-<span class="kn">import</span> <span class="nn">traceback</span>
+<span></span><span class="kn">import</span> <span class="nn">anyio</span>
 <span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">import</span> <span class="nn">anyio</span>
+<span class="kn">import</span> <span class="nn">sqlite3</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
 
-<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlparse</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Final</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlparse</span>
 
-<span class="kn">from</span> <span class="nn">mcp.types</span> <span class="kn">import</span> <span class="n">TextContent</span><span class="p">,</span> <span class="n">ImageContent</span><span class="p">,</span> <span class="n">EmbeddedResource</span><span class="p">,</span> <span class="n">Tool</span>
-
-<span class="kn">from</span> <span class="nn">mcp.server.models</span> <span class="kn">import</span> <span class="n">InitializationOptions</span>
 <span class="kn">from</span> <span class="nn">mcp.server</span> <span class="kn">import</span> <span class="n">NotificationOptions</span><span class="p">,</span> <span class="n">Server</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">ResourceResult</span><span class="p">,</span> <span class="n">ResourceResultType</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.api</span> <span class="kn">import</span> <span class="n">BaseJsonApi</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">RESOURCES_TOOL_NAME</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="n">SITES_TOOL_NAME</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.blobs</span> <span class="kn">import</span> <span class="n">ThumbnailManager</span>
+<span class="kn">from</span> <span class="nn">mcp.server.models</span> <span class="kn">import</span> <span class="n">InitializationOptions</span>
+<span class="kn">from</span> <span class="nn">mcp.types</span> <span class="kn">import</span> <span class="n">EmbeddedResource</span><span class="p">,</span> <span class="n">ImageContent</span><span class="p">,</span> <span class="n">TextContent</span><span class="p">,</span> <span class="n">Tool</span>
 
-<span class="n">OVERRIDE_ERROR_MESSAGE</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;BaseCrawler subclasses must implement the following </span><span class="se">\</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.api</span> <span class="kn">import</span> <span class="n">BaseJsonApi</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.adapter</span> <span class="kn">import</span> <span class="n">IndexState</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models</span> <span class="kn">import</span> <span class="n">METADATA_VALUE_TYPE</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResourceResult</span><span class="p">,</span>
+    <span class="n">ResourceResultType</span><span class="p">,</span>
+    <span class="n">RESOURCES_DEFAULT_FIELD_MAPPING</span><span class="p">,</span>
+    <span class="n">RESOURCES_TOOL_NAME</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="n">SITES_TOOL_NAME</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.blobs</span> <span class="kn">import</span> <span class="n">ThumbnailManager</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="n">OVERRIDE_ERROR_MESSAGE</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;BaseCrawler subclasses must implement the following </span><span class="se">\</span>
 <span class="s2">methods: handle_list_tools, handle_call_tool, at minimum.&quot;&quot;&quot;</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
+
 
 <div class="viewcode-block" id="BaseCrawler">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler">[docs]</a>
 <span class="k">class</span> <span class="nc">BaseCrawler</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Base crawler class that implements MCP server functionality.</span>
-<span class="sd">    </span>
-<span class="sd">    This class provides the foundation for specialized crawlers to interact with </span>
+
+<span class="sd">    This class provides the foundation for specialized crawlers to interact with</span>
 <span class="sd">    the MCP server and handle tool operations for web resources.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="BaseCrawler.__init__">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasrc</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">get_sites_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">get_resources_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">resource_field_mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">RESOURCES_DEFAULT_FIELD_MAPPING</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Initialize the BaseCrawler with a data source.</span>
-<span class="sd">        </span>
+<span class="sd">        Initialize the IndexedCrawler with a data source path and required adapter functions.</span>
+
 <span class="sd">        Args:</span>
-<span class="sd">            datasrc: String path to the database</span>
+<span class="sd">            datasrc: Path to the data source</span>
+<span class="sd">            get_sites_func: Function to retrieve sites from the data source</span>
+<span class="sd">            get_resources_func: Function to retrieve resources from the data source</span>
+<span class="sd">            resource_field_mapping: Mapping of resource field names to display names</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># avoid circular import</span>
+
         <span class="kn">from</span> <span class="nn">mcp_server_webcrawl</span> <span class="kn">import</span> <span class="vm">__name__</span> <span class="k">as</span> <span class="n">module_name</span><span class="p">,</span> <span class="n">__version__</span> <span class="k">as</span> <span class="n">module_version</span>
+
+        <span class="k">assert</span> <span class="n">datasrc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> needs a datasrc, regardless of action&quot;</span>
+        <span class="k">assert</span> <span class="nb">callable</span><span class="p">(</span><span class="n">get_sites_func</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> requires a callable get_sites_func&quot;</span>
+        <span class="k">assert</span> <span class="nb">callable</span><span class="p">(</span><span class="n">get_resources_func</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> requires a callable get_resources_func&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resource_field_mapping</span><span class="p">,</span> <span class="nb">dict</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> resource_field_mapping must be a dict&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">datasrc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_thumbnails</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_module_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">module_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_module_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">module_version</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">datasrc</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">thumbnails</span> <span class="o">=</span> <span class="kc">False</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">=</span> <span class="n">Server</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module_name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">list_tools</span><span class="p">()(</span><span class="bp">self</span><span class="o">.</span><span class="n">mcp_list_tools</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">call_tool</span><span class="p">()(</span><span class="bp">self</span><span class="o">.</span><span class="n">mcp_call_tool</span><span class="p">)</span>
-        <span class="c1"># untapped features: list_prompts/get_prompt | list_resources/get_resources</span>
-        <span class="c1"># currently focused on tools (search and retrieval)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">list_prompts</span><span class="p">()(</span><span class="bp">self</span><span class="o">.</span><span class="n">mcp_list_prompts</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">list_resources</span><span class="p">()(</span><span class="bp">self</span><span class="o">.</span><span class="n">mcp_list_resources</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">list_resources</span><span class="p">()(</span><span class="bp">self</span><span class="o">.</span><span class="n">mcp_list_resources</span><span class="p">)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_resource_field_mapping</span> <span class="o">=</span> <span class="n">resource_field_mapping</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_adapter_get_sites</span> <span class="o">=</span> <span class="n">get_sites_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_adapter_get_resources</span> <span class="o">=</span> <span class="n">get_resources_func</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">datasrc</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">thumbnails</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thumbnails</span>
 
 <div class="viewcode-block" id="BaseCrawler.mcp_list_prompts">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.mcp_list_prompts">[docs]</a>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">mcp_list_prompts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;List available prompts (currently none).&quot;&quot;&quot;</span>            
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;List available prompts (currently none).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[]</span></div>
 
 
@@ -145,17 +179,17 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;List available resources (currently none).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[]</span></div>
 
-    
+
 <div class="viewcode-block" id="BaseCrawler.serve">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.serve">[docs]</a>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">serve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stdin</span><span class="p">:</span> <span class="n">anyio</span><span class="o">.</span><span class="n">AsyncFile</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">stdout</span><span class="p">:</span> <span class="n">anyio</span><span class="o">.</span><span class="n">AsyncFile</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Launch the awaitable server.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            stdin: Input stream for the server</span>
 <span class="sd">            stdout: Output stream for the server</span>
-<span class="sd">            </span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            The MCP server over stdio</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -169,7 +203,7 @@
     <span class="k">def</span> <span class="nf">get_initialization_options</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InitializationOptions</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the MCP initialization object.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            Dictionary containing project information</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -183,7 +217,7 @@
     <span class="k">def</span> <span class="nf">get_sites_api_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get sites API result as JSON.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            JSON string of sites API results</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -196,7 +230,7 @@
     <span class="k">def</span> <span class="nf">get_resources_api_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get resources API result as JSON.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            JSON string of resources API results</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -206,35 +240,90 @@
 
 <div class="viewcode-block" id="BaseCrawler.get_sites_api">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.get_sites_api">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_sites_api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get sites API object.</span>
-<span class="sd">        </span>
-<span class="sd">        Args:</span>
-<span class="sd">            ids: Optional list of site IDs</span>
-<span class="sd">            fields: Optional list of fields to include</span>
-<span class="sd">            </span>
-<span class="sd">        Raises:</span>
-<span class="sd">            NotImplementedError: This method must be implemented by subclasses</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># each crawler subclass must provide this method</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">OVERRIDE_ERROR_MESSAGE</span><span class="p">)</span></div>
+    <span class="k">def</span> <span class="nf">get_sites_api</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseJsonApi</span><span class="p">:</span>
+        <span class="n">sites</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adapter_get_sites</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="n">fields</span><span class="p">)</span>
+
+        <span class="c1"># sites_args = {k: v for k, v in locals().items() if k != &quot;self&quot;}</span>
+        <span class="n">sites_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;ids&quot;</span><span class="p">:</span> <span class="n">ids</span><span class="p">,</span>
+            <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">fields</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># print(resources_args)</span>
+        <span class="n">json_result</span> <span class="o">=</span> <span class="n">BaseJsonApi</span><span class="p">(</span><span class="s2">&quot;GetProjects&quot;</span><span class="p">,</span> <span class="n">sites_kwargs</span><span class="p">)</span>
+        <span class="n">json_result</span><span class="o">.</span><span class="n">set_results</span><span class="p">(</span><span class="n">sites</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sites</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sites</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">json_result</span></div>
 
 
 <div class="viewcode-block" id="BaseCrawler.get_resources_api">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.get_resources_api">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_resources_api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">querystring</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get resources API object.</span>
-<span class="sd">        </span>
-<span class="sd">        Args:</span>
-<span class="sd">            querystring: Query string for filtering resources</span>
-<span class="sd">            </span>
-<span class="sd">        Raises:</span>
-<span class="sd">            NotImplementedError: This method must be implemented by subclasses</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># each crawler subclass must provide this method</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">OVERRIDE_ERROR_MESSAGE</span><span class="p">)</span></div>
+    <span class="k">def</span> <span class="nf">get_resources_api</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sites</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">statuses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sort</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+        <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseJsonApi</span><span class="p">:</span>
+        <span class="n">resources_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">METADATA_VALUE_TYPE</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;ids&quot;</span><span class="p">:</span> <span class="n">ids</span><span class="p">,</span>
+            <span class="s2">&quot;sites&quot;</span><span class="p">:</span> <span class="n">sites</span><span class="p">,</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="n">query</span><span class="p">,</span>
+            <span class="s2">&quot;types&quot;</span><span class="p">:</span> <span class="n">types</span><span class="p">,</span>
+            <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">fields</span><span class="p">,</span>
+            <span class="s2">&quot;statuses&quot;</span><span class="p">:</span> <span class="n">statuses</span><span class="p">,</span>
+            <span class="s2">&quot;sort&quot;</span><span class="p">:</span> <span class="n">sort</span><span class="p">,</span>
+            <span class="s2">&quot;limit&quot;</span><span class="p">:</span> <span class="n">limit</span><span class="p">,</span>
+            <span class="s2">&quot;offset&quot;</span><span class="p">:</span> <span class="n">offset</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">def</span> <span class="nf">no_results</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">BaseJsonApi</span><span class="p">:</span>
+            <span class="n">api_result</span> <span class="o">=</span> <span class="n">BaseJsonApi</span><span class="p">(</span><span class="s2">&quot;GetResources&quot;</span><span class="p">,</span> <span class="n">resources_kwargs</span><span class="p">,</span> <span class="n">index_state</span><span class="o">=</span><span class="n">IndexState</span><span class="p">())</span>
+            <span class="n">api_result</span><span class="o">.</span><span class="n">set_results</span><span class="p">([],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">api_result</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sites</span><span class="p">:</span>
+            <span class="n">all_sites</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adapter_get_sites</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">all_sites</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">no_results</span><span class="p">()</span>
+            <span class="c1"># set to default of all sites if not specified</span>
+            <span class="n">sites</span> <span class="o">=</span> <span class="p">[</span><span class="n">site</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">all_sites</span><span class="p">]</span>
+
+        <span class="c1"># sometimes the AI gets it in their head this is a good idea</span>
+        <span class="c1"># but they mean no query, it can get tedious</span>
+        <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;&quot;&quot;&#39;</span><span class="p">,</span><span class="s2">&quot;&#39;&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;``&quot;</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">):</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="n">site_matches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adapter_get_sites</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="n">sites</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">site_matches</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">no_results</span><span class="p">()</span>
+
+        <span class="c1"># convert to enums</span>
+        <span class="n">resource_types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_to_resource_types</span><span class="p">(</span><span class="n">types</span><span class="p">)</span>
+        <span class="n">results</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">index_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adapter_get_resources</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">,</span>
+            <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span>
+            <span class="n">sites</span><span class="o">=</span><span class="n">sites</span><span class="p">,</span>
+            <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+            <span class="n">types</span><span class="o">=</span><span class="n">resource_types</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="n">fields</span><span class="p">,</span>
+            <span class="n">statuses</span><span class="o">=</span><span class="n">statuses</span><span class="p">,</span>
+            <span class="n">sort</span><span class="o">=</span><span class="n">sort</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span>
+            <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># TODO: figure out how to get index_state from manager if exists</span>
+        <span class="n">api_result</span> <span class="o">=</span> <span class="n">BaseJsonApi</span><span class="p">(</span><span class="s2">&quot;GetResources&quot;</span><span class="p">,</span> <span class="n">resources_kwargs</span><span class="p">,</span> <span class="n">index_state</span><span class="o">=</span><span class="n">index_state</span><span class="p">)</span>
+        <span class="n">api_result</span><span class="o">.</span><span class="n">set_results</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">api_result</span></div>
 
 
 <div class="viewcode-block" id="BaseCrawler.mcp_list_tools">
@@ -242,10 +331,10 @@
     <span class="k">async</span> <span class="k">def</span> <span class="nf">mcp_list_tools</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tool</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        List available tools.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            List of available tools</span>
-<span class="sd">            </span>
+
 <span class="sd">        Raises:</span>
 <span class="sd">            NotImplementedError: This method must be implemented by subclasses</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -260,14 +349,14 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Handle tool execution requests. You can override this or super(), then tweak.</span>
 <span class="sd">        Basically, it is a passthrough.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            name: Name of the tool to call</span>
 <span class="sd">            arguments: Arguments to pass to the tool</span>
-<span class="sd">            </span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            List of content objects resulting from the tool execution</span>
-<span class="sd">            </span>
+
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If the specified tool does not exist</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -284,15 +373,15 @@
             <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="n">RESOURCES_TOOL_NAME</span><span class="p">:</span>
 
                 <span class="c1"># because this process happens after the normal filtering, it is flagged for later</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">thumbnails</span> <span class="o">=</span> <span class="kc">False</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;thumbnails&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;thumbnails&quot;</span><span class="p">]</span>
-                
+                <span class="bp">self</span><span class="o">.</span><span class="n">_thumbnails</span> <span class="o">=</span> <span class="kc">False</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;thumbnails&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;thumbnails&quot;</span><span class="p">]</span>
+
                 <span class="c1"># regular args pass through to the result</span>
                 <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;query&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;query&quot;</span><span class="p">]</span>
                 <span class="n">ids</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;ids&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;ids&quot;</span><span class="p">]</span>
                 <span class="n">sites</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;sites&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;sites&quot;</span><span class="p">]</span>
                 <span class="n">types</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;types&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;types&quot;</span><span class="p">]</span>
                 <span class="n">fields</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;fields&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;fields&quot;</span><span class="p">]</span>
-                <span class="n">statuses</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;statuses&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;statuses&quot;</span><span class="p">]</span>                
+                <span class="n">statuses</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;statuses&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;statuses&quot;</span><span class="p">]</span>
                 <span class="n">sort</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;sort&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;sort&quot;</span><span class="p">]</span>
                 <span class="n">limit</span> <span class="o">=</span> <span class="mi">20</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;limit&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;limit&quot;</span><span class="p">]</span>
                 <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;offset&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;offset&quot;</span><span class="p">]</span>
@@ -308,13 +397,13 @@
                     <span class="n">offset</span><span class="o">=</span><span class="n">offset</span>
                 <span class="p">)</span>
 
-                <span class="c1"># build mcp response, imagedata is a different content type, and is </span>
+                <span class="c1"># build mcp response, imagedata is a different content type, and is</span>
                 <span class="c1"># collected independent of the archive data</span>
                 <span class="n">results_json</span> <span class="o">=</span> <span class="n">api_result</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
                 <span class="n">mcp_result</span> <span class="o">=</span> <span class="p">[</span><span class="n">TextContent</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">results_json</span><span class="p">)]</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thumbnails</span><span class="p">:</span>                    
-                    <span class="n">crawl_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">]</span> <span class="o">=</span> <span class="n">api_result</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>                    
-                    <span class="n">mcp_result</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_thumbnails</span><span class="p">(</span><span class="n">crawl_results</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>                
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thumbnails</span><span class="p">:</span>
+                    <span class="n">crawl_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">]</span> <span class="o">=</span> <span class="n">api_result</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+                    <span class="n">mcp_result</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_thumbnails</span><span class="p">(</span><span class="n">crawl_results</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
 
                 <span class="k">return</span> <span class="n">mcp_result</span>
             <span class="k">else</span><span class="p">:</span>
@@ -325,13 +414,13 @@
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[</span><span class="n">TextContent</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;mcp_call_tool/exception</span><span class="se">\n</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)]</span></div>
 
-    
+
 <div class="viewcode-block" id="BaseCrawler.get_thumbnails">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.get_thumbnails">[docs]</a>
     <span class="k">def</span> <span class="nf">get_thumbnails</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ImageContent</span><span class="p">]:</span>
-        
+
         <span class="n">thumbnails_result</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ImageContent</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thumbnails</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thumbnails</span><span class="p">:</span>
             <span class="n">image_paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">result</span><span class="o">.</span><span class="n">url</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">url</span> <span class="ow">and</span> <span class="n">result</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">]))</span>
             <span class="n">valid_paths</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">image_paths</span><span class="p">:</span>
@@ -342,7 +431,7 @@
                 <span class="k">elif</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\.(jpg|jpeg|png|gif|bmp|webp)$&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">):</span>
                     <span class="n">clean_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
                     <span class="n">valid_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">clean_path</span><span class="p">)</span>
-            
+
             <span class="k">if</span> <span class="n">valid_paths</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">thumbnail_manager</span> <span class="o">=</span> <span class="n">ThumbnailManager</span><span class="p">()</span>
@@ -357,26 +446,25 @@
                     <span class="c1"># print(thumbnail_data)</span>
                 <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error fetching thumbnails: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        
+
         <span class="k">return</span> <span class="n">thumbnails_result</span></div>
 
-    
-    <span class="k">def</span> <span class="nf">_convert_to_resource_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="p">]]:</span>
+
+    <span class="k">def</span> <span class="nf">_convert_to_resource_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convert string type values to ResourceResultType enums.  Silently ignore invalid type strings.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            types: Optional list of string type values</span>
-<span class="sd">            </span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            Optional list of ResourceResultType enums, or None if no valid types</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">types</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-        
+
         <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="n">rt</span> <span class="k">for</span> <span class="n">rt</span> <span class="ow">in</span> <span class="n">ResourceResultType</span> <span class="k">if</span> <span class="n">rt</span><span class="o">.</span><span class="n">value</span> <span class="ow">in</span> <span class="n">types</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">result</span> <span class="k">if</span> <span class="n">result</span> <span class="k">else</span> <span class="kc">None</span></div>
-
 
 
 </pre></div>

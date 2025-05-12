@@ -1,5 +1,4 @@
 import logging
-
 from pathlib import Path
 from typing import Final
 
@@ -13,23 +12,23 @@ DEFAULT_LOG_LEVEL: Final[int] = logging.NOTSET
 def get_logger_configuration() -> tuple[str, Path, int]:
     """
     Get log name, path, and level (in that order)
-    
+
     Returns:
         tuple[str, Path, int]: A tuple containing name, path, and level
     """
 
-    log_path: Path = DEFAULT_LOG_PATH    
+    log_path: Path = DEFAULT_LOG_PATH
     log_level: int = DEFAULT_LOG_LEVEL
 
     log_level = logging.DEBUG if DEBUG else getattr(settings, "LOG_LEVEL", DEFAULT_LOG_LEVEL)
     log_path = getattr(settings, "LOG_PATH", DEFAULT_LOG_PATH)
-    
+
     return (DEFAULT_LOG_KEY, log_path, log_level)
 
 def get_logger() -> logging.Logger:
     """
     Get logger, usually in order to write to it
-    
+
     Returns:
         Logger: a writable logging object (error/warn/info/debug)
     """
@@ -40,17 +39,17 @@ def get_logger() -> logging.Logger:
 def initialize_logger() -> None:
     """
     Validate and set up logger for writing
-    
+
     Returns:
         None
     """
 
     (log_name, log_path, log_level) = get_logger_configuration()
     if log_level == logging.NOTSET:
-        # don't set up anything, named logging will effectively evaporate 
+        # don't set up anything, named logging will effectively evaporate
         # todo: needs reality check
-        return 
-    
+        return
+
     assert isinstance(log_level, int) and log_level != 0, "LOG_LEVEL must be set"
     assert isinstance(log_path, Path), "LOG_PATH must be a Path object"
     assert isinstance(log_name, str) and log_name.strip() != "", "LOG_NAME must be a non-empty string"
@@ -62,11 +61,11 @@ def initialize_logger() -> None:
     else:
         assert log_path.parent.exists() and log_path.parent.is_dir(), \
             f"Custom parent directory `{log_path.parent}` does not exist or is not a directory"
-    
+
     logging.basicConfig(filename=str(log_path), filemode="w", level=log_level,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S", encoding="utf-8")
-    
+
     logger: logging.Logger = logging.getLogger(log_name)
 
     # just set a few ops back, concurrent logger might not be ready

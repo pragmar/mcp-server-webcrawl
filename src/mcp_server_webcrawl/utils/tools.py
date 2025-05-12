@@ -1,23 +1,20 @@
-
-from typing import Optional
 from mcp.types import Tool
+
 from mcp_server_webcrawl.models.resources import (
     ResourceResultType,
+    RESOURCES_FIELDS_DEFAULT,
     RESOURCES_FIELDS_REQUIRED,
+    RESOURCES_SORT_OPTIONS_DEFAULT,
+    RESOURCES_TOOL_NAME,
 )
 from mcp_server_webcrawl.models.sites import (
-    SiteResult, 
-    SITES_TOOL_NAME, 
+    SiteResult,
     SITES_FIELDS_DEFAULT,
     SITES_FIELDS_REQUIRED,
-)
-from mcp_server_webcrawl.models.resources import (
-    RESOURCES_TOOL_NAME, 
-    RESOURCES_FIELDS_DEFAULT,
-    RESOURCES_SORT_OPTIONS_DEFAULT,
+    SITES_TOOL_NAME,
 )
 
-def get_crawler_tools(sites: Optional[list[SiteResult]] = None):
+def get_crawler_tools(sites: list[SiteResult] | None = None):
     """
     Generate crawler tools based on available sites.
 
@@ -88,9 +85,9 @@ def get_crawler_tools(sites: Optional[list[SiteResult]] = None):
                         "description": ("Fulltext search query string. Leave empty to return all resources when "
                             "filtering on other fields and you will get better precision. "
                             "Extremely useful tips to guide query construction follows. "
-                            "Be explicit—a query MUST use one of these formats: (1) single keyword, (2) quoted phrase: \"keyword1 keyword2\", (3) " 
-                            "explicit AND: keyword1 AND keyword2, (4) explicit OR: keyword1 OR keyword2, or (5) advanced boolean: (keyword1 AND keyword2) " 
-                            "OR (keyword3 NOT keyword4). " 
+                            "Be explicit—a query MUST use one of these formats: (1) single keyword, (2) quoted phrase: \"keyword1 keyword2\", (3) "
+                            "explicit AND: keyword1 AND keyword2, (4) explicit OR: keyword1 OR keyword2, or (5) advanced boolean: (keyword1 AND keyword2) "
+                            "OR (keyword3 NOT keyword4). "
                             "WARNING, space-separated keywords without quotes or operators will not work correctly."
                             "Supports fulltext and boolean operators, syntax and capabilities consistent with "
                             "SQLite FTS5 in boolean mode. Supports AND, OR, NOT operators, quoted phrases, "
@@ -156,7 +153,7 @@ def get_crawler_tools(sites: Optional[list[SiteResult]] = None):
                         "description": ("Support for base64 encoded data for image thumbnails. "
                             "Default is false. This creates small thumbnails that enable basic "
                             "image recognition while keeping token output minimal. Only works for image "
-                            "(""img"") types, which is filterable in types field. Svg format is not " 
+                            "(""img"") types, which is filterable in types field. Svg format is not "
                             "currently supported.")
                     },
                 },
