@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="sphinx/_static/images/mcpswc.svg" alt="MCP Server Webcrawl" width="50%">
+  <img src="sphinx/_static/images/mcpswc.svg" alt="MCP Server Webcrawl" width="60%">
 </p>
 
 <p align="center">
