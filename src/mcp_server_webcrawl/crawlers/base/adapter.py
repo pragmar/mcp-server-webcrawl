@@ -72,12 +72,19 @@ INDEXED_TYPE_MAPPING: Final[dict[str, ResourceResultType]] = {
     ".png": ResourceResultType.IMAGE,
     ".gif": ResourceResultType.IMAGE,
     ".svg": ResourceResultType.IMAGE,
+    ".tif": ResourceResultType.IMAGE,
+    ".tiff": ResourceResultType.IMAGE,
+    ".webp": ResourceResultType.IMAGE,
     ".pdf": ResourceResultType.PDF,
     ".txt": ResourceResultType.TEXT,
     ".xml": ResourceResultType.TEXT,
     ".json": ResourceResultType.TEXT,
     ".doc": ResourceResultType.DOC,
-    ".docx": ResourceResultType.DOC
+    ".docx": ResourceResultType.DOC,
+    ".mov": ResourceResultType.VIDEO,
+    ".mp4": ResourceResultType.VIDEO,
+    ".mp3": ResourceResultType.AUDIO,
+    ".ogg": ResourceResultType.AUDIO,
 }
 
 class IndexStatus(Enum):

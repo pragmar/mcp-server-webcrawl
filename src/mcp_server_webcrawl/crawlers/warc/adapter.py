@@ -69,7 +69,7 @@ class WarcManager(BaseManager):
                 with open(warc_path, "rb") as stream:
                     for record in warcio.ArchiveIterator(stream):
 
-                        if index_state is not None and index_state.has_timed_out():
+                        if index_state is not None and index_state.is_timeout():
                             index_state.set_status(IndexStatus.PARTIAL)
                             if batch_records:
                                 self._execute_batch_insert(connection, cursor, batch_records)
