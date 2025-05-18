@@ -36,7 +36,7 @@ pip install mcp-server-webcrawl
 * Fulltext search support
 * Filter by type, status, and more
 * Multi-crawler compatible
-* ChatGPT support coming soon
+* Supports advanced/boolean and field searching
 
 ## MCP Configuration
 
