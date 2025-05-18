@@ -34,13 +34,10 @@ class InterroBotCrawler(BaseCrawler):
         datasrc: Path,
     ) -> None:
         """
-        Initialize the IndexedCrawler with a data source path and required adapter functions.
+        Initialize the InterroBotCrawler with a data source path and required adapter functions.
 
         Args:
             datasrc: Path to the data source
-            get_sites_func: Function to retrieve sites from the data source
-            get_resources_func: Function to retrieve resources from the data source
-            resource_field_mapping: Mapping of resource field names to display names
         """
         super().__init__(datasrc, get_sites, get_resources, resource_field_mapping=INTERROBOT_RESOURCE_FIELD_MAPPING)
         assert datasrc.is_file() and datasrc.suffix == ".db", f"{self.__class__.__name__} datasrc must be a db file"
@@ -75,7 +72,7 @@ class InterroBotCrawler(BaseCrawler):
 
         drt_props: dict = default_resources_tool.inputSchema["properties"]
         drt_props["fields"]["items"]["enum"] = resources_field_options
-        drt_props["types"]["items"]["enum"] = resources_type_options
+        # drt_props["types"]["items"]["enum"] = resources_type_options
         drt_props["sort"]["enum"] = resources_sort_options
         drt_props["sites"]["enum"] = sites_field_options
         drt_props["sites"]["description"] = ("Optional "

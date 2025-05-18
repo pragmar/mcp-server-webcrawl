@@ -18,7 +18,7 @@ class WarcCrawler(IndexedCrawler):
         Supported file types: .txt, .warc, and .warc.gz
 
         Args:
-            datasrc: The input argument as Path, must be a directory containing WARC files
+            datasrc: the input argument as Path, must be a directory containing WARC files
 
 
         Raises:

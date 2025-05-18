@@ -1,8 +1,9 @@
 from datetime import datetime
 from typing import Final
+from pathlib import Path
 
 from mcp_server_webcrawl.models import METADATA_VALUE_TYPE
-from mcp_server_webcrawl.utils import isoformat_zulu
+from mcp_server_webcrawl.utils import to_isoformat_zulu
 
 SITES_TOOL_NAME: Final[str] = "webcrawl_sites"
 SITES_FIELDS_REQUIRED: Final[list[str]] = ["id", "url"]
@@ -17,6 +18,7 @@ class SiteResult:
         self,
         id: int,
         url: str | None = None,
+        path: Path = None,
         created: datetime | None = None,
         modified: datetime | None = None,
         robots: str | None = None,
@@ -26,15 +28,17 @@ class SiteResult:
         Initialize a SiteResult instance.
 
         Args:
-            id: Site identifier
-            url: Site URL
-            created: Creation timestamp
-            modified: Last modification timestamp
-            robots: Robots.txt content
-            metadata: Additional metadata for the site
+            id: site identifier
+            url: site URL
+            path: path to site data, different from datasrc
+            created: creation timestamp
+            modified: last modification timestamp
+            robots: robots.txt content
+            metadata: additional metadata for the site
         """
         self.id = id
         self.url = url
+        self.path = path
         self.created = created
         self.modified = modified
         self.robots = robots
@@ -47,8 +51,8 @@ class SiteResult:
         result: dict[str, METADATA_VALUE_TYPE] = {
             "id": self.id,
             "url": self.url,
-            "created": isoformat_zulu(self.created) if self.created else None,
-            "modified": isoformat_zulu(self.modified) if self.modified else None,
+            "created": to_isoformat_zulu(self.created) if self.created else None,
+            "modified": to_isoformat_zulu(self.modified) if self.modified else None,
             "robots": self.robots,
             "metadata": self.metadata if self.metadata else None,
         }
@@ -63,7 +67,7 @@ class SiteResult:
         and ensuring all fields in the forcefields list exist, even if null.
 
         Args:
-            forcefields: List of field names that must appear in the output dictionary
+            forcefields: list of field names that must appear in the output dictionary
                 with at least a None value
 
         Returns:

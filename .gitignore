@@ -30,5 +30,8 @@ sphinx/_static/images/generated/
 
 **/__pycache__/
 .coverage
+parser.out
 htmlcov/
 soho.nascom.nasa.com/
+*.7z
+*.diff

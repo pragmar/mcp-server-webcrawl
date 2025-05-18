@@ -1,8 +1,12 @@
+from logging import Logger
 from mcp_server_webcrawl.crawlers.katana.crawler import KatanaCrawler
 from mcp_server_webcrawl.crawlers.katana.adapter import KatanaManager
 from mcp_server_webcrawl.models.resources import ResourceResultType
 from mcp_server_webcrawl.crawlers.base.tests import BaseCrawlerTests
 from mcp_server_webcrawl.crawlers import get_fixture_directory
+from mcp_server_webcrawl.utils.logger import get_logger
+
+logger: Logger = get_logger()
 
 # calculate ids for test directories using the same hash function as adapter
 EXAMPLE_SITE_ID = KatanaManager.string_to_id("example.com")
@@ -82,7 +86,7 @@ class KatanaTests(BaseCrawlerTests):
             first_resource = resources_json._results[0]
             id_resources = crawler.get_resources_api(
                 sites=[first_resource.site],
-                ids=[first_resource.id]
+                query=f"id: {first_resource.id}",
             )
             self.assertEqual(id_resources.total, 1)
             self.assertEqual(id_resources._results[0].id, first_resource.id)
@@ -96,7 +100,7 @@ class KatanaTests(BaseCrawlerTests):
         # type filtering for HTML pages
         html_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE.value]
+            query= f"type: {ResourceResultType.PAGE.value}",
         )
         self.assertTrue(html_resources.total > 0, "HTML filtering should return results")
         for resource in html_resources._results:
@@ -105,7 +109,8 @@ class KatanaTests(BaseCrawlerTests):
         # type filtering for multiple resource types
         mixed_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE.value, ResourceResultType.SCRIPT.value]
+            query= f"type: {ResourceResultType.PAGE.value} OR type: {ResourceResultType.SCRIPT.value}",
+            # types=[ResourceResultType.PAGE.value, ResourceResultType.SCRIPT.value]
         )
         if mixed_resources.total > 0:
             types_found = {r.type for r in mixed_resources._results}
@@ -130,21 +135,17 @@ class KatanaTests(BaseCrawlerTests):
         for field in custom_fields:
             self.assertIn(field, resource_dict, f"Field '{field}' should be in response")
 
-        # URL sorting (ascending)
         asc_resources = crawler.get_resources_api(sites=[PRAGMAR_SITE_ID], sort="+url")
         if asc_resources.total > 1:
             self.assertTrue(asc_resources._results[0].url <= asc_resources._results[1].url)
 
-        # URL sorting (descending)
         desc_resources = crawler.get_resources_api(sites=[PRAGMAR_SITE_ID], sort="-url")
         if desc_resources.total > 1:
             self.assertTrue(desc_resources._results[0].url >= desc_resources._results[1].url)
 
-        # pagination (limit)
         limit_resources = crawler.get_resources_api(sites=[PRAGMAR_SITE_ID], limit=3)
         self.assertTrue(len(limit_resources._results) <= 3)
 
-        # pagination (offset)
         offset_resources = crawler.get_resources_api(sites=[PRAGMAR_SITE_ID], offset=2, limit=2)
         self.assertTrue(len(offset_resources._results) <= 2)
         if resources_json.total > 4:
@@ -155,13 +156,28 @@ class KatanaTests(BaseCrawlerTests):
             )
 
         # status code filtering
-        status_resources = crawler.get_resources_api(sites=[PRAGMAR_SITE_ID], statuses=[200])
+        status_resources = crawler.get_resources_api(
+            sites=[PRAGMAR_SITE_ID],
+            query=f"status: 200",
+        )
         self.assertTrue(status_resources.total > 0, "Status filtering should return results")
         for resource in status_resources._results:
             self.assertEqual(resource.status, 200)
 
+
+        # status code filtering
+        appstat_resources = crawler.get_resources_api(
+            sites=[PRAGMAR_SITE_ID],
+            query=f"url: https://pragmar.com/appstat*",
+        )
+        self.assertTrue(appstat_resources.total > 0, "Status filtering should return results")
+
+        self.assertEqual(len(appstat_resources._results), 3, "Unexpected page count")
+
         # multiple status codes
-        multi_status_resources = crawler.get_resources_api(statuses=[200, 404])
+        multi_status_resources = crawler.get_resources_api(
+            query=f"status: 200 OR status: 404",
+        )
         if multi_status_resources.total > 0:
             found_statuses = {r.status for r in multi_status_resources._results}
             for status in found_statuses:
@@ -170,8 +186,7 @@ class KatanaTests(BaseCrawlerTests):
         # combined filtering
         combined_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            query="style",
-            types=[ResourceResultType.PAGE.value],
+            query= f"style AND type: {ResourceResultType.PAGE.value}",
             fields=["content", "headers"],
             sort="+url",
             limit=3
@@ -188,7 +203,7 @@ class KatanaTests(BaseCrawlerTests):
         # multi-site search
         multisite_resources = crawler.get_resources_api(
             sites=[EXAMPLE_SITE_ID, PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE.value],
+            query= f"type: {ResourceResultType.PAGE.value}",
             sort="+url",
             limit=100
         )
@@ -235,7 +250,7 @@ class KatanaTests(BaseCrawlerTests):
                 f"Random sort should produce different order than standard sort.\nStandard: {random1_ids}\nRandom: {random2_ids}"
             )
         else:
-            print(f"Skip randomness verification: Not enough resources ({random2_resources.total})")
+            logger.info(f"Skip randomness verification: Not enough resources ({random2_resources.total})")
 
     def test_katana_content_parsing(self):
         """
@@ -246,9 +261,10 @@ class KatanaTests(BaseCrawlerTests):
         # HTML content detection
         html_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE.value],
+            query= f"type: {ResourceResultType.PAGE.value}",
             fields=["content", "headers"]
         )
+        # print(html_resources.to_dict())
         self.assertTrue(html_resources.total > 0, "Should find HTML resources")
         for resource in html_resources._results:
             resource_dict = resource.to_dict()
@@ -268,7 +284,7 @@ class KatanaTests(BaseCrawlerTests):
         # script content detection
         script_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.SCRIPT.value],
+            query= f"type: {ResourceResultType.SCRIPT.value}",
             fields=["content", "headers"]
         )
         if script_resources.total > 0:
@@ -278,7 +294,7 @@ class KatanaTests(BaseCrawlerTests):
         # css content detection
         css_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.CSS.value],
+            query= f"type: {ResourceResultType.CSS.value}",
             fields=["content", "headers"]
         )
         if css_resources.total > 0:

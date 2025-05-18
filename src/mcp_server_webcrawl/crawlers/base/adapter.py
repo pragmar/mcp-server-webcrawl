@@ -3,19 +3,29 @@ import hashlib
 import mimetypes
 import re
 import sqlite3
+import traceback
 
+from contextlib import closing
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import closing, contextmanager
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from dataclasses import dataclass
 from datetime import timezone
 from typing import Final
+from mcp_server_webcrawl.models.resources import (
+    ResourceResult,
+    ResourceResultType,
+    RESOURCES_DEFAULT_FIELD_MAPPING,
+    RESOURCES_FIELDS_REQUIRED,
+    RESOURCES_LIMIT_DEFAULT,
+    RESOURCES_LIMIT_MAX,
+)
 
-from mcp_server_webcrawl.models.resources import ResourceResultType
-from mcp_server_webcrawl.utils import isoformat_zulu
+from mcp_server_webcrawl.utils import to_isoformat_zulu
+from mcp_server_webcrawl.utils.search import SearchQueryParser, SearchSubquery
 from mcp_server_webcrawl.utils.logger import get_logger
+
 
 logger = get_logger()
 
@@ -47,14 +57,14 @@ INDEXED_MAX_PROCESS_TIME: Final[timedelta] = timedelta(minutes=10)
 
 # maximum indexes held in cache, an index is a unique list[site-ids] argument
 INDEXED_MANAGER_CACHE_MAX: Final[int] = 20
-
+INDEXED_IGNORE_DIRECTORIES: Final[list[str]] = ["http-client-cache", "result-storage"]
 INDEXED_SORT_MAPPING: Final[dict[str, tuple[str, str]]] = {
-    "+id": ("Id", "ASC"),
-    "-id": ("Id", "DESC"),
-    "+url": ("Url", "ASC"),
-    "-url": ("Url", "DESC"),
-    "+status": ("Status", "ASC"),
-    "-status": ("Status", "DESC"),
+    "+id": ("Resources.Id", "ASC"),
+    "-id": ("Resources.Id", "DESC"),
+    "+url": ("ResourcesFullText.Url", "ASC"),
+    "-url": ("ResourcesFullText.Url", "DESC"),
+    "+status": ("Resources.Status", "ASC"),
+    "-status": ("Resources.Status", "DESC"),
     "?": ("Id", "RANDOM")
 }
 
@@ -75,6 +85,7 @@ INDEXED_TYPE_MAPPING: Final[dict[str, ResourceResultType]] = {
     ".tif": ResourceResultType.IMAGE,
     ".tiff": ResourceResultType.IMAGE,
     ".webp": ResourceResultType.IMAGE,
+    ".bmp": ResourceResultType.IMAGE,
     ".pdf": ResourceResultType.PDF,
     ".txt": ResourceResultType.TEXT,
     ".xml": ResourceResultType.TEXT,
@@ -133,7 +144,7 @@ class IndexState:
         seconds = int(total_seconds % 60)
         milliseconds = int((total_seconds % 1) * 1000)
 
-        # Format as HH:MM:SS.mmm
+        # HH:MM:SS.mmm
         return f"{hours:02d}:{minutes:02d}:{seconds:02d}.{milliseconds:03d}"
 
     def is_timeout(self) -> bool:
@@ -148,24 +159,25 @@ class IndexState:
         result = { "status": status }
         if self.status not in (IndexStatus.REMOTE, IndexStatus.UNDEFINED):
             result["processed"] = self.processed
-            result["time_start"] = isoformat_zulu(self.time_start) if self.time_start else None
-            result["time_end"] = isoformat_zulu(self.time_end) if self.time_end else None
+            result["time_start"] = to_isoformat_zulu(self.time_start) if self.time_start else None
+            result["time_end"] = to_isoformat_zulu(self.time_end) if self.time_end else None
             result["duration"] = self.duration
         return result
 
 
-
-
 class SitesGroup:
-    def __init__(self, site_ids: list[int], site_paths: list[Path]) -> None:
+    def __init__(self, datasrc: Path, site_ids: list[int], site_paths: list[Path]) -> None:
         """
-        Simple container class supports many sites being searched at once.
+        Container class supports the searching of one or more sites at once.
 
         Args:
+            datasrc: site datasrc
             site_ids: site ids of the sites
             site_paths: paths to site contents (directories)
 
         """
+
+        self.datasrc: Path = datasrc
         self.ids: list[int] = site_ids
         self.paths: list[Path] = site_paths
         self.cache_key = frozenset(map(str, site_ids))
@@ -193,25 +205,8 @@ class BaseManager:
     """
 
     def __init__(self) -> None:
-        """Initialize the manager with empty cache and statistics."""
-        self._db_cache: dict[frozenset, tuple[sqlite3.Connection, IndexState]] = {}
+        """Initialize the manager with statistics."""
         self._stats: list[SitesStat] = []
-        # dictionary to track which database builds are in progress
-        self._build_locks: dict[frozenset, tuple[datetime, str]] = {}
-
-    @contextmanager
-    def _building_lock(self, group: SitesGroup):
-        """Context manager for database building operations.
-           Sets a lock during database building and releases it when done."""
-        try:
-            self._build_locks[group.cache_key] = (datetime.now(), "building")
-            yield
-        except Exception as e:
-            self._build_locks[group.cache_key] = (self._build_locks[group.cache_key][0], f"failed: {str(e)}")
-            raise # re-raise
-        finally:
-            # clean up the lock
-            self._build_locks.pop(group.cache_key, None)
 
     @staticmethod
     def string_to_id(value: str) -> int:
@@ -227,7 +222,7 @@ class BaseManager:
         - The big problem with larger hashspaces is the length of the ids they generate for presentation.
 
         Args:
-            dirname: Input string to convert to an ID
+            value: Input string to convert to an ID
 
         Returns:
             Integer ID derived from the input string
@@ -320,7 +315,7 @@ class BaseManager:
         return content
 
     @staticmethod
-    def decruft_path(path:str) -> list[str]:
+    def decruft_path(path:str) -> str:
         """
         Very light touch cleanup of wget file naming, these tmps are creating noise
         """
@@ -329,83 +324,181 @@ class BaseManager:
         decruftified = re.sub(r"[\u00b7·]?\d+\.tmp|\d{12}|\.tmp", "", decruftified)
         return decruftified
 
-    def get_connection(self, group: SitesGroup) -> tuple[sqlite3.Connection | None, IndexState]:
-        """
-        Get database connection for sites in the group, creating if needed.
-
-        Args:
-            group: Group of sites to connect to
-
-        Returns:
-            Tuple of (SQLite connection to in-memory database with data loaded or None if building,
-                     IndexState associated with this database)
-        """
-        if group.cache_key in self._build_locks:
-            build_time, status = self._build_locks[group.cache_key]
-            get_logger().info(f"Database for {group} is currently {status} (started at {build_time})")
-            return None, IndexState()  # Return empty IndexState for building databases
-
-        if len(self._db_cache) >= INDEXED_MANAGER_CACHE_MAX:
-            self._db_cache.clear()
-
-        is_cached: bool = group.cache_key in self._db_cache
-        self._stats.append(SitesStat(group, is_cached))
-
-        if not is_cached:
-            # Create fresh IndexState for this new database
-            index_state = IndexState()
-            index_state.set_status(IndexStatus.INDEXING)
-
-            # use the context manager to handle the building lock
-            with self._building_lock(group):
-                connection: sqlite3.Connection = sqlite3.connect(":memory:", check_same_thread=False)
-                self._setup_database(connection)
-
-                for site_id, site_path in group.get_sites().items():
-                    self._load_site_data(connection, Path(site_path), site_id, index_state=index_state)
-                    if index_state.is_timeout():
-                        index_state.set_status(IndexStatus.PARTIAL)
-                        break
-
-                if index_state is not None and index_state.status == IndexStatus.INDEXING:
-                    index_state.set_status(IndexStatus.COMPLETE)
-
-                # Cache both connection and its IndexState
-                self._db_cache[group.cache_key] = (connection, index_state)
-
-        # Return cached or newly created connection with its IndexState
-        connection, index_state = self._db_cache[group.cache_key]
-        return connection, index_state
-
     def get_stats(self) -> list[SitesStat]:
         return self._stats.copy()
 
-    def _setup_database(self, connection: sqlite3.Connection) -> None:
+
+    def get_resources_for_sites_group(
+        self,
+        sites_group: SitesGroup,
+        query: str,
+        fields: list[str] | None,
+        sort: str | None,
+        limit: int,
+        offset: int,
+        swap_values: dict = {}
+    ) -> tuple[list[ResourceResult], int, IndexState]:
         """
-        Create the database schema for storing resource data.
+        Get resources from directories using structured query parsing with SearchQueryParser.
+
+        This method extracts types, fields, and statuses from the querystring instead of
+        accepting them as separate arguments, using the new SearchSubquery functionality.
 
         Args:
-            connection: SQLite connection to set up
+            sites_group: Group of sites to search in
+            query: Search query string that can include field:value syntax for filtering
+            fields: resource fields to be returned by the API (Content, Headers, etc.)
+            sort: Sort order for results
+            limit: Maximum number of results to return
+            offset: Number of results to skip for pagination
+            swap_values: per-field parameterized values to check for (and replace)
+
+        Returns:
+            Tuple of (list of ResourceResult objects, total count, connection_index_state)
+
+        Notes:
+            Returns empty results if sites is empty or not provided.
+            If the database is being built, it will log a message and return empty results.
+
+            This method extracts field-specific filters from the query string using SearchQueryParser:
+            - type:html (to filter by resource type)
+            - status:200 (to filter by HTTP status)
+            Any fields present in the SearchSubquery will be included in the response.
         """
-        with closing(connection.cursor()) as cursor:
-            connection.execute("PRAGMA encoding = \"UTF-8\"")
-            connection.execute("PRAGMA synchronous = OFF")
-            connection.execute("PRAGMA journal_mode = MEMORY")
-            cursor.execute("""
-                CREATE VIRTUAL TABLE ResourcesFullText USING fts5(
-                    Id,
-                    Project,
-                    Url,
-                    Type,
-                    Status,
-                    Name,
-                    Size,
-                    Time,
-                    Headers,
-                    Content,
-                    tokenize='unicode61 remove_diacritics 0'
-                )
-            """)
+
+        # get_connection must be defined in subclass
+        assert hasattr(self, "get_connection"), "get_connection not found"
+
+        null_result: tuple[list[ResourceResult], int, IndexState | None] = [], 0, None
+
+        # get sites arg from group
+        sites: list[int] = sites_group.ids
+
+        if not sites or not sites_group or len(sites) == 0:
+            return null_result
+
+        connection: sqlite3.Connection
+        connection_index_state: IndexState
+        connection, connection_index_state = self.get_connection(sites_group)
+
+        if connection is None:
+            # database is currently being built
+            logger.info(f"Database for sites {sites} is currently being built, try again later")
+            return null_result
+
+        parser = SearchQueryParser()
+        parsed_query = []
+
+        if query.strip():
+            try:
+                parsed_query = parser.parse(query.strip())
+            except Exception as e:
+                logger.error(f"Error parsing query: {e}")
+                # fall back to simple text search
+                parsed_query = []
+
+        # determine fields to be retrieved
+        selected_fields: set[str] = set(RESOURCES_FIELDS_REQUIRED)
+        if fields:
+            selected_fields.update(f for f in fields if f in RESOURCES_DEFAULT_FIELD_MAPPING)
+        safe_sql_fields = [RESOURCES_DEFAULT_FIELD_MAPPING[f] for f in selected_fields]
+        assert all(re.match(r'^[A-Za-z\.]+$', field) for field in safe_sql_fields), "Unknown or unsafe field requested"
+        safe_sql_fields_joined: str = ", ".join(safe_sql_fields)
+        from_clause = "ResourcesFullText LEFT JOIN Resources ON ResourcesFullText.Id = Resources.Id"
+        where_clauses: list[str] = []
+        params: dict[str, int | str] = {}
+
+        if sites:
+            placeholders: list[str] = [f":sites{i}" for i in range(len(sites))]
+            where_clauses.append(f"ResourcesFullText.Project IN ({','.join(placeholders)})")
+            params.update({f"sites{i}": id_val for i, id_val in enumerate(sites)})
+
+        if parsed_query:
+            fts_parts, fts_params = parser.to_sqlite_fts(parsed_query, swap_values)
+            if fts_parts:
+                fts_where = ""
+                for i, part in enumerate(fts_parts):
+                    if part in ["AND", "OR", "NOT"]:    # operator
+                        fts_where += f" {part} "
+                    else:                               # condition
+                        fts_where += part
+                # fts subquery as a single condition in parentheses
+                if fts_where:
+                    where_clauses.append(f"({fts_where})")
+                    for param_name, param_value in fts_params.items():
+                        params[param_name] = param_value
+
+        where_clause: str = f" WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+
+        if sort in INDEXED_SORT_MAPPING:
+            field, direction = INDEXED_SORT_MAPPING[sort]
+            if direction == "RANDOM":
+                order_clause: str = " ORDER BY RANDOM()"
+            else:
+                order_clause = f" ORDER BY {field} {direction}"
+        else:
+            order_clause = " ORDER BY Resources.Id ASC"
+
+        limit = min(max(1, limit), RESOURCES_LIMIT_MAX)
+        limit_clause: str = f" LIMIT {limit} OFFSET {offset}"
+        statement: str = f"SELECT {safe_sql_fields_joined} FROM {from_clause}{where_clause}{order_clause}{limit_clause}"
+        results: list[ResourceResult] = []
+        total_count: int = 0
+
+        try:
+            with closing(connection.cursor()) as cursor:
+                cursor.execute(statement, params)
+                rows = cursor.fetchall()
+
+                if rows:
+                    column_names = [description[0].lower() for description in cursor.description]
+                    for row in rows:
+                        row_dict = {column_names[i]: row[i] for i in range(len(column_names))}
+                        type_value = row_dict.get("type", "")
+                        resource_type = ResourceResultType.UNDEFINED
+
+                        # map the type string back to enum
+                        for rt in ResourceResultType:
+                            if rt.value == type_value:
+                                resource_type = rt
+                                break
+
+                        # also accept InterroBot ints
+                        if resource_type == ResourceResultType.UNDEFINED and isinstance(type_value, int):
+                            enum_members = list(ResourceResultType)
+                            if 0 <= type_value < len(enum_members):
+                                resource_type = enum_members[type_value]
+
+                        result = ResourceResult(
+                            id=row_dict.get("id"),
+                            site=row_dict.get("project"),
+                            url=row_dict.get("url", ""),
+                            type=resource_type,
+                            name=row_dict.get("name"),
+                            headers=row_dict.get("headers"),
+                            content=row_dict.get("content") if "content" in selected_fields else None,
+                            status=row_dict.get("status"),
+                            size=row_dict.get("size"),
+                            time=row_dict.get("time"),
+                            metadata=None,
+                        )
+
+                        results.append(result)
+
+                # get total count
+                if len(results) < limit:
+                    total_count = offset + len(results)
+                else:
+                    count_statement = f"SELECT COUNT(*) as total FROM {from_clause}{where_clause}"
+                    cursor.execute(count_statement, params)
+                    count_row = cursor.fetchone()
+                    total_count = count_row[0] if count_row else 0
+
+        except sqlite3.Error as ex:
+            logger.error(f"SQLite error in structured query: {ex}\n{statement}\n{traceback.format_exc()}")
+            return null_result
+
+        return results, total_count, connection_index_state
 
     def _load_site_data(self, connection: sqlite3.Connection, site_path: Path,
             site_id: int, index_state: IndexState = None) -> None:

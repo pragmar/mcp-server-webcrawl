@@ -4,8 +4,8 @@ from mcp_server_webcrawl.models.resources import ResourceResultType
 from mcp_server_webcrawl.crawlers.base.tests import BaseCrawlerTests
 from mcp_server_webcrawl.crawlers import get_fixture_directory
 
-EXAMPLE_WARC_ID: int = WarcManager.string_to_id("example.com.warc.txt") # 757558045
-PRAGMAR_WARC_ID: int =  WarcManager.string_to_id("pragmar.com.warc.txt") # 630459203
+EXAMPLE_WARC_ID: int = WarcManager.string_to_id("example.com.warc.txt")
+PRAGMAR_WARC_ID: int =  WarcManager.string_to_id("pragmar.com.warc.txt") # 50126081961606
 
 class WarcTests(BaseCrawlerTests):
     """
@@ -68,7 +68,10 @@ class WarcTests(BaseCrawlerTests):
         # retrieving resources by specific ids
         if resources_json.total > 0:
             first_id = resources_json._results[0].id
-            id_resources = crawler.get_resources_api(sites=[PRAGMAR_WARC_ID], ids=[first_id])
+            id_resources = crawler.get_resources_api(
+                sites=[PRAGMAR_WARC_ID],
+                query=f"id: {first_id}",
+            )
             self.assertEqual(id_resources.total, 1)
             self.assertEqual(id_resources._results[0].id, first_id)
 
@@ -81,7 +84,7 @@ class WarcTests(BaseCrawlerTests):
         # type filtering for HTML pages
         html_resources = crawler.get_resources_api(
             sites=[PRAGMAR_WARC_ID],
-            types=[ResourceResultType.PAGE.value]
+            query=f"type: {ResourceResultType.PAGE.value}"
         )
         self.assertTrue(html_resources.total > 0, "HTML filtering should return results")
         for resource in html_resources._results:
@@ -117,17 +120,18 @@ class WarcTests(BaseCrawlerTests):
             )
 
         # single field filtering
-        status_resources = crawler.get_resources_api(sites=[PRAGMAR_WARC_ID], statuses=[200])
+        status_resources = crawler.get_resources_api(
+            sites=[PRAGMAR_WARC_ID],
+            query="status: 200"
+        )
         self.assertTrue(status_resources.total > 0, "Status filtering should return results")
         for resource in status_resources._results:
-            # everything in fts5 for speed, status not native int
-            self.assertEqual(resource.status, "200")
+            self.assertEqual(resource.status, 200)
 
         # combined filtering
         combined_resources = crawler.get_resources_api(
             sites=[PRAGMAR_WARC_ID],
-            query="privacy",
-            types=[ResourceResultType.PAGE.value],
+            query=f"privacy AND type: {ResourceResultType.PAGE.value}",
             fields=["content", "headers"],
             sort="+url",
             limit=3
@@ -144,7 +148,7 @@ class WarcTests(BaseCrawlerTests):
         # multisite
         multisite_resources = crawler.get_resources_api(
             sites=[EXAMPLE_WARC_ID, PRAGMAR_WARC_ID],
-            types=[ResourceResultType.PAGE.value],
+            query=f"type: {ResourceResultType.PAGE.value}",
             sort="+url",
             limit=100
         )

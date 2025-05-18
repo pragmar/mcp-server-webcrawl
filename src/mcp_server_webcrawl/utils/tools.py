@@ -18,8 +18,8 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
     """
     Generate crawler tools based on available sites.
 
-    Parameters:
-        sites: Optional list of site results to include in tool descriptions
+    Args:
+        sites: optional list of site results to include in tool descriptions
 
     Returns:
         List of Tool objects for sites and resources
@@ -63,18 +63,15 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
         ),
         Tool(
             name=RESOURCES_TOOL_NAME,
-            description= ("Searches for resources (webpages, images, CSS, JS, etc.) across projects and retrieves specified fields. "
-                "Invaluable tips to guide efficient search follows. "
-                "To find a site homepage or index, use sort='+id' with types=['html'] and the appropriate site ID. "
-                "Most sites indexed by this tool will be small to moderately sized websites, "
-                "don't assume most keywords will generate results. "
-                "When searching a new topic, it is generally best to start with just a site "
-                "(all resources, lay of the land), a site and a search query, "
-                "or by site and filters—combine query and filters once you have a result set to refine. "
-                "This becomes less true as you search more, acquiring a lay of the land and ability to anticipate results. "
-                "If you need to separate internal from external pages, you can query the site index URL with a wildcard (*), e.g. "
-                "https://example.com/*. A vital aspect of this API is field control, you should open up the limit wide when dealing with thin "
-                "fields (string length) and dial way back when using larger fields, like content. Adjust dynamically, the best strategy "
+            description= ("Searches for resources (webpages, images, CSS, JS, etc.) across web crawler projects and "
+                "retrieves specified fields. "
+                "Supports boolean queries and field searching, along with site filtering to "
+                "filter with fine control. "
+                "To find a site homepage or index of a site, query type: html with sort='+modified' and a limit of 1. "
+                "Most sites indexed by this tool will be small to moderately sized websites. "
+                "Don't assume most keywords will generate results; start broader on first search (until you have a feel for results). "
+                "A vital aspect of this API is field control; you can open up the limit wide when dealing with lightweight "
+                "fields and dial way back when using larger fields, like content. Adjust dynamically. The best strategy "
                 "balances preserving the user's context window while minimizing number of queries necessary to answer their question."
             ),
             inputSchema={
@@ -82,25 +79,23 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": ("Fulltext search query string. Leave empty to return all resources when "
-                            "filtering on other fields and you will get better precision. "
-                            "Extremely useful tips to guide query construction follows. "
-                            "Be explicit—a query MUST use one of these formats: (1) single keyword, (2) quoted phrase: \"keyword1 keyword2\", (3) "
-                            "explicit AND: keyword1 AND keyword2, (4) explicit OR: keyword1 OR keyword2, or (5) advanced boolean: (keyword1 AND keyword2) "
-                            "OR (keyword3 NOT keyword4). "
-                            "WARNING, space-separated keywords without quotes or operators will not work correctly."
-                            "Supports fulltext and boolean operators, syntax and capabilities consistent with "
-                            "SQLite FTS5 in boolean mode. Supports AND, OR, NOT operators, quoted phrases, "
-                            "and suffix wildcards (word*), but not prefix wildcards (*word). "
-                            "Parentheses nesting for complex boolean expressions is fully supported. "
-                            "Does not support `field: value` format, it will poison the query, cause zero results—use filters instead. "
-                            "Does not support stemming, use wildcards (keyword*) instead."
+                        "description": ("The query field is the workhorse of the API and supports fulltext boolean queries "
+                            "along with field searching using the name: value pattern. "
+                            "Fields supported include page/resource id as id: <resource_id|int> (OR together for multiple docs), "
+                            "HTTP status as status: <code|int>, URL as url: <url|str>, and content type as type: <type|str>. "
+                            f"Valid types include ({', '.join(resources_type_options)}). "
+                            "Additionally, headers as headers: <term|str> and content as content: <term|str> can be "
+                            "searched specifically. You would only search content when fulltext search is diluted by other field hits. "
+                            "For the status field, numerical operators are supported, e.g. status: >=400. "
+                            "For the url and type fields, along with fulltext search terms (fieldless), FTS5 stem* suffix "
+                            "wildcarding is enabled. An empty query returns all results. "
+                            "A query MUST use one of these formats: (1) empty query for unfiltered results, (2) single keyword, "
+                            "(3) quoted phrase: \"keyword1 keyword2\", (4) "
+                            "explicit AND: keyword1 AND type: html, (5) explicit OR: keyword1 OR keyword2, or (6) advanced boolean: "
+                            "(keyword1 OR keyword2) AND (status: 200 AND type: html). "
+                            "The search index does not support stemming, use wildcards (keyword*), or the boolean OR and your "
+                            "imagination instead."
                         )
-                    },
-                    "ids": {
-                        "type": "array",
-                        "items": {"type": "integer"},
-                        "description": ("Optional list of resource IDs to retrieve specific resources directly.")
                     },
                     "sites": {
                         "type": "array",
@@ -108,14 +103,6 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                         "description": ("Optional list of project ID to filter search results to a specific site. In 95% "
                             "of scenarios, you'd filter to only one site, but multiple site filtering is offered for "
                             f"advanced search scenarios. Available sites include {sites_display}.")
-                    },
-                    "types": {
-                        "type": "array",
-                        "items": {
-                            "type": "string",
-                            "enum": resources_type_options,
-                        },
-                        "description": "Optional filter for specific resource types."
                     },
                     "fields": {
                         "type": "array",
@@ -126,13 +113,6 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                         "description": ("List of additional fields to include in the response beyond the defaults "
                             f"({', '.join(resources_field_options)}). Empty list means default fields only. "
                             "The content field can lead to large results and should be used judiously with LIMIT.")
-                    },
-                    "statuses": {
-                        "type": "array",
-                        "items": {"type": "integer"},
-                        "description": ("Optional list of HTTP status codes to filter results. "
-                            "For example, [200] returns only successful resources, [404, 500] returns "
-                            "only resources with Not Found or Server Error.")
                     },
                     "sort": {
                         "type": "string",
@@ -148,13 +128,18 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                         "type": "integer",
                         "description": "Number of results to skip for pagination. Default is 0."
                     },
-                    "thumbnails": {
-                        "type": "boolean",
-                        "description": ("Support for base64 encoded data for image thumbnails. "
-                            "Default is false. This creates small thumbnails that enable basic "
-                            "image recognition while keeping token output minimal. Only works for image "
-                            "(""img"") types, which is filterable in types field. Svg format is not "
-                            "currently supported.")
+                    "extras": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": ["thumbnails", "markdown"]
+                        },
+                        "description": ("Optional array of extra features to include in results. Available options include:\n"
+                            "- 'thumbnails': Generates base64 encoded thumbnails for image resources. Creates small previews "
+                            "that enable basic image recognition while keeping token output minimal. Only works for image "
+                            "(img) types, which can be filtered using `type: img` in queries. SVG format is not supported.\n"
+                            "- 'markdown': Converts HTML content to markdown format for easier consumption by LLMs and "
+                            "improved readability in responses. Must be accompanied by content requested in fields.")
                     },
                 },
                 "required": []

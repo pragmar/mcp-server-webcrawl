@@ -1,10 +1,9 @@
-from mcp_server_webcrawl.crawlers.wget.crawler import WgetCrawler
-from mcp_server_webcrawl.models.resources import ResourceResultType
-from mcp_server_webcrawl.crawlers.base.tests import BaseCrawlerTests
 from mcp_server_webcrawl.crawlers import get_fixture_directory
 from mcp_server_webcrawl.crawlers.wget.adapter import WgetManager
+from mcp_server_webcrawl.crawlers.wget.crawler import WgetCrawler
+from mcp_server_webcrawl.crawlers.base.tests import BaseCrawlerTests
+from mcp_server_webcrawl.models.resources import ResourceResultType
 
-# Calculate IDs for test directories using same hash function as adapter
 EXAMPLE_SITE_ID = WgetManager.string_to_id("example.com")
 PRAGMAR_SITE_ID = WgetManager.string_to_id("pragmar.com")
 
@@ -80,7 +79,8 @@ class WgetTests(BaseCrawlerTests):
             first_resource = resources_json._results[0]
             id_resources = crawler.get_resources_api(
                 sites=[first_resource.site],  # Use the site ID from the resource
-                ids=[first_resource.id]
+                query=f"id: {first_resource.id}",
+                # ids=[first_resource.id]
             )
             self.assertEqual(id_resources.total, 1)
             self.assertEqual(id_resources._results[0].id, first_resource.id)
@@ -94,8 +94,8 @@ class WgetTests(BaseCrawlerTests):
         # type filtering
         html_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE.value],
-            query="html"  # Only look for HTML files explicitly
+            query=f"html AND type: {ResourceResultType.PAGE.value}",
+            fields=["content", "headers"]
         )
         self.assertTrue(html_resources.total > 0, "HTML filtering should return results")
         for resource in html_resources._results:
@@ -107,7 +107,7 @@ class WgetTests(BaseCrawlerTests):
         # multiple resource types
         mixed_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE.value, ResourceResultType.CSS.value]
+            query=f"type: {ResourceResultType.PAGE.value} OR type: {ResourceResultType.CSS.value}"
         )
         if mixed_resources.total > 0:
             types_found = {r.type for r in mixed_resources._results}
@@ -125,7 +125,7 @@ class WgetTests(BaseCrawlerTests):
         custom_fields = ["content", "headers", "time"]
         field_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE.value],
+            query=f"type: {ResourceResultType.PAGE.value}",
             fields=custom_fields
         )
         self.assertTrue(field_resources.total > 0)
@@ -159,7 +159,10 @@ class WgetTests(BaseCrawlerTests):
             )
 
         # status code filtering
-        status_resources = crawler.get_resources_api(sites=[PRAGMAR_SITE_ID], statuses=[200])
+        status_resources = crawler.get_resources_api(
+            sites=[PRAGMAR_SITE_ID],
+            query="status: 200"
+        )
         self.assertTrue(status_resources.total > 0, "Status filtering should return results")
         for resource in status_resources._results:
             self.assertEqual(resource.status, 200)
@@ -167,8 +170,7 @@ class WgetTests(BaseCrawlerTests):
         # combined filtering
         combined_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            query="index",
-            types=[ResourceResultType.PAGE.value],
+            query=f"index AND type: {ResourceResultType.PAGE.value}",
             fields=["content", "headers"],
             sort="+url",
             limit=3
@@ -185,7 +187,7 @@ class WgetTests(BaseCrawlerTests):
         # multi-site search
         multisite_resources = crawler.get_resources_api(
             sites=[EXAMPLE_SITE_ID, PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE.value],
+            query=f"type: {ResourceResultType.PAGE.value}",
             sort="+url",
             limit=100
         )

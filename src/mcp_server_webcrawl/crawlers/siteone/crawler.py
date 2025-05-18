@@ -20,7 +20,7 @@ class SiteOneCrawler(IndexedCrawler):
 
         Args:
             datasrc: The input argument as Path, it must be a directory containing
-                    SiteOne captures organized as subdirectories
+                SiteOne captures organized as subdirectories
 
         Raises:
             AssertionError: If datasrc is None or not a directory

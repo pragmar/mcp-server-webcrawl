@@ -20,6 +20,8 @@ dependencies = [
     "Pillow>=9.0.0",
     "aiohttp>=3.8.0",
     "warcio>=1.7.0",
+    "ply==3.11",
+    "html2text>=2020.1.16"
 ]
 dynamic = ["version"]
 

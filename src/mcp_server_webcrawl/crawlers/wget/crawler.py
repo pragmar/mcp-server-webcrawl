@@ -17,8 +17,8 @@ class WgetCrawler(IndexedCrawler):
         Initialize the wget crawler with a data source directory.
 
         Args:
-            datasrc: The input argument as Path, it must be a directory containing
-                    wget captures organized as subdirectories
+            datasrc: the input argument as Path, it must be a directory containing
+                wget captures organized as subdirectories
 
         Raises:
             AssertionError: If datasrc is None or not a directory

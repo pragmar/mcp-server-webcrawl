@@ -18,6 +18,6 @@ class KatanaCrawler(IndexedCrawler):
 
         Args:
             datasrc: The input argument as Path, it must be a directory containing
-                    subdirectories with HTTP text files
+                subdirectories with HTTP text files
         """
         super().__init__(datasrc, get_sites, get_resources)

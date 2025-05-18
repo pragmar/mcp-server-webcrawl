@@ -1,10 +1,14 @@
 import asyncio
-from pprint import pprint
 
+from pprint import pprint
+from logging import Logger
 from mcp_server_webcrawl.crawlers.base.tests import BaseCrawlerTests
 from mcp_server_webcrawl.crawlers.interrobot.crawler import InterroBotCrawler
 from mcp_server_webcrawl.models.resources import ResourceResultType
 from mcp_server_webcrawl.crawlers import get_fixture_directory
+from mcp_server_webcrawl.utils.logger import get_logger
+
+logger: Logger = get_logger()
 
 class InterroBotTests(BaseCrawlerTests):
     """
@@ -32,19 +36,31 @@ class InterroBotTests(BaseCrawlerTests):
         crawler = InterroBotCrawler(self.fixture_path)
         list_tools_result = asyncio.run(crawler.mcp_list_tools())
         self.assertIsNotNone(list_tools_result)
-        # print(list_tools_result)
 
-    def test_interrobot_thumbnail(self):
+    def test_interrobot_image(self):
         """
-        Test thumbnail generation for image resources.
+        Test image retrieval.
         """
         crawler = InterroBotCrawler(self.fixture_path)
 
         image_id = 68
         thumbnail_resources = crawler.get_resources_api(
-            ids=[image_id],
+            query=f"id: {image_id}",
+            # ids=[image_id],
         )
         self.assertEqual(thumbnail_resources.total, 1, "Should find exactly one resource")
+
+    #def test_interrobot_markdown(self):
+    #    """
+    #    Test markdwon transform for content resources.
+    #    """
+    #    crawler = InterroBotCrawler(self.fixture_path)
+#
+    #    markdown_resources = crawler.get_resources_api(
+    #        query=f"type: html",
+    #        extras=["markdown"],
+    #    )
+    #    self.assertEqual(markdown_resources.total, 1, "Should find exactly one resource")
 
     def test_interrobot_sites(self):
         """
@@ -56,7 +72,9 @@ class InterroBotTests(BaseCrawlerTests):
         self.assertTrue(sites_json.total == 2)
 
         # example.com
-        site_one_json = crawler.get_sites_api(ids=[1])
+        site_one_json = crawler.get_sites_api(
+            ids=[1]
+        )
         self.assertTrue(site_one_json.total == 1)
 
         # example.com + fields
@@ -77,29 +95,31 @@ class InterroBotTests(BaseCrawlerTests):
         # basic resource retrieval with default parameters
         resources_json = crawler.get_resources_api()
         self.assertTrue(resources_json.total > 0)
-        # pprint(resources_json.to_dict())
 
         # query parameter
         query_resources = crawler.get_resources_api(query="example")
         self.assertTrue(query_resources.total > 0, "Search query should return results")
-        # pprint(query_resources.to_dict())
 
         # retrieving resources by specific IDs
         if resources_json.total > 0:
             first_id = resources_json._results[0].id
-            id_resources = crawler.get_resources_api(ids=[first_id])
+            id_resources = crawler.get_resources_api(
+                query=f"id: {first_id}",
+            )
             self.assertEqual(id_resources.total, 1)
             self.assertEqual(id_resources._results[0].id, first_id)
 
         # site filtering
-        site_resources = crawler.get_resources_api(sites=[1])  # Filter to site with ID 1
-        # pprint(site_resources.to_dict())
+        site_resources = crawler.get_resources_api(sites=[1])
         self.assertTrue(site_resources.total > 0, "Site filtering should return results")
         for resource in site_resources._results:
             self.assertEqual(resource.site, 1)
 
         # type filtering
-        type_resources = crawler.get_resources_api(types=[ResourceResultType.PAGE.value])
+        type_resources = crawler.get_resources_api(
+            query=f"type: {ResourceResultType.PAGE.value}",
+        )
+
         if type_resources.total > 0:
             for resource in type_resources._results:
                 self.assertEqual(resource.type, ResourceResultType.PAGE)
@@ -137,8 +157,7 @@ class InterroBotTests(BaseCrawlerTests):
         # combining multiple parameters
         combined_resources = crawler.get_resources_api(
             sites=[1],
-            query="example",
-            types=[ResourceResultType.PAGE.value],
+            query=f"example AND type: {ResourceResultType.PAGE.value}",
             fields=["content", "headers"],
             sort="+url",
             limit=3
@@ -153,20 +172,26 @@ class InterroBotTests(BaseCrawlerTests):
                 self.assertIn("content", resource_dict)
                 self.assertIn("headers", resource_dict)
 
-        html_resources = crawler.get_resources_api(types=[ResourceResultType.PAGE.value, ResourceResultType.PDF.value])
+        html_resources = crawler.get_resources_api(
+            query=f"type: {ResourceResultType.PAGE.value}",
+            # types=[ResourceResultType.PAGE.value, ResourceResultType.PDF.value]
+        )
         self.assertTrue(html_resources.total > 0, "No HTML resources found when filtering for 'html' type")
         self.assertTrue(all(r.type.value in ("html", "pdf") for r in html_resources._results),
                 "Not all resources have type 'html' or 'pdf' when filtering for those types")
-        # print(html_resources.to_json())
 
         # status filtering
-        status_resources = crawler.get_resources_api(statuses=[200])
+        status_resources = crawler.get_resources_api(
+            query=f"status: 200",
+        )
         self.assertTrue(status_resources.total > 0, "Status filtering should return results")
         for resource in status_resources._results:
             self.assertEqual(resource.status, 200, "All resources should have status 200")
 
         # multiple statuses
-        multi_status_resources = crawler.get_resources_api(statuses=[200, 404, 500])
+        multi_status_resources = crawler.get_resources_api(
+            query=f"status: 200 OR status: 404 OR status: 500",
+        )
         self.assertTrue(multi_status_resources.total > 0, "Multiple status filtering should return results")
         for resource in multi_status_resources._results:
             self.assertIn(resource.status, [200, 404, 500], "Resources should have one of the filtered statuses")

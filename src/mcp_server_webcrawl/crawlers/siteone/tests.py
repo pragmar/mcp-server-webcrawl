@@ -68,7 +68,6 @@ class SiteOneTests(BaseCrawlerTests):
         # search term exists in returned resources
         for resource in query_resources._results:
             resource_dict = resource.to_dict()
-            # print(resource_dict)
             found = False
             for field, value in resource_dict.items():
                 if isinstance(value, str) and "privacy" in value.lower():
@@ -80,8 +79,8 @@ class SiteOneTests(BaseCrawlerTests):
         if resources_json.total > 0:
             first_resource = resources_json._results[0]
             id_resources = crawler.get_resources_api(
-                sites=[first_resource.site],  # Use the site ID from the resource
-                ids=[first_resource.id]
+                sites=[first_resource.site],
+                query=f"id: {first_resource.id}",
             )
             self.assertEqual(id_resources.total, 1)
             self.assertEqual(id_resources._results[0].id, first_resource.id)
@@ -95,8 +94,8 @@ class SiteOneTests(BaseCrawlerTests):
         # type filtering
         html_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE.value],
-            query="html"  # Only look for HTML files explicitly
+            query=f"html AND type: {ResourceResultType.PAGE.value}",
+            fields=["content", "headers"]
         )
         self.assertTrue(html_resources.total > 0, "HTML filtering should return results")
         for resource in html_resources._results:
@@ -108,7 +107,7 @@ class SiteOneTests(BaseCrawlerTests):
         # multiple resource types
         mixed_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE.value, ResourceResultType.CSS.value]
+            query=f"type: {ResourceResultType.PAGE.value} OR type: {ResourceResultType.CSS.value}"
         )
         if mixed_resources.total > 0:
             types_found = {r.type for r in mixed_resources._results}
@@ -159,13 +158,29 @@ class SiteOneTests(BaseCrawlerTests):
             )
 
         # status code filtering
-        status_resources_ok = crawler.get_resources_api(sites=[PRAGMAR_SITE_ID], statuses=[200])
+        status_resources_ok = crawler.get_resources_api(
+            sites=[PRAGMAR_SITE_ID],
+            query="status: 200"
+        )
         self.assertTrue(status_resources_ok.total > 0, "Status filtering should return results")
         for resource in status_resources_ok._results:
             self.assertEqual(resource.status, 200)
 
+        # status code numeric operator
+        # note S1 finds this, but other crawlers don't always
+        status_resources2 = crawler.get_resources_api(
+            sites=[PRAGMAR_SITE_ID],
+            query=f"status: >400",
+        )
+        self.assertTrue(status_resources2.total > 0, "Status filtering should return results")
+        for resource in status_resources2._results:
+            self.assertGreater(resource.status, 200)
+
         # redirects
-        status_resources_redirect = crawler.get_resources_api(sites=[PRAGMAR_SITE_ID], statuses=[302])
+        status_resources_redirect = crawler.get_resources_api(
+            sites=[PRAGMAR_SITE_ID],
+            query="status: 302"
+        )
         self.assertTrue(status_resources_redirect.total > 0, "Status filtering should return results")
         for resource in status_resources_redirect._results:
             self.assertEqual(resource.status, 302)
@@ -173,7 +188,11 @@ class SiteOneTests(BaseCrawlerTests):
         # 404 will not have all metadata, content likely missing, but should capture filesize
         # pragmar.com has an intentional 404, should be in the fixture
         # http://pragmar.com/internal/this/page/does/not/exist/
-        status_resources_not_found = crawler.get_resources_api(sites=[PRAGMAR_SITE_ID], statuses=[404], fields=["size"])
+        status_resources_not_found = crawler.get_resources_api(
+            sites=[PRAGMAR_SITE_ID],
+            query="status: 404",
+            fields=["size"]
+        )
         self.assertTrue(status_resources_not_found.total > 0, "Status filtering should return results")
         for resource in status_resources_not_found._results:
             self.assertEqual(resource.status, 404)
@@ -184,8 +203,7 @@ class SiteOneTests(BaseCrawlerTests):
         # combined filtering
         combined_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            query="index",
-            types=[ResourceResultType.PAGE.value],
+            query=f"index AND type: {ResourceResultType.PAGE.value}",
             fields=["content", "headers"],
             sort="+url",
             limit=3
@@ -202,7 +220,7 @@ class SiteOneTests(BaseCrawlerTests):
         # multi-site search
         multisite_resources = crawler.get_resources_api(
             sites=[EXAMPLE_SITE_ID, PRAGMAR_SITE_ID],
-            types=[ResourceResultType.PAGE.value],
+            query=f"type: {ResourceResultType.PAGE.value}",
             sort="+url",
             limit=100
         )
@@ -253,4 +271,3 @@ class SiteOneTests(BaseCrawlerTests):
             )
         else:
             print(f"Skip randomness verification: Not enough resources ({random2_resources.total})")
-

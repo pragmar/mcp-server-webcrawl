@@ -7,7 +7,7 @@ from mcp_server_webcrawl.crawlers.base.adapter import IndexState
 from mcp_server_webcrawl.models import METADATA_VALUE_TYPE, UTC
 from mcp_server_webcrawl.models.resources import ResourceResult, ResourceResultType
 from mcp_server_webcrawl.models.sites import SiteResult
-from mcp_server_webcrawl.utils import isoformat_zulu
+from mcp_server_webcrawl.utils import to_isoformat_zulu
 from mcp_server_webcrawl.utils.logger import get_logger
 
 logger = get_logger()
@@ -37,8 +37,8 @@ class BaseJsonApiEncoder(json.JSONEncoder):
         elif isinstance(obj, datetime):
             # Convert UTC datetime to ISO format with 'Z' suffix
             if obj.tzinfo is not None and obj.tzinfo.utcoffset(obj) == timedelta(0):
-                return isoformat_zulu(obj)
-            return isoformat_zulu(obj)
+                return to_isoformat_zulu(obj)
+            return to_isoformat_zulu(obj)
         return super().default(obj)
 
 class BaseJsonApi:
@@ -58,6 +58,7 @@ class BaseJsonApi:
         Args:
             method: API method name
             args: Dictionary of API arguments
+            index_state: indexing, complete, remote, etc.
         """
 
         from mcp_server_webcrawl import __version__, __name__
@@ -65,7 +66,7 @@ class BaseJsonApi:
         self.method = method
         self.args = args
         self.meta_generator = f"{__name__} ({__version__})"
-        self.meta_generated = isoformat_zulu(datetime.now(UTC))
+        self.meta_generated = to_isoformat_zulu(datetime.now(UTC))
         self.meta_index = index_state.to_dict() if index_state is not None else None
         self._results: list[SiteResult | ResourceResult] = []
         self._results_total: int = 0
@@ -152,4 +153,4 @@ class BaseJsonApi:
         Returns:
             JSON string representation of the API response
         """
-        return json.dumps(self.to_dict(), cls=BaseJsonApiEncoder)
+        return json.dumps(self.to_dict(), indent=2, cls=BaseJsonApiEncoder)

@@ -2,6 +2,7 @@ import anyio
 import re
 import sqlite3
 import traceback
+import html2text
 
 from pathlib import Path
 from typing import Any, Callable, Final
@@ -20,9 +21,9 @@ from mcp_server_webcrawl.models.resources import (
     RESOURCES_DEFAULT_FIELD_MAPPING,
     RESOURCES_TOOL_NAME,
 )
-from mcp_server_webcrawl.models.sites import SITES_TOOL_NAME
 from mcp_server_webcrawl.utils.blobs import ThumbnailManager
 from mcp_server_webcrawl.utils.logger import get_logger
+from mcp_server_webcrawl.models.sites import SITES_TOOL_NAME
 
 OVERRIDE_ERROR_MESSAGE: Final[str] = """BaseCrawler subclasses must implement the following \
 methods: handle_list_tools, handle_call_tool, at minimum."""
@@ -46,13 +47,13 @@ class BaseCrawler:
         resource_field_mapping: dict[str, str] = RESOURCES_DEFAULT_FIELD_MAPPING,
     ) -> None:
         """
-        Initialize the IndexedCrawler with a data source path and required adapter functions.
+        Initialize the BaseCrawler with a data source path and required adapter functions.
 
         Args:
-            datasrc: Path to the data source
-            get_sites_func: Function to retrieve sites from the data source
-            get_resources_func: Function to retrieve resources from the data source
-            resource_field_mapping: Mapping of resource field names to display names
+            datasrc: path to the data source
+            get_sites_func: function to retrieve sites from the data source
+            get_resources_func: function to retrieve resources from the data source
+            resource_field_mapping: mapping of resource field names to display names
         """
 
         from mcp_server_webcrawl import __name__ as module_name, __version__ as module_version
@@ -63,7 +64,7 @@ class BaseCrawler:
         assert isinstance(resource_field_mapping, dict), f"{self.__class__.__name__} resource_field_mapping must be a dict"
 
         self._datasrc: Path = Path(datasrc)
-        self._thumbnails = False
+        self._extras: list[str] = []
 
         self._module_name: str = module_name
         self._module_version: str = module_version
@@ -83,8 +84,8 @@ class BaseCrawler:
         return self._datasrc
 
     @property
-    def thumbnails(self) -> bool:
-        return self._thumbnails
+    def extras(self) -> list[str]:
+        return self._extras
 
     async def mcp_list_prompts(self) -> list:
         """List available prompts (currently none)."""
@@ -99,8 +100,8 @@ class BaseCrawler:
         Launch the awaitable server.
 
         Args:
-            stdin: Input stream for the server
-            stdout: Output stream for the server
+            stdin: input stream for the server
+            stdout: output stream for the server
 
         Returns:
             The MCP server over stdio
@@ -160,23 +161,17 @@ class BaseCrawler:
 
     def get_resources_api(
         self,
-        ids: list[int] | None = None,
         sites: list[int] | None = None,
         query: str = "",
-        types: list[str] | None = None,
         fields: list[str] | None = None,
-        statuses: list[int] | None = None,
         sort: str | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> BaseJsonApi:
         resources_kwargs: dict[str, METADATA_VALUE_TYPE] = {
-            "ids": ids,
             "sites": sites,
             "query": query,
-            "types": types,
             "fields": fields,
-            "statuses": statuses,
             "sort": sort,
             "limit": limit,
             "offset": offset,
@@ -195,7 +190,7 @@ class BaseCrawler:
             sites = [site.id for site in all_sites]
 
         # sometimes the AI gets it in their head this is a good idea
-        # but they mean no query, it can get tedious
+        # but they mean no query, it can get tedious, nip in the bud
         if query.strip in ('""',"''", "``", "*"):
             query = ""
 
@@ -204,20 +199,17 @@ class BaseCrawler:
             return no_results()
 
         # convert to enums
-        resource_types = self._convert_to_resource_types(types)
+        # resource_types = self._convert_to_resource_types(types)
         results, total, index_state = self._adapter_get_resources(
             self._datasrc,
-            ids=ids,
             sites=sites,
             query=query,
-            types=resource_types,
             fields=fields,
-            statuses=statuses,
             sort=sort,
             limit=limit,
             offset=offset,
         )
-        # TODO: figure out how to get index_state from manager if exists
+
         api_result = BaseJsonApi("GetResources", resources_kwargs, index_state=index_state)
         api_result.set_results(results, total, offset, limit)
         return api_result
@@ -242,8 +234,8 @@ class BaseCrawler:
         Basically, it is a passthrough.
 
         Args:
-            name: Name of the tool to call
-            arguments: Arguments to pass to the tool
+            name: name of the tool to call
+            arguments: arguments to pass to the tool
 
         Returns:
             List of content objects resulting from the tool execution
@@ -264,7 +256,7 @@ class BaseCrawler:
             elif name == RESOURCES_TOOL_NAME:
 
                 # because this process happens after the normal filtering, it is flagged for later
-                self._thumbnails = False if not arguments or "thumbnails" not in arguments else arguments["thumbnails"]
+                self._extras = [] if not arguments or "extras" not in arguments else arguments["extras"]
 
                 # regular args pass through to the result
                 query = "" if not arguments or "query" not in arguments else arguments["query"]
@@ -277,12 +269,9 @@ class BaseCrawler:
                 limit = 20 if not arguments or "limit" not in arguments else arguments["limit"]
                 offset = 0 if not arguments or "offset" not in arguments else arguments["offset"]
                 api_result: BaseJsonApi = self.get_resources_api(
-                    ids=ids,
                     sites=sites,
                     query=query,
-                    types=types,
                     fields=fields,
-                    statuses=statuses,
                     sort=sort,
                     limit=limit,
                     offset=offset
@@ -290,9 +279,25 @@ class BaseCrawler:
 
                 # build mcp response, imagedata is a different content type, and is
                 # collected independent of the archive data
+
+                crawl_results: list[ResourceResult] = api_result.get_results()
+
+                if "markdown" in self._extras:
+                    converter = html2text.HTML2Text()
+                    converter.ignore_links = False
+                    converter.ignore_images = True
+                    converter.ignore_tables = False
+                    converter.body_width = 0  # don't wrap
+                    for result in crawl_results:
+                        if result.content is None or result.content == "":
+                            continue
+                        # claude HTML to markdown
+                        result.content = converter.handle(result.content)
+
                 results_json = api_result.to_json()
                 mcp_result = [TextContent(type="text", text=results_json)]
-                if self._thumbnails:
+
+                if "thumbnails" in self._extras:
                     crawl_results: list[ResourceResult] = api_result.get_results()
                     mcp_result += self.get_thumbnails(crawl_results) or []
 
@@ -308,7 +313,8 @@ class BaseCrawler:
     def get_thumbnails(self, results: list[ResourceResult]) -> list[ImageContent]:
 
         thumbnails_result: list[ImageContent] = []
-        if self._thumbnails:
+        #if self._thumbnails:
+        if "thumbnails" in self._extras:
             image_paths = list(set([result.url for result in results if result.url and result.type == ResourceResultType.IMAGE]))
             valid_paths = []
             for path in image_paths:
@@ -342,7 +348,7 @@ class BaseCrawler:
         Convert string type values to ResourceResultType enums.  Silently ignore invalid type strings.
 
         Args:
-            types: Optional list of string type values
+            types: optional list of string type values
 
         Returns:
             Optional list of ResourceResultType enums, or None if no valid types

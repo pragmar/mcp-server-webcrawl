@@ -3,7 +3,7 @@ from typing import Final
 from datetime import datetime
 
 from mcp_server_webcrawl.models import METADATA_VALUE_TYPE
-from mcp_server_webcrawl.utils import isoformat_zulu
+from mcp_server_webcrawl.utils import to_isoformat_zulu
 
 RESOURCES_TOOL_NAME: str = "webcrawl_search"
 RESOURCES_LIMIT_DEFAULT: int = 20
@@ -14,16 +14,16 @@ RESOURCES_FIELDS_DEFAULT: Final[list[str]] = RESOURCES_FIELDS_REQUIRED + ["creat
 RESOURCES_SORT_OPTIONS_DEFAULT: Final[list[str]] = ["+id", "-id", "+url", "-url", "+status", "-status", "?"]
 
 RESOURCES_DEFAULT_FIELD_MAPPING: Final[dict[str, str]] = {
-    "id": "Id",
-    "site": "Project",
-    "url": "Url",
-    "name": "Name",
-    "status": "Status",
-    "size": "Size",
-    "type": "Type",
-    "headers": "Headers",
-    "content": "Content",
-    "time": "Time"
+    "id": "ResourcesFullText.Id",
+    "site": "ResourcesFullText.Project",
+    "url": "ResourcesFullText.Url",
+    "status": "Resources.Status",
+    "size": "Resources.Size",
+    "type": "ResourcesFullText.Type",
+    "headers": "ResourcesFullText.Headers",
+    "content": "ResourcesFullText.Content",
+    "time": "Resources.Time",
+    "fulltext": "ResourcesFullText",
 }
 
 class ResourceResultType(Enum):
@@ -46,11 +46,21 @@ class ResourceResultType(Enum):
     OTHER = "other"
 
     @classmethod
-    def values(cls):
+    def values(cls) -> list[str]:
         """
         Return all values of the enum as a list.
         """
         return [member.value for member in cls]
+
+    @classmethod
+    def to_int_map(cls):
+        """
+        Return a dictionary mapping each enum value to its integer position.
+
+        Returns:
+            dict: a dictionary with enum values as keys and their ordinal positions as values.
+        """
+        return {member.value: i for i, member in enumerate(cls)}
 
 
 class ResourceResult:
@@ -78,21 +88,21 @@ class ResourceResult:
         Initialize a ResourceResult instance.
 
         Args:
-            id: Resource identifier
-            url: Resource URL
-            site: Site identifier the resource belongs to
-            crawl: Crawl identifier the resource was found in
-            type: Type of resource
-            name: Resource name
+            id: resource identifier
+            url: resource URL
+            site: site identifier the resource belongs to
+            crawl: crawl identifier the resource was found in
+            type: type of resource
+            name: resource name
             headers: HTTP headers
-            content: Resource content
-            created: Creation timestamp
-            modified: Last modification timestamp
+            content: resource content
+            created: creation timestamp
+            modified: last modification timestamp
             status: HTTP status code
-            size: Size in bytes
-            time: Response time in milliseconds
-            thumbnail: Base64 encoded thumbnail (experimental)
-            metadata: Additional metadata for the resource
+            size: size in bytes
+            time: response time in milliseconds
+            thumbnail: base64 encoded thumbnail (experimental)
+            metadata: additional metadata for the resource
         """
         self.id = id
         self.url = url
@@ -123,8 +133,8 @@ class ResourceResult:
             "name": self.name,
             "headers": self.headers,
             "content": self.content,
-            "created": isoformat_zulu(self.created) if self.created else None,
-            "modified": isoformat_zulu(self.modified) if self.modified else None,
+            "created": to_isoformat_zulu(self.created) if self.created else None,
+            "modified": to_isoformat_zulu(self.modified) if self.modified else None,
             "status": self.status,
             "size": self.size,
             "time": self.time,
@@ -138,8 +148,8 @@ class ResourceResult:
         Create a dictionary with forced fields set to None if not present in the object.
 
         Args:
-            forcefields: List of field names that should be included in the result
-                        even if they're not present in the object data
+            forcefields: list of field names that should be included in the result
+                even if they're not present in the object data
 
         Returns:
             Dictionary containing object data with forced fields included

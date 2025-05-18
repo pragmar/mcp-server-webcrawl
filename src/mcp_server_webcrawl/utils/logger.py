@@ -47,7 +47,6 @@ def initialize_logger() -> None:
     (log_name, log_path, log_level) = get_logger_configuration()
     if log_level == logging.NOTSET:
         # don't set up anything, named logging will effectively evaporate
-        # todo: needs reality check
         return
 
     assert isinstance(log_level, int) and log_level != 0, "LOG_LEVEL must be set"
