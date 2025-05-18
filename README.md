@@ -134,7 +134,7 @@ the MCP collapsable.
 | "privacy policy" | fulltext match exact phrase |
 | privacy* | matches wildcard fulltext results starting with "privacy" |
 | id: 12345 | matches a specific resource by ID |
-| url: https://example.com/* | matches results with URL containing https://example.com/ |
+| url: example.com/* | matches results with URL containing example.com |
 | type: html | HTML pages only |
 | status: 200 | matches specific HTTP status code (equal) |
 | status: >=400 | matches specific HTTP status code (greater than or equal to) |
