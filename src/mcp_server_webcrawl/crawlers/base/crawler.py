@@ -191,7 +191,7 @@ class BaseCrawler:
 
         # sometimes the AI gets it in their head this is a good idea
         # but they mean no query, it can get tedious, nip in the bud
-        if query.strip in ('""',"''", "``", "*"):
+        if query.strip() in ('""',"''", "``", "*"):
             query = ""
 
         site_matches = self._adapter_get_sites(self._datasrc, ids=sites)
