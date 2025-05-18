@@ -138,8 +138,10 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                             "- 'thumbnails': Generates base64 encoded thumbnails for image resources. Creates small previews "
                             "that enable basic image recognition while keeping token output minimal. Only works for image "
                             "(img) types, which can be filtered using `type: img` in queries. SVG format is not supported.\n"
-                            "- 'markdown': Converts HTML content to markdown format for easier consumption by LLMs and "
-                            "improved readability in responses. Must be accompanied by content requested in fields.")
+                            "- 'markdown': Directly transforms the HTML content field into concise markdown, "
+                            "reducing token usage and improving readability for LLMs. This does not create a separate field "
+                            "but replaces the HTML in the content field with its markdown equivalent. Must be used with "
+                            "the content field in the fields parameter.")
                     },
                 },
                 "required": []

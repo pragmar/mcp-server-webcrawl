@@ -5,6 +5,8 @@ from itertools import chain
 from contextlib import closing
 from pathlib import Path
 
+from datetime import datetime, timezone
+
 from mcp_server_webcrawl.crawlers.base.adapter import (
     IndexState,
     IndexStatus,
@@ -97,6 +99,15 @@ class KatanaManager(IndexedManager):
         Returns:
             ResourceResult object ready for insertion, or None if processing fails
         """
+        if file_path.is_file():
+            file_stat = file_path.stat()
+            # HTTP header modified mostly useless, change my mind
+            file_created = datetime.fromtimestamp(file_stat.st_ctime, tz=timezone.utc)
+            file_modified = datetime.fromtimestamp(file_stat.st_mtime, tz=timezone.utc)
+        else:
+            file_created = None
+            file_modified = None
+
         # crawl format: <url>\n\n<request>\n\n<headers>...<response>
         parts: list[str] = content.split("\n\n", 2)
         if len(parts) < 3:
@@ -128,6 +139,8 @@ class KatanaManager(IndexedManager):
             return ResourceResult(
                 id=resource_id,
                 site=site_id,
+                created=file_created,
+                modified=file_modified,
                 url=url,
                 type=resource_type,
                 headers=headers,

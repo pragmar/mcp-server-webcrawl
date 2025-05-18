@@ -16,6 +16,8 @@ RESOURCES_SORT_OPTIONS_DEFAULT: Final[list[str]] = ["+id", "-id", "+url", "-url"
 RESOURCES_DEFAULT_FIELD_MAPPING: Final[dict[str, str]] = {
     "id": "ResourcesFullText.Id",
     "site": "ResourcesFullText.Project",
+    "created": "Resources.Created",
+    "modified": "Resources.Modified",
     "url": "ResourcesFullText.Url",
     "status": "Resources.Status",
     "size": "Resources.Size",
@@ -62,6 +64,25 @@ class ResourceResultType(Enum):
         """
         return {member.value: i for i, member in enumerate(cls)}
 
+# if types stored as ints within db
+RESOURCES_ENUMERATED_TYPE_MAPPING: Final[dict[int, ResourceResultType]] = {
+    0: ResourceResultType.UNDEFINED,
+    1: ResourceResultType.PAGE,
+    2: ResourceResultType.OTHER,
+    3: ResourceResultType.FEED,
+    4: ResourceResultType.FRAME,
+    5: ResourceResultType.OTHER,
+    6: ResourceResultType.IMAGE,
+    7: ResourceResultType.AUDIO,
+    8: ResourceResultType.VIDEO,
+    9: ResourceResultType.FONT,
+    10: ResourceResultType.CSS,
+    11: ResourceResultType.SCRIPT,
+    12: ResourceResultType.OTHER,
+    13: ResourceResultType.TEXT,
+    14: ResourceResultType.PDF,
+    15: ResourceResultType.DOC
+}
 
 class ResourceResult:
     """
@@ -119,10 +140,13 @@ class ResourceResult:
         self.time = time  # in millis
         self.metadata = metadata  # reserved
 
+        # print(f"** {self.url} {self.created} {self.modified}")
+
     def to_dict(self) -> dict[str, METADATA_VALUE_TYPE]:
         """
         Convert the object to a dictionary suitable for JSON serialization.
         """
+        # print(f"!! {self.url} {self.created}")
         # api_type = self.type.value if self.type else None
         result: dict[str, METADATA_VALUE_TYPE] = {
             "id": self.id,

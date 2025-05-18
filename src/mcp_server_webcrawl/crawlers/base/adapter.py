@@ -13,19 +13,19 @@ from pathlib import Path
 from dataclasses import dataclass
 from datetime import timezone
 from typing import Final
+
 from mcp_server_webcrawl.models.resources import (
     ResourceResult,
     ResourceResultType,
     RESOURCES_DEFAULT_FIELD_MAPPING,
     RESOURCES_FIELDS_REQUIRED,
-    RESOURCES_LIMIT_DEFAULT,
+    RESOURCES_ENUMERATED_TYPE_MAPPING,
     RESOURCES_LIMIT_MAX,
 )
 
-from mcp_server_webcrawl.utils import to_isoformat_zulu
+from mcp_server_webcrawl.utils import to_isoformat_zulu, from_isoformat_zulu
 from mcp_server_webcrawl.utils.search import SearchQueryParser, SearchSubquery
 from mcp_server_webcrawl.utils.logger import get_logger
-
 
 logger = get_logger()
 
@@ -464,14 +464,19 @@ class BaseManager:
                                 break
 
                         # also accept InterroBot ints
+                        # if resource_type == ResourceResultType.UNDEFINED and isinstance(type_value, int):
+                        #     enum_members = list(ResourceResultType)
+                        #     if 0 <= type_value < len(enum_members):
+                        #         resource_type = enum_members[type_value]
                         if resource_type == ResourceResultType.UNDEFINED and isinstance(type_value, int):
-                            enum_members = list(ResourceResultType)
-                            if 0 <= type_value < len(enum_members):
-                                resource_type = enum_members[type_value]
+                            if type_value in RESOURCES_ENUMERATED_TYPE_MAPPING:
+                                resource_type = RESOURCES_ENUMERATED_TYPE_MAPPING[type_value]
 
                         result = ResourceResult(
                             id=row_dict.get("id"),
                             site=row_dict.get("project"),
+                            created=from_isoformat_zulu(row_dict.get("created")),
+                            modified=from_isoformat_zulu(row_dict.get("modified")),
                             url=row_dict.get("url", ""),
                             type=resource_type,
                             name=row_dict.get("name"),

@@ -3,6 +3,7 @@ import re
 import sqlite3
 
 from contextlib import closing
+from datetime import datetime, timezone
 from pathlib import Path
 
 from mcp_server_webcrawl.crawlers.base.adapter import (
@@ -227,7 +228,17 @@ class SiteOneManager(IndexedManager):
             # generate relative url path from file path (similar to wget)
             relative_path = file_path.relative_to(base_dir)
             url = f"{INDEXED_RESOURCE_DEFAULT_PROTOCOL}{base_dir.name}/{str(relative_path).replace(os.sep, '/')}"
-            file_size = file_path.stat().st_size
+
+            if file_path.is_file():
+                file_stat = file_path.stat()
+                file_size = file_stat.st_size
+                file_created = datetime.fromtimestamp(file_stat.st_ctime, tz=timezone.utc)
+                file_modified = datetime.fromtimestamp(file_stat.st_mtime, tz=timezone.utc)
+            else:
+                file_created = None
+                file_modified = None
+                file_size = 0
+
             decruftified_path = BaseManager.decruft_path(str(file_path))
             extension = Path(decruftified_path).suffix.lower()
             wget_static_pattern = re.compile(r"\.[0-9a-f]{8,}\.")
@@ -280,6 +291,8 @@ class SiteOneManager(IndexedManager):
             record = ResourceResult(
                 id=BaseManager.string_to_id(url),
                 site=site_id,
+                created=file_created,
+                modified=file_modified,
                 url=url,
                 type=resource_type,
                 status=status_code,

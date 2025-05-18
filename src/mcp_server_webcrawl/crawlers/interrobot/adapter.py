@@ -57,24 +57,24 @@ INTERROBOT_SORT_MAPPING: Final[dict[str, tuple[str, str]]] = {
 }
 
 # maybe dedupe with near match INDEXED version
-INTERROBOT_TYPE_INT_MAPPING: Final[dict[int, ResourceResultType]] = {
-    0: ResourceResultType.UNDEFINED,
-    1: ResourceResultType.PAGE,
-    2: ResourceResultType.OTHER,
-    3: ResourceResultType.FEED,
-    4: ResourceResultType.FRAME,
-    5: ResourceResultType.OTHER,
-    6: ResourceResultType.IMAGE,
-    7: ResourceResultType.AUDIO,
-    8: ResourceResultType.VIDEO,
-    9: ResourceResultType.FONT,
-    10: ResourceResultType.CSS,
-    11: ResourceResultType.SCRIPT,
-    12: ResourceResultType.OTHER,
-    13: ResourceResultType.TEXT,
-    14: ResourceResultType.PDF,
-    15: ResourceResultType.DOC
-}
+#INTERROBOT_TYPE_INT_MAPPING: Final[dict[int, ResourceResultType]] = {
+#    0: ResourceResultType.UNDEFINED,
+#    1: ResourceResultType.PAGE,
+#    2: ResourceResultType.OTHER,
+#    3: ResourceResultType.FEED,
+#    4: ResourceResultType.FRAME,
+#    5: ResourceResultType.OTHER,
+#    6: ResourceResultType.IMAGE,
+#    7: ResourceResultType.AUDIO,
+#    8: ResourceResultType.VIDEO,
+#    9: ResourceResultType.FONT,
+#    10: ResourceResultType.CSS,
+#    11: ResourceResultType.SCRIPT,
+#    12: ResourceResultType.OTHER,
+#    13: ResourceResultType.TEXT,
+#    14: ResourceResultType.PDF,
+#    15: ResourceResultType.DOC
+#}
 
 logger: Logger = get_logger()
 
@@ -219,9 +219,24 @@ def get_resources(
     assert sites_results, "At least one site is required to search"
     site_paths = [site.path for site in sites_results]
     sites_group = SitesGroup(datasrc, sites, site_paths)
-    # return manager.get_resources_for_sites_group(sites_group, ids, sites, query, types, fields, statuses, sort, limit, offset)
+
     # fieldname: dict of swaps
     swap_values = {
-        "type" : ResourceResultType.to_int_map()
+        "type" : {
+            "": 0,             # UNDEFINED
+            "html": 1,         # PAGE
+            "other": 2,        # OTHER (could also be 5 or 12 depending on context)
+            "rss": 3,          # FEED
+            "iframe": 4,       # FRAME
+            "img": 6,          # IMAGE
+            "audio": 7,        # AUDIO
+            "video": 8,        # VIDEO
+            "font": 9,         # FONT
+            "style": 10,       # CSS
+            "script": 11,      # SCRIPT
+            "text": 13,        # TEXT
+            "pdf": 14,         # PDF
+            "doc": 15          # DOC
+        }
     }
     return manager.get_resources_for_sites_group(sites_group, query, fields, sort, limit, offset, swap_values)

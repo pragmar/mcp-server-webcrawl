@@ -29,6 +29,7 @@ from mcp_server_webcrawl.models.sites import (
     SITES_FIELDS_REQUIRED,
     SITES_FIELDS_DEFAULT,
 )
+from mcp_server_webcrawl.utils import to_isoformat_zulu
 from mcp_server_webcrawl.utils.logger import get_logger
 from mcp_server_webcrawl.utils.tools import get_crawler_tools
 
@@ -202,6 +203,8 @@ class IndexedManager(BaseManager):
             CREATE TABLE Resources (
                 Id INTEGER PRIMARY KEY,
                 Project INTEGER NOT NULL,
+                Created TEXT,
+                Modified TEXT,
                 Status INTEGER NOT NULL,
                 Size INTEGER NOT NULL,
                 Time INTEGER NOT NULL
@@ -237,6 +240,8 @@ class IndexedManager(BaseManager):
             resources_base_records.append((
                 resource.id,
                 resource.site,
+                to_isoformat_zulu(resource.created) if resource.created else None,
+                to_isoformat_zulu(resource.modified) if resource.modified else None,
                 resource.status,
                 resource.size if resource.size is not None else 0,
                 resource.time if resource.time is not None else 0,
@@ -254,8 +259,8 @@ class IndexedManager(BaseManager):
             connection.execute("BEGIN TRANSACTION")
             cursor.executemany("""
                 INSERT INTO Resources (
-                    Id, Project, Status, Size, Time
-                ) VALUES (?, ?, ?, ?, ?)
+                    Id, Project, Created, Modified, Status, Size, Time
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
             """, resources_base_records)
             cursor.executemany("""
                 INSERT INTO ResourcesFullText (

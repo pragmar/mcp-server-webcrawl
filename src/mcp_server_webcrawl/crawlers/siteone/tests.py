@@ -65,6 +65,22 @@ class SiteOneTests(BaseCrawlerTests):
         )
         self.assertTrue(query_resources.total > 0, "Search query should return results")
 
+        # test less often used, more invisible fields
+        timestamp_resources = crawler.get_resources_api(
+            sites=[PRAGMAR_SITE_ID],
+            query="privacy",
+            fields=["created", "modified", "time"]
+        )
+        self.assertTrue(timestamp_resources.total > 0, "Search query should return results")
+
+        # Verify timestamps are not None
+        for resource in timestamp_resources._results:
+            resource_dict = resource.to_dict()
+            self.assertIsNotNone(resource_dict["created"], "Created timestamp should not be None")
+            self.assertIsNotNone(resource_dict["modified"], "Modified timestamp should not be None")
+            self.assertIsNotNone(resource_dict["time"], "Modified timestamp should not be None")
+
+
         # search term exists in returned resources
         for resource in query_resources._results:
             resource_dict = resource.to_dict()

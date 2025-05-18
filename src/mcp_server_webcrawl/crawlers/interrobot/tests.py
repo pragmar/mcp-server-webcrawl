@@ -124,6 +124,12 @@ class InterroBotTests(BaseCrawlerTests):
             for resource in type_resources._results:
                 self.assertEqual(resource.type, ResourceResultType.PAGE)
 
+        # type mapping, forwards and backwards
+        img_results = crawler.get_resources_api(query="type: img", limit=5)
+        self.assertTrue(img_results.total > 0, "Image type filter should return results")
+        self.assertTrue(all(r.type.value == "img" for r in img_results._results),
+                        "All filtered resources should have type 'img'")
+
         # custom fields in response
         custom_fields = ["content", "headers", "time"]
         field_resources = crawler.get_resources_api(fields=custom_fields)

@@ -1,11 +1,12 @@
+import email.utils
 import os
 import sqlite3
 import warcio
 
 from contextlib import closing
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, Final
+from typing import Final
 from warcio.recordloader import ArcWarcRecord
 
 from mcp_server_webcrawl.crawlers.base.adapter import (
@@ -126,16 +127,33 @@ class WarcManager(IndexedManager):
             else:
                 content_str = None
 
+            warc_date = record.rec_headers.get_header("WARC-Date")
+            if warc_date:
+                try:
+                    file_created = datetime.fromisoformat(warc_date.replace('Z', '+00:00'))
+                except ValueError:
+                    # Fallback to email date parser
+                    try:
+                        time_tuple = email.utils.parsedate_tz(warc_date)
+                        file_created = datetime.fromtimestamp(email.utils.mktime_tz(time_tuple), tz=timezone.utc)
+                    except (ValueError, TypeError):
+                        file_created = datetime.now(timezone.utc)
+            else:
+                file_created = None # don't pretend it is now, ResourceResult can survive
+            file_modified = file_created # like file stat indexes, these are equivalent
+
             result = ResourceResult(
                 id=IndexedManager.string_to_id(url),
                 site=site_id,
+                created=file_created,
+                modified=file_modified,
                 url=url,
                 type=resource_type,
                 status=status,
                 headers=record.http_headers.to_str(),
                 content=content_str,
                 size=content_size,
-                time=0  # Time not available
+                time=0  # time not available
             )
             # print(status)
             # print(result.to_dict())
