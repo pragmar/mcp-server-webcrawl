@@ -72,13 +72,39 @@
            <div itemprop="articleBody">
              
   <h1>Source code for mcp_server_webcrawl.utils</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span></span><span class="kn">import</span> <span class="nn">re</span>
 
-<div class="viewcode-block" id="isoformat_zulu">
-<a class="viewcode-back" href="../../mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.isoformat_zulu">[docs]</a>
-<span class="k">def</span> <span class="nf">isoformat_zulu</span><span class="p">(</span><span class="n">dt</span><span class="p">:</span> <span class="n">datetime</span><span class="p">):</span>
-    <span class="c1"># python 3.10 considerations, needs this </span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+
+<div class="viewcode-block" id="to_isoformat_zulu">
+<a class="viewcode-back" href="../../mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.to_isoformat_zulu">[docs]</a>
+<span class="k">def</span> <span class="nf">to_isoformat_zulu</span><span class="p">(</span><span class="n">dt</span><span class="p">:</span> <span class="n">datetime</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert datetime to iso Z.</span>
+
+<span class="sd">    python&lt;=3.10 struggles with Z and fractions of seconds, will</span>
+<span class="sd">    throw. smooth out the iso string, second precision isn&#39;t key here</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">dt</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;+00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;Z&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="from_isoformat_zulu">
+<a class="viewcode-back" href="../../mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.from_isoformat_zulu">[docs]</a>
+<span class="k">def</span> <span class="nf">from_isoformat_zulu</span><span class="p">(</span><span class="n">dt_string</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert ISO string to datetime.</span>
+
+<span class="sd">    python&lt;=3.10 struggles with Z and fractions of seconds, will</span>
+<span class="sd">    throw. smooth out the iso string, second precision isn&#39;t key here</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">dt_string</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">dt_string</span> <span class="o">=</span> <span class="n">dt_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;+00:00&quot;</span><span class="p">)</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(.*\.\d</span><span class="si">{6}</span><span class="s2">)\d*([-+]\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">|$)&quot;</span><span class="p">,</span> <span class="n">dt_string</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+        <span class="n">dt_string</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">dt_string</span><span class="p">)</span></div>
 
 </pre></div>
 

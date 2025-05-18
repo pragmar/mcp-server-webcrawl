@@ -95,8 +95,8 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generate crawler tools based on available sites.</span>
 
-<span class="sd">    Parameters:</span>
-<span class="sd">        sites: Optional list of site results to include in tool descriptions</span>
+<span class="sd">    Args:</span>
+<span class="sd">        sites: optional list of site results to include in tool descriptions</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        List of Tool objects for sites and resources</span>
@@ -140,18 +140,15 @@
         <span class="p">),</span>
         <span class="n">Tool</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="n">RESOURCES_TOOL_NAME</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Searches for resources (webpages, images, CSS, JS, etc.) across projects and retrieves specified fields. &quot;</span>
-                <span class="s2">&quot;Invaluable tips to guide efficient search follows. &quot;</span>
-                <span class="s2">&quot;To find a site homepage or index, use sort=&#39;+id&#39; with types=[&#39;html&#39;] and the appropriate site ID. &quot;</span>
-                <span class="s2">&quot;Most sites indexed by this tool will be small to moderately sized websites, &quot;</span>
-                <span class="s2">&quot;don&#39;t assume most keywords will generate results. &quot;</span>
-                <span class="s2">&quot;When searching a new topic, it is generally best to start with just a site &quot;</span>
-                <span class="s2">&quot;(all resources, lay of the land), a site and a search query, &quot;</span>
-                <span class="s2">&quot;or by site and filters—combine query and filters once you have a result set to refine. &quot;</span>
-                <span class="s2">&quot;This becomes less true as you search more, acquiring a lay of the land and ability to anticipate results. &quot;</span>
-                <span class="s2">&quot;If you need to separate internal from external pages, you can query the site index URL with a wildcard (*), e.g. &quot;</span>
-                <span class="s2">&quot;https://example.com/*. A vital aspect of this API is field control, you should open up the limit wide when dealing with thin &quot;</span>
-                <span class="s2">&quot;fields (string length) and dial way back when using larger fields, like content. Adjust dynamically, the best strategy &quot;</span>
+            <span class="n">description</span><span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Searches for resources (webpages, images, CSS, JS, etc.) across web crawler projects and &quot;</span>
+                <span class="s2">&quot;retrieves specified fields. &quot;</span>
+                <span class="s2">&quot;Supports boolean queries and field searching, along with site filtering to &quot;</span>
+                <span class="s2">&quot;filter with fine control. &quot;</span>
+                <span class="s2">&quot;To find a site homepage or index of a site, query type: html with sort=&#39;+modified&#39; and a limit of 1. &quot;</span>
+                <span class="s2">&quot;Most sites indexed by this tool will be small to moderately sized websites. &quot;</span>
+                <span class="s2">&quot;Don&#39;t assume most keywords will generate results; start broader on first search (until you have a feel for results). &quot;</span>
+                <span class="s2">&quot;A vital aspect of this API is field control; you can open up the limit wide when dealing with lightweight &quot;</span>
+                <span class="s2">&quot;fields and dial way back when using larger fields, like content. Adjust dynamically. The best strategy &quot;</span>
                 <span class="s2">&quot;balances preserving the user&#39;s context window while minimizing number of queries necessary to answer their question.&quot;</span>
             <span class="p">),</span>
             <span class="n">inputSchema</span><span class="o">=</span><span class="p">{</span>
@@ -159,25 +156,23 @@
                 <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="p">{</span>
                         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-                        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Fulltext search query string. Leave empty to return all resources when &quot;</span>
-                            <span class="s2">&quot;filtering on other fields and you will get better precision. &quot;</span>
-                            <span class="s2">&quot;Extremely useful tips to guide query construction follows. &quot;</span>
-                            <span class="s2">&quot;Be explicit—a query MUST use one of these formats: (1) single keyword, (2) quoted phrase: </span><span class="se">\&quot;</span><span class="s2">keyword1 keyword2</span><span class="se">\&quot;</span><span class="s2">, (3) &quot;</span>
-                            <span class="s2">&quot;explicit AND: keyword1 AND keyword2, (4) explicit OR: keyword1 OR keyword2, or (5) advanced boolean: (keyword1 AND keyword2) &quot;</span>
-                            <span class="s2">&quot;OR (keyword3 NOT keyword4). &quot;</span>
-                            <span class="s2">&quot;WARNING, space-separated keywords without quotes or operators will not work correctly.&quot;</span>
-                            <span class="s2">&quot;Supports fulltext and boolean operators, syntax and capabilities consistent with &quot;</span>
-                            <span class="s2">&quot;SQLite FTS5 in boolean mode. Supports AND, OR, NOT operators, quoted phrases, &quot;</span>
-                            <span class="s2">&quot;and suffix wildcards (word*), but not prefix wildcards (*word). &quot;</span>
-                            <span class="s2">&quot;Parentheses nesting for complex boolean expressions is fully supported. &quot;</span>
-                            <span class="s2">&quot;Does not support `field: value` format, it will poison the query, cause zero results—use filters instead. &quot;</span>
-                            <span class="s2">&quot;Does not support stemming, use wildcards (keyword*) instead.&quot;</span>
+                        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;The query field is the workhorse of the API and supports fulltext boolean queries &quot;</span>
+                            <span class="s2">&quot;along with field searching using the name: value pattern. &quot;</span>
+                            <span class="s2">&quot;Fields supported include page/resource id as id: &lt;resource_id|int&gt; (OR together for multiple docs), &quot;</span>
+                            <span class="s2">&quot;HTTP status as status: &lt;code|int&gt;, URL as url: &lt;url|str&gt;, and content type as type: &lt;type|str&gt;. &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;Valid types include (</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resources_type_options</span><span class="p">)</span><span class="si">}</span><span class="s2">). &quot;</span>
+                            <span class="s2">&quot;Additionally, headers as headers: &lt;term|str&gt; and content as content: &lt;term|str&gt; can be &quot;</span>
+                            <span class="s2">&quot;searched specifically. You would only search content when fulltext search is diluted by other field hits. &quot;</span>
+                            <span class="s2">&quot;For the status field, numerical operators are supported, e.g. status: &gt;=400. &quot;</span>
+                            <span class="s2">&quot;For the url and type fields, along with fulltext search terms (fieldless), FTS5 stem* suffix &quot;</span>
+                            <span class="s2">&quot;wildcarding is enabled. An empty query returns all results. &quot;</span>
+                            <span class="s2">&quot;A query MUST use one of these formats: (1) empty query for unfiltered results, (2) single keyword, &quot;</span>
+                            <span class="s2">&quot;(3) quoted phrase: </span><span class="se">\&quot;</span><span class="s2">keyword1 keyword2</span><span class="se">\&quot;</span><span class="s2">, (4) &quot;</span>
+                            <span class="s2">&quot;explicit AND: keyword1 AND type: html, (5) explicit OR: keyword1 OR keyword2, or (6) advanced boolean: &quot;</span>
+                            <span class="s2">&quot;(keyword1 OR keyword2) AND (status: 200 AND type: html). &quot;</span>
+                            <span class="s2">&quot;The search index does not support stemming, use wildcards (keyword*), or the boolean OR and your &quot;</span>
+                            <span class="s2">&quot;imagination instead.&quot;</span>
                         <span class="p">)</span>
-                    <span class="p">},</span>
-                    <span class="s2">&quot;ids&quot;</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
-                        <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">},</span>
-                        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Optional list of resource IDs to retrieve specific resources directly.&quot;</span><span class="p">)</span>
                     <span class="p">},</span>
                     <span class="s2">&quot;sites&quot;</span><span class="p">:</span> <span class="p">{</span>
                         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
@@ -185,14 +180,6 @@
                         <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Optional list of project ID to filter search results to a specific site. In 95% &quot;</span>
                             <span class="s2">&quot;of scenarios, you&#39;d filter to only one site, but multiple site filtering is offered for &quot;</span>
                             <span class="sa">f</span><span class="s2">&quot;advanced search scenarios. Available sites include </span><span class="si">{</span><span class="n">sites_display</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
-                    <span class="p">},</span>
-                    <span class="s2">&quot;types&quot;</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
-                        <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span>
-                            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-                            <span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="n">resources_type_options</span><span class="p">,</span>
-                        <span class="p">},</span>
-                        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Optional filter for specific resource types.&quot;</span>
                     <span class="p">},</span>
                     <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">{</span>
                         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
@@ -203,13 +190,6 @@
                         <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;List of additional fields to include in the response beyond the defaults &quot;</span>
                             <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resources_field_options</span><span class="p">)</span><span class="si">}</span><span class="s2">). Empty list means default fields only. &quot;</span>
                             <span class="s2">&quot;The content field can lead to large results and should be used judiously with LIMIT.&quot;</span><span class="p">)</span>
-                    <span class="p">},</span>
-                    <span class="s2">&quot;statuses&quot;</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
-                        <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">},</span>
-                        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Optional list of HTTP status codes to filter results. &quot;</span>
-                            <span class="s2">&quot;For example, [200] returns only successful resources, [404, 500] returns &quot;</span>
-                            <span class="s2">&quot;only resources with Not Found or Server Error.&quot;</span><span class="p">)</span>
                     <span class="p">},</span>
                     <span class="s2">&quot;sort&quot;</span><span class="p">:</span> <span class="p">{</span>
                         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
@@ -225,13 +205,20 @@
                         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
                         <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Number of results to skip for pagination. Default is 0.&quot;</span>
                     <span class="p">},</span>
-                    <span class="s2">&quot;thumbnails&quot;</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;boolean&quot;</span><span class="p">,</span>
-                        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Support for base64 encoded data for image thumbnails. &quot;</span>
-                            <span class="s2">&quot;Default is false. This creates small thumbnails that enable basic &quot;</span>
-                            <span class="s2">&quot;image recognition while keeping token output minimal. Only works for image &quot;</span>
-                            <span class="s2">&quot;(&quot;&quot;img&quot;&quot;) types, which is filterable in types field. Svg format is not &quot;</span>
-                            <span class="s2">&quot;currently supported.&quot;</span><span class="p">)</span>
+                    <span class="s2">&quot;extras&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;thumbnails&quot;</span><span class="p">,</span> <span class="s2">&quot;markdown&quot;</span><span class="p">]</span>
+                        <span class="p">},</span>
+                        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Optional array of extra features to include in results. Available options include:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                            <span class="s2">&quot;- &#39;thumbnails&#39;: Generates base64 encoded thumbnails for image resources. Creates small previews &quot;</span>
+                            <span class="s2">&quot;that enable basic image recognition while keeping token output minimal. Only works for image &quot;</span>
+                            <span class="s2">&quot;(img) types, which can be filtered using `type: img` in queries. SVG format is not supported.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                            <span class="s2">&quot;- &#39;markdown&#39;: Directly transforms the HTML content field into concise markdown, &quot;</span>
+                            <span class="s2">&quot;reducing token usage and improving readability for LLMs. This does not create a separate field &quot;</span>
+                            <span class="s2">&quot;but replaces the HTML in the content field with its markdown equivalent. Must be used with &quot;</span>
+                            <span class="s2">&quot;the content field in the fields parameter.&quot;</span><span class="p">)</span>
                     <span class="p">},</span>
                 <span class="p">},</span>
                 <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[]</span>

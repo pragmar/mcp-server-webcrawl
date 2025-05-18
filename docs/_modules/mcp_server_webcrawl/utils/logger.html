@@ -130,7 +130,6 @@
     <span class="p">(</span><span class="n">log_name</span><span class="p">,</span> <span class="n">log_path</span><span class="p">,</span> <span class="n">log_level</span><span class="p">)</span> <span class="o">=</span> <span class="n">get_logger_configuration</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">log_level</span> <span class="o">==</span> <span class="n">logging</span><span class="o">.</span><span class="n">NOTSET</span><span class="p">:</span>
         <span class="c1"># don&#39;t set up anything, named logging will effectively evaporate</span>
-        <span class="c1"># todo: needs reality check</span>
         <span class="k">return</span>
 
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">log_level</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">log_level</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;LOG_LEVEL must be set&quot;</span>

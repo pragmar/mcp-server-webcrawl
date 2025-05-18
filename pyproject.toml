@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "mcp-server-webcrawl"
 description = "MCP server for search and retrieval of web crawler content"
-readme = "README.md"
+readme = "README_pypi.md"
 requires-python = ">=3.10"
 authors = [
     {name = "Ben Caulfield"}

@@ -153,10 +153,25 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">query_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Search query should return results&quot;</span><span class="p">)</span>
 
+        <span class="c1"># test less often used, more invisible fields</span>
+        <span class="n">timestamp_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s2">&quot;privacy&quot;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="s2">&quot;modified&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">timestamp_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Search query should return results&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Verify timestamps are not None</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">timestamp_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+            <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">resource_dict</span><span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">],</span> <span class="s2">&quot;Created timestamp should not be None&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">resource_dict</span><span class="p">[</span><span class="s2">&quot;modified&quot;</span><span class="p">],</span> <span class="s2">&quot;Modified timestamp should not be None&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">resource_dict</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="s2">&quot;Modified timestamp should not be None&quot;</span><span class="p">)</span>
+
+
         <span class="c1"># search term exists in returned resources</span>
         <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">query_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
             <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-            <span class="c1"># print(resource_dict)</span>
             <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
             <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">resource_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;privacy&quot;</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
@@ -168,8 +183,8 @@
         <span class="k">if</span> <span class="n">resources_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">first_resource</span> <span class="o">=</span> <span class="n">resources_json</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">id_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
-                <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">first_resource</span><span class="o">.</span><span class="n">site</span><span class="p">],</span>  <span class="c1"># Use the site ID from the resource</span>
-                <span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="n">first_resource</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
+                <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">first_resource</span><span class="o">.</span><span class="n">site</span><span class="p">],</span>
+                <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;id: </span><span class="si">{</span><span class="n">first_resource</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">id_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">id_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">first_resource</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
@@ -183,8 +198,8 @@
         <span class="c1"># type filtering</span>
         <span class="n">html_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
             <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
-            <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="p">],</span>
-            <span class="n">query</span><span class="o">=</span><span class="s2">&quot;html&quot;</span>  <span class="c1"># Only look for HTML files explicitly</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;html AND type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">]</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">html_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;HTML filtering should return results&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">html_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
@@ -196,7 +211,7 @@
         <span class="c1"># multiple resource types</span>
         <span class="n">mixed_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
             <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
-            <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> OR type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">mixed_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">types_found</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">type</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">mixed_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">}</span>
@@ -247,13 +262,29 @@
             <span class="p">)</span>
 
         <span class="c1"># status code filtering</span>
-        <span class="n">status_resources_ok</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span> <span class="n">statuses</span><span class="o">=</span><span class="p">[</span><span class="mi">200</span><span class="p">])</span>
+        <span class="n">status_resources_ok</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s2">&quot;status: 200&quot;</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">status_resources_ok</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Status filtering should return results&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">status_resources_ok</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
 
+        <span class="c1"># status code numeric operator</span>
+        <span class="c1"># note S1 finds this, but other crawlers don&#39;t always</span>
+        <span class="n">status_resources2</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;status: &gt;400&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">status_resources2</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Status filtering should return results&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">status_resources2</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+
         <span class="c1"># redirects</span>
-        <span class="n">status_resources_redirect</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span> <span class="n">statuses</span><span class="o">=</span><span class="p">[</span><span class="mi">302</span><span class="p">])</span>
+        <span class="n">status_resources_redirect</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s2">&quot;status: 302&quot;</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">status_resources_redirect</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Status filtering should return results&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">status_resources_redirect</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="mi">302</span><span class="p">)</span>
@@ -261,7 +292,11 @@
         <span class="c1"># 404 will not have all metadata, content likely missing, but should capture filesize</span>
         <span class="c1"># pragmar.com has an intentional 404, should be in the fixture</span>
         <span class="c1"># http://pragmar.com/internal/this/page/does/not/exist/</span>
-        <span class="n">status_resources_not_found</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span> <span class="n">statuses</span><span class="o">=</span><span class="p">[</span><span class="mi">404</span><span class="p">],</span> <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">])</span>
+        <span class="n">status_resources_not_found</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s2">&quot;status: 404&quot;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">status_resources_not_found</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Status filtering should return results&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">status_resources_not_found</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="mi">404</span><span class="p">)</span>
@@ -272,8 +307,7 @@
         <span class="c1"># combined filtering</span>
         <span class="n">combined_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
             <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
-            <span class="n">query</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">,</span>
-            <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;index AND type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">],</span>
             <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;+url&quot;</span><span class="p">,</span>
             <span class="n">limit</span><span class="o">=</span><span class="mi">3</span>
@@ -290,7 +324,7 @@
         <span class="c1"># multi-site search</span>
         <span class="n">multisite_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
             <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">EXAMPLE_SITE_ID</span><span class="p">,</span> <span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
-            <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;+url&quot;</span><span class="p">,</span>
             <span class="n">limit</span><span class="o">=</span><span class="mi">100</span>
         <span class="p">)</span>
@@ -345,7 +379,6 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skip randomness verification: Not enough resources (</span><span class="si">{</span><span class="n">random2_resources</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span></div>
 </div>
-
 
 </pre></div>
 

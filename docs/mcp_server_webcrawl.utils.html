@@ -189,95 +189,17 @@
 </dd></dl>
 
 </section>
-<section id="module-mcp_server_webcrawl.utils.querycache">
-<span id="mcp-server-webcrawl-utils-querycache-module"></span><h2>mcp_server_webcrawl.utils.querycache module<a class="headerlink" href="#module-mcp_server_webcrawl.utils.querycache" title="Link to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="mcp_server_webcrawl.utils.querycache.QueryCountCache">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">QueryCountCache</span></span><a class="reference internal" href="_modules/mcp_server_webcrawl/utils/querycache.html#QueryCountCache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.utils.querycache.QueryCountCache" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>A cache for storing total count results from database queries.
-Only caches the count integer values, as these are reusable and light.</p>
-<p>Initialize the query count cache.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>max</strong> – Maximum number of entries to store in the cache</p></li>
-<li><p><strong>ttl</strong> – Time-to-live for cache entries in seconds</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="mcp_server_webcrawl.utils.querycache.QueryCountCache.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">250</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ttl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">900</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/utils/querycache.html#QueryCountCache.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.utils.querycache.QueryCountCache.__init__" title="Link to this definition"></a></dt>
-<dd><p>Initialize the query count cache.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Maximum number of entries to store in the cache</p></li>
-<li><p><strong>ttl</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Time-to-live for cache entries in seconds</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="mcp_server_webcrawl.utils.querycache.QueryCountCache.get">
-<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">statement</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/utils/querycache.html#QueryCountCache.get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.utils.querycache.QueryCountCache.get" title="Link to this definition"></a></dt>
-<dd><p>Get a cached count result if available and not expired.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>statement</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – SQL statement</p></li>
-<li><p><strong>params</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em>) – Query parameters</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Cached count value or None if not found or expired</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a> | None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="mcp_server_webcrawl.utils.querycache.QueryCountCache.set">
-<span class="sig-name descname"><span class="pre">set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">statement</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/utils/querycache.html#QueryCountCache.set"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.utils.querycache.QueryCountCache.set" title="Link to this definition"></a></dt>
-<dd><p>Store a count result in the cache.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>statement</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – SQL statement</p></li>
-<li><p><strong>params</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em>) – Query parameters</p></li>
-<li><p><strong>count</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Count value to cache</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="mcp_server_webcrawl.utils.querycache.QueryCountCache.clear">
-<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/utils/querycache.html#QueryCountCache.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.utils.querycache.QueryCountCache.clear" title="Link to this definition"></a></dt>
-<dd><p>Clear all entries from the cache.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
+<section id="mcp-server-webcrawl-utils-querycache-module">
+<h2>mcp_server_webcrawl.utils.querycache module<a class="headerlink" href="#mcp-server-webcrawl-utils-querycache-module" title="Link to this heading"></a></h2>
 </section>
 <section id="module-mcp_server_webcrawl.utils.server">
 <span id="mcp-server-webcrawl-utils-server-module"></span><h2>mcp_server_webcrawl.utils.server module<a class="headerlink" href="#module-mcp_server_webcrawl.utils.server" title="Link to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.utils.server.initialize_mcp_server">
 <span class="sig-name descname"><span class="pre">initialize_mcp_server</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/utils/server.html#initialize_mcp_server"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.utils.server.initialize_mcp_server" title="Link to this definition"></a></dt>
-<dd><dl class="field-list simple">
+<dd><p>MCP stdio streams require utf-8 explicitly set for Windows (default cp1252)
+or internationalized content will fail.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
@@ -293,7 +215,7 @@ Only caches the count integer values, as these are reusable and light.</p>
 <dd><p>Generate crawler tools based on available sites.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>sites</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference internal" href="mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.sites.SiteResult" title="mcp_server_webcrawl.models.sites.SiteResult"><em>SiteResult</em></a><em>] </em><em>| </em><em>None</em>) – Optional list of site results to include in tool descriptions</p>
+<dd class="field-odd"><p><strong>sites</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference internal" href="mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.sites.SiteResult" title="mcp_server_webcrawl.models.sites.SiteResult"><em>SiteResult</em></a><em>] </em><em>| </em><em>None</em>) – optional list of site results to include in tool descriptions</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>List of Tool objects for sites and resources</p>
@@ -305,11 +227,30 @@ Only caches the count integer values, as these are reusable and light.</p>
 <section id="module-mcp_server_webcrawl.utils">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mcp_server_webcrawl.utils" title="Link to this heading"></a></h2>
 <dl class="py function">
-<dt class="sig sig-object py" id="mcp_server_webcrawl.utils.isoformat_zulu">
-<span class="sig-name descname"><span class="pre">isoformat_zulu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/utils.html#isoformat_zulu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.utils.isoformat_zulu" title="Link to this definition"></a></dt>
-<dd><dl class="field-list simple">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.utils.to_isoformat_zulu">
+<span class="sig-name descname"><span class="pre">to_isoformat_zulu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/utils.html#to_isoformat_zulu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.utils.to_isoformat_zulu" title="Link to this definition"></a></dt>
+<dd><p>Convert datetime to iso Z.</p>
+<p>python&lt;=3.10 struggles with Z and fractions of seconds, will
+throw. smooth out the iso string, second precision isn’t key here</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>dt</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.13)"><em>datetime</em></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.utils.from_isoformat_zulu">
+<span class="sig-name descname"><span class="pre">from_isoformat_zulu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt_string</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/utils.html#from_isoformat_zulu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.utils.from_isoformat_zulu" title="Link to this definition"></a></dt>
+<dd><p>Convert ISO string to datetime.</p>
+<p>python&lt;=3.10 struggles with Z and fractions of seconds, will
+throw. smooth out the iso string, second precision isn’t key here</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dt_string</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><em>None</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.13)"><em>datetime</em></a></p>
 </dd>
 </dl>
 </dd></dl>

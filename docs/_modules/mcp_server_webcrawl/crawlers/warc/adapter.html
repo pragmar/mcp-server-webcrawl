@@ -73,31 +73,28 @@
            <div itemprop="articleBody">
              
   <h1>Source code for mcp_server_webcrawl.crawlers.warc.adapter</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span></span><span class="kn">import</span> <span class="nn">email.utils</span>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sqlite3</span>
 <span class="kn">import</span> <span class="nn">warcio</span>
 
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">closing</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
 <span class="kn">from</span> <span class="nn">warcio.recordloader</span> <span class="kn">import</span> <span class="n">ArcWarcRecord</span>
 
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.adapter</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">BaseManager</span><span class="p">,</span>
     <span class="n">IndexState</span><span class="p">,</span>
     <span class="n">IndexStatus</span><span class="p">,</span>
     <span class="n">SitesGroup</span><span class="p">,</span>
     <span class="n">INDEXED_BATCH_SIZE</span><span class="p">,</span>
-    <span class="n">INDEXED_SORT_MAPPING</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.indexed</span> <span class="kn">import</span> <span class="n">IndexedManager</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ResourceResult</span><span class="p">,</span>
     <span class="n">ResourceResultType</span><span class="p">,</span>
-    <span class="n">RESOURCES_DEFAULT_FIELD_MAPPING</span><span class="p">,</span>
-    <span class="n">RESOURCES_FIELDS_REQUIRED</span><span class="p">,</span>
     <span class="n">RESOURCES_LIMIT_DEFAULT</span><span class="p">,</span>
-    <span class="n">RESOURCES_LIMIT_MAX</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">SiteResult</span><span class="p">,</span>
@@ -110,9 +107,10 @@
 
 <span class="n">WARC_FILE_EXTENSIONS</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;.warc&quot;</span><span class="p">,</span> <span class="s2">&quot;.warc.gz&quot;</span><span class="p">,</span> <span class="s2">&quot;.txt&quot;</span><span class="p">]</span>
 
+
 <div class="viewcode-block" id="WarcManager">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.adapter.WarcManager">[docs]</a>
-<span class="k">class</span> <span class="nc">WarcManager</span><span class="p">(</span><span class="n">BaseManager</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">WarcManager</span><span class="p">(</span><span class="n">IndexedManager</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Manages WARC file data in in-memory SQLite databases.</span>
 <span class="sd">    Provides connection pooling and caching for efficient access.</span>
@@ -132,7 +130,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            connection: SQLite connection</span>
-<span class="sd">            warc_path: Path to the WARC file</span>
+<span class="sd">            warc_path: path to the WARC file</span>
 <span class="sd">            site_id: ID for the site</span>
 <span class="sd">            index_state: IndexState object for tracking progress</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -144,35 +142,34 @@
             <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">INDEXING</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">batch_records</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="n">batch_count</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">batch_insert_resource_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">batch_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
                 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">warc_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">warcio</span><span class="o">.</span><span class="n">ArchiveIterator</span><span class="p">(</span><span class="n">stream</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">warc_record</span> <span class="ow">in</span> <span class="n">warcio</span><span class="o">.</span><span class="n">ArchiveIterator</span><span class="p">(</span><span class="n">stream</span><span class="p">):</span>
 
-                        <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">index_state</span><span class="o">.</span><span class="n">has_timed_out</span><span class="p">():</span>
+                        <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">index_state</span><span class="o">.</span><span class="n">is_timeout</span><span class="p">():</span>
                             <span class="n">index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">PARTIAL</span><span class="p">)</span>
-                            <span class="k">if</span> <span class="n">batch_records</span><span class="p">:</span>
-                                <span class="bp">self</span><span class="o">.</span><span class="n">_execute_batch_insert</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">cursor</span><span class="p">,</span> <span class="n">batch_records</span><span class="p">)</span>
+                            <span class="c1"># commit current batch and shut it down</span>
+                            <span class="k">if</span> <span class="n">batch_insert_resource_results</span><span class="p">:</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_execute_batch_insert</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">cursor</span><span class="p">,</span> <span class="n">batch_insert_resource_results</span><span class="p">)</span>
                             <span class="k">return</span>
 
-                        <span class="k">if</span> <span class="n">record</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">rec_type</span> <span class="o">==</span> <span class="s2">&quot;response&quot;</span><span class="p">:</span>
-                            <span class="n">record_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_warc_record</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">site_id</span><span class="p">)</span>
-                            <span class="k">if</span> <span class="n">record_data</span><span class="p">:</span>
-                                <span class="n">batch_records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">record_data</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">warc_record</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">warc_record</span><span class="o">.</span><span class="n">rec_type</span> <span class="o">==</span> <span class="s2">&quot;response&quot;</span><span class="p">:</span>
+                            <span class="n">resource_result</span><span class="p">:</span> <span class="n">ResourceResult</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_warc_record</span><span class="p">(</span><span class="n">warc_record</span><span class="p">,</span> <span class="n">site_id</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">resource_result</span><span class="p">:</span>
+                                <span class="n">batch_insert_resource_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">resource_result</span><span class="p">)</span>
                                 <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                                     <span class="n">index_state</span><span class="o">.</span><span class="n">increment_processed</span><span class="p">()</span>
 
                                 <span class="n">batch_count</span> <span class="o">+=</span> <span class="mi">1</span>
-
-                                <span class="c1"># batch insert chunk</span>
                                 <span class="k">if</span> <span class="n">batch_count</span> <span class="o">&gt;=</span> <span class="n">INDEXED_BATCH_SIZE</span><span class="p">:</span>
-                                    <span class="bp">self</span><span class="o">.</span><span class="n">_execute_batch_insert</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">cursor</span><span class="p">,</span> <span class="n">batch_records</span><span class="p">)</span>
-                                    <span class="n">batch_records</span> <span class="o">=</span> <span class="p">[]</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">_execute_batch_insert</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">cursor</span><span class="p">,</span> <span class="n">batch_insert_resource_results</span><span class="p">)</span>
+                                    <span class="n">batch_insert_resource_results</span> <span class="o">=</span> <span class="p">[]</span>
                                     <span class="n">batch_count</span> <span class="o">=</span> <span class="mi">0</span>
 
                 <span class="c1"># batch insert remaining</span>
-                <span class="k">if</span> <span class="n">batch_records</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_execute_batch_insert</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">cursor</span><span class="p">,</span> <span class="n">batch_records</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">batch_insert_resource_results</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_execute_batch_insert</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">cursor</span><span class="p">,</span> <span class="n">batch_insert_resource_results</span><span class="p">)</span>
 
                 <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">index_state</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">IndexStatus</span><span class="o">.</span><span class="n">INDEXING</span><span class="p">:</span>
                     <span class="n">index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">COMPLETE</span><span class="p">)</span>
@@ -182,38 +179,12 @@
                 <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">FAILED</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_execute_batch_insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">cursor</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Cursor</span><span class="p">,</span>
-                            <span class="n">batch_records</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Execute batch insert of WARC records with transaction handling.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            connection: SQLite connection</span>
-<span class="sd">            cursor: SQLite cursor</span>
-<span class="sd">            batch_records: List of record tuples ready for insertion</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">batch_records</span><span class="p">:</span>
-            <span class="k">return</span>
-
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;BEGIN TRANSACTION&quot;</span><span class="p">)</span>
-            <span class="n">cursor</span><span class="o">.</span><span class="n">executemany</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">                INSERT INTO ResourcesFullText (</span>
-<span class="s2">                    Id, Project, Url, Type, Status,</span>
-<span class="s2">                    Headers, Content, Size, Time</span>
-<span class="s2">                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)</span>
-<span class="s2">            &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">batch_records</span><span class="p">)</span>
-            <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;COMMIT&quot;</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;ROLLBACK&quot;</span><span class="p">)</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error during batch insert: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_prepare_warc_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">ArcWarcRecord</span><span class="p">,</span> <span class="n">site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_prepare_warc_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">ArcWarcRecord</span><span class="p">,</span> <span class="n">site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResourceResult</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Prepare a WARC record for batch insertion.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            record: A warcio record object</span>
+<span class="sd">            record: a warcio record object</span>
 <span class="sd">            site_id: ID for the site</span>
 
 <span class="sd">        Returns:</span>
@@ -222,8 +193,9 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">rec_headers</span><span class="o">.</span><span class="n">get_header</span><span class="p">(</span><span class="s2">&quot;WARC-Target-URI&quot;</span><span class="p">)</span>
             <span class="n">content_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">http_headers</span><span class="o">.</span><span class="n">get_header</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-            <span class="n">status</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">http_headers</span><span class="o">.</span><span class="n">get_statuscode</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">0</span>
-            <span class="n">res_type</span><span class="p">:</span> <span class="n">ResourceResultType</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_determine_resource_type</span><span class="p">(</span><span class="n">content_type</span><span class="p">)</span>
+            <span class="n">status</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">http_headers</span><span class="o">.</span><span class="n">get_statuscode</span><span class="p">())</span> <span class="ow">or</span> <span class="mi">200</span>
+            <span class="n">resource_type</span><span class="p">:</span> <span class="n">ResourceResultType</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_determine_resource_type</span><span class="p">(</span><span class="n">content_type</span><span class="p">)</span>
+            <span class="c1"># print(resource_type)</span>
             <span class="n">content</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">content_stream</span><span class="p">()</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
             <span class="n">content_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
 
@@ -235,172 +207,43 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">content_str</span> <span class="o">=</span> <span class="kc">None</span>
 
-            <span class="k">return</span> <span class="p">(</span>
-                <span class="n">BaseManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="n">url</span><span class="p">),</span>
-                <span class="n">site_id</span><span class="p">,</span>
-                <span class="n">url</span><span class="p">,</span>
-                <span class="n">res_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                <span class="n">status</span><span class="p">,</span>
-                <span class="n">record</span><span class="o">.</span><span class="n">http_headers</span><span class="o">.</span><span class="n">to_str</span><span class="p">(),</span>
-                <span class="n">content_str</span><span class="p">,</span>
-                <span class="n">content_size</span><span class="p">,</span>
-                <span class="mi">0</span>  <span class="c1"># Time not available</span>
+            <span class="n">warc_date</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">rec_headers</span><span class="o">.</span><span class="n">get_header</span><span class="p">(</span><span class="s2">&quot;WARC-Date&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">warc_date</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">file_created</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">warc_date</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;+00:00&#39;</span><span class="p">))</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="c1"># Fallback to email date parser</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">time_tuple</span> <span class="o">=</span> <span class="n">email</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">parsedate_tz</span><span class="p">(</span><span class="n">warc_date</span><span class="p">)</span>
+                        <span class="n">file_created</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">email</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">mktime_tz</span><span class="p">(</span><span class="n">time_tuple</span><span class="p">),</span> <span class="n">tz</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                        <span class="n">file_created</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">file_created</span> <span class="o">=</span> <span class="kc">None</span> <span class="c1"># don&#39;t pretend it is now, ResourceResult can survive</span>
+            <span class="n">file_modified</span> <span class="o">=</span> <span class="n">file_created</span> <span class="c1"># like file stat indexes, these are equivalent</span>
+
+            <span class="n">result</span> <span class="o">=</span> <span class="n">ResourceResult</span><span class="p">(</span>
+                <span class="nb">id</span><span class="o">=</span><span class="n">IndexedManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="n">url</span><span class="p">),</span>
+                <span class="n">site</span><span class="o">=</span><span class="n">site_id</span><span class="p">,</span>
+                <span class="n">created</span><span class="o">=</span><span class="n">file_created</span><span class="p">,</span>
+                <span class="n">modified</span><span class="o">=</span><span class="n">file_modified</span><span class="p">,</span>
+                <span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span>
+                <span class="nb">type</span><span class="o">=</span><span class="n">resource_type</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
+                <span class="n">headers</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">http_headers</span><span class="o">.</span><span class="n">to_str</span><span class="p">(),</span>
+                <span class="n">content</span><span class="o">=</span><span class="n">content_str</span><span class="p">,</span>
+                <span class="n">size</span><span class="o">=</span><span class="n">content_size</span><span class="p">,</span>
+                <span class="n">time</span><span class="o">=</span><span class="mi">0</span>  <span class="c1"># time not available</span>
             <span class="p">)</span>
+            <span class="c1"># print(status)</span>
+            <span class="c1"># print(result.to_dict())</span>
+            <span class="k">return</span> <span class="n">result</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing WARC record for URL </span><span class="si">{</span><span class="n">url</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="s1">&#39;url&#39;</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nb">locals</span><span class="p">()</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;unknown&#39;</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">None</span></div>
 
 
 <span class="n">manager</span><span class="p">:</span> <span class="n">WarcManager</span> <span class="o">=</span> <span class="n">WarcManager</span><span class="p">()</span>
-
-<div class="viewcode-block" id="get_resources">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.adapter.get_resources">[docs]</a>
-<span class="k">def</span> <span class="nf">get_resources</span><span class="p">(</span>
-    <span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
-    <span class="n">ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">sites</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">statuses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">sort</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">RESOURCES_LIMIT_DEFAULT</span><span class="p">,</span>
-    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">],</span> <span class="nb">int</span><span class="p">,</span> <span class="n">IndexState</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Get resources from WARC files using in-memory SQLite.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        datasrc: Path to the directory containing WARC files</span>
-<span class="sd">        ids: Optional list of resource IDs to filter by</span>
-<span class="sd">        sites: Optional list of site IDs to filter by</span>
-<span class="sd">        query: Search query string</span>
-<span class="sd">        types: Optional list of resource types to filter by</span>
-<span class="sd">        fields: Optional list of fields to include in the response</span>
-<span class="sd">        statuses: Optional list of HTTP status codes to filter by</span>
-<span class="sd">        sort: Sort order for results</span>
-<span class="sd">        limit: Maximum number of results to return</span>
-<span class="sd">        offset: Number of results to skip for pagination</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        Tuple of (list of ResourceResult objects, total count)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">sites</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">sites</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">[],</span> <span class="mi">0</span>
-
-    <span class="n">site_results</span> <span class="o">=</span> <span class="n">get_sites</span><span class="p">(</span><span class="n">datasrc</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="n">sites</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">site_results</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">[],</span> <span class="mi">0</span>
-
-    <span class="n">site_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="n">site</span><span class="o">.</span><span class="n">url</span><span class="p">)</span> <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">site_results</span><span class="p">]</span>
-    <span class="n">sites_group</span> <span class="o">=</span> <span class="n">SitesGroup</span><span class="p">(</span><span class="n">sites</span><span class="p">,</span> <span class="n">site_paths</span><span class="p">)</span>
-    <span class="n">connection</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span>
-    <span class="n">connection_index_state</span><span class="p">:</span> <span class="n">IndexState</span>
-    <span class="n">connection</span><span class="p">,</span> <span class="n">connection_index_state</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">get_connection</span><span class="p">(</span><span class="n">sites_group</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># database is currently being built</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Database for sites </span><span class="si">{</span><span class="n">sites</span><span class="si">}</span><span class="s2"> is currently being built, try again later&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">[],</span> <span class="mi">0</span>
-
-    <span class="c1"># normalize limit and prepare field selection</span>
-    <span class="n">limit</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">limit</span><span class="p">),</span> <span class="n">RESOURCES_LIMIT_MAX</span><span class="p">)</span>
-
-    <span class="c1"># process field selection</span>
-    <span class="n">select_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">RESOURCES_FIELDS_REQUIRED</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">fields</span><span class="p">:</span>
-        <span class="n">select_fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">RESOURCES_DEFAULT_FIELD_MAPPING</span><span class="p">)</span>
-
-    <span class="c1"># convert to qualified field names</span>
-    <span class="n">qualified_fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">RESOURCES_DEFAULT_FIELD_MAPPING</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">select_fields</span><span class="p">]</span>
-    <span class="n">fields_joined</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">qualified_fields</span><span class="p">)</span>
-
-    <span class="c1"># build query components</span>
-    <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">where_clauses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-    <span class="k">if</span> <span class="n">ids</span><span class="p">:</span>
-        <span class="n">placeholders</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;:id</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">))]</span>
-        <span class="n">where_clauses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Id IN (</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">placeholders</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-        <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="sa">f</span><span class="s2">&quot;id</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">id_val</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">id_val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ids</span><span class="p">)})</span>
-
-    <span class="k">if</span> <span class="n">types</span><span class="p">:</span>
-        <span class="n">type_placeholders</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;:type</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">types</span><span class="p">))]</span>
-        <span class="n">where_clauses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Type IN (</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">type_placeholders</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-        <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="sa">f</span><span class="s2">&quot;type</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">type_val</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">type_val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">types</span><span class="p">)})</span>
-
-    <span class="k">if</span> <span class="n">statuses</span><span class="p">:</span>
-        <span class="n">status_placeholders</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;:status</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">statuses</span><span class="p">))]</span>
-        <span class="n">where_clauses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Status IN (</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">status_placeholders</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-        <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="sa">f</span><span class="s2">&quot;status</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">status_val</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">status_val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">statuses</span><span class="p">)})</span>
-
-    <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-        <span class="n">where_clauses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;ResourcesFullText MATCH :query&quot;</span><span class="p">)</span>
-        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;query&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-
-    <span class="n">where_clause</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; WHERE </span><span class="si">{</span><span class="s1">&#39; AND &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">where_clauses</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">where_clauses</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="n">sort</span> <span class="ow">in</span> <span class="n">INDEXED_SORT_MAPPING</span><span class="p">:</span>
-        <span class="n">field</span><span class="p">,</span> <span class="n">direction</span> <span class="o">=</span> <span class="n">INDEXED_SORT_MAPPING</span><span class="p">[</span><span class="n">sort</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">&quot;RANDOM&quot;</span><span class="p">:</span>
-            <span class="n">order_clause</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot; ORDER BY RANDOM()&quot;</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">order_clause</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; ORDER BY </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">direction</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">order_clause</span> <span class="o">=</span> <span class="s2">&quot; ORDER BY Id ASC&quot;</span>
-
-    <span class="n">limit_clause</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; LIMIT </span><span class="si">{</span><span class="n">limit</span><span class="si">}</span><span class="s2"> OFFSET </span><span class="si">{</span><span class="n">offset</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;SELECT </span><span class="si">{</span><span class="n">fields_joined</span><span class="si">}</span><span class="s2"> FROM ResourcesFullText</span><span class="si">{</span><span class="n">where_clause</span><span class="si">}{</span><span class="n">order_clause</span><span class="si">}{</span><span class="n">limit_clause</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">total_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">())</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
-            <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
-            <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">rows</span><span class="p">:</span>
-                <span class="n">column_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">description</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">description</span> <span class="ow">in</span> <span class="n">cursor</span><span class="o">.</span><span class="n">description</span><span class="p">]</span>
-                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
-                    <span class="n">row_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">column_names</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">row</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">column_names</span><span class="p">))}</span>
-                    <span class="n">type_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-                    <span class="n">resource_type</span><span class="p">:</span> <span class="n">ResourceResultType</span> <span class="o">=</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">UNDEFINED</span>
-                    <span class="k">for</span> <span class="n">rt</span> <span class="ow">in</span> <span class="n">ResourceResultType</span><span class="p">:</span>
-                        <span class="k">if</span> <span class="n">rt</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">type_value</span><span class="p">:</span>
-                            <span class="n">resource_type</span> <span class="o">=</span> <span class="n">rt</span>
-                            <span class="k">break</span>
-
-                    <span class="n">result</span><span class="p">:</span> <span class="n">ResourceResult</span> <span class="o">=</span> <span class="n">ResourceResult</span><span class="p">(</span>
-                        <span class="nb">id</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">),</span>
-                        <span class="n">site</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;project&quot;</span><span class="p">),</span>
-                        <span class="n">url</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;url&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-                        <span class="nb">type</span><span class="o">=</span><span class="n">resource_type</span><span class="p">,</span>
-                        <span class="n">name</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">),</span>
-                        <span class="n">headers</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;headers&quot;</span><span class="p">),</span>
-                        <span class="n">content</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;content&quot;</span> <span class="ow">in</span> <span class="n">select_fields</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-                        <span class="n">status</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">),</span>
-                        <span class="n">size</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;size&quot;</span><span class="p">),</span>
-                        <span class="n">time</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">),</span>
-                        <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># reserved</span>
-                    <span class="p">)</span>
-
-                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">limit</span><span class="p">:</span>
-                <span class="n">total_count</span> <span class="o">=</span> <span class="n">offset</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">count_statement</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;SELECT COUNT(*) as total FROM ResourcesFullText</span><span class="si">{</span><span class="n">where_clause</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">count_statement</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
-                <span class="n">count_row</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
-                <span class="n">total_count</span> <span class="o">=</span> <span class="n">count_row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">count_row</span> <span class="k">else</span> <span class="mi">0</span>
-
-    <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SQLite error in WARC adapter: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">[],</span> <span class="mi">0</span>
-
-    <span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">total_count</span><span class="p">,</span> <span class="n">connection_index_state</span></div>
-
-
 
 <div class="viewcode-block" id="get_sites">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.adapter.get_sites">[docs]</a>
@@ -413,9 +256,9 @@
 <span class="sd">    List WARC files in the datasrc directory as sites.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        datasrc: Path to the directory containing WARC files</span>
-<span class="sd">        ids: Optional list of site IDs to filter by</span>
-<span class="sd">        fields: List of fields to include in the response</span>
+<span class="sd">        datasrc: path to the directory containing WARC files</span>
+<span class="sd">        ids: optional list of site IDs to filter by</span>
+<span class="sd">        fields: list of fields to include in the response</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        List of SiteResult objects, one for each WARC file</span>
@@ -452,14 +295,49 @@
         <span class="n">created_time</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">file_stat</span><span class="o">.</span><span class="n">st_ctime</span><span class="p">)</span>
         <span class="n">modified_time</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">file_stat</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">)</span>
         <span class="n">site</span><span class="p">:</span> <span class="n">SiteResult</span> <span class="o">=</span> <span class="n">SiteResult</span><span class="p">(</span>
+            <span class="n">path</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span>
             <span class="nb">id</span><span class="o">=</span><span class="n">site_id</span><span class="p">,</span>
             <span class="n">url</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">file_path</span><span class="o">.</span><span class="n">absolute</span><span class="p">()),</span>
             <span class="n">created</span><span class="o">=</span><span class="n">created_time</span> <span class="k">if</span> <span class="s2">&quot;created&quot;</span> <span class="ow">in</span> <span class="n">selected_fields</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">modified</span><span class="o">=</span><span class="n">modified_time</span> <span class="k">if</span> <span class="s2">&quot;modified&quot;</span> <span class="ow">in</span> <span class="n">selected_fields</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">site</span><span class="p">)</span>
-
     <span class="k">return</span> <span class="n">results</span></div>
+
+
+<div class="viewcode-block" id="get_resources">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.adapter.get_resources">[docs]</a>
+<span class="k">def</span> <span class="nf">get_resources</span><span class="p">(</span>
+    <span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">sites</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sort</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">RESOURCES_LIMIT_DEFAULT</span><span class="p">,</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">],</span> <span class="nb">int</span><span class="p">,</span> <span class="n">IndexState</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get resources from wget directories using in-memory SQLite.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        datasrc: path to the directory containing wget captures</span>
+<span class="sd">        sites: optional list of site IDs to filter by</span>
+<span class="sd">        query: search query string</span>
+<span class="sd">        fields: optional list of fields to include in response</span>
+<span class="sd">        sort: sort order for results</span>
+<span class="sd">        limit: maximum number of results to return</span>
+<span class="sd">        offset: number of results to skip for pagination</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple of (list of ResourceResult objects, total count)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sites_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SiteResult</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_sites</span><span class="p">(</span><span class="n">datasrc</span><span class="o">=</span><span class="n">datasrc</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="n">sites</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">sites_results</span><span class="p">,</span> <span class="s2">&quot;At least one site is required to search&quot;</span>
+    <span class="n">site_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">site</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">sites_results</span><span class="p">]</span>
+    <span class="n">sites_group</span> <span class="o">=</span> <span class="n">SitesGroup</span><span class="p">(</span><span class="n">datasrc</span><span class="p">,</span> <span class="n">sites</span><span class="p">,</span> <span class="n">site_paths</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">manager</span><span class="o">.</span><span class="n">get_resources_for_sites_group</span><span class="p">(</span><span class="n">sites_group</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">sort</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span></div>
+
+
 
 </pre></div>
 

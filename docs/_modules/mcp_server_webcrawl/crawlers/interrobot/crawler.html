@@ -113,13 +113,10 @@
         <span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Initialize the IndexedCrawler with a data source path and required adapter functions.</span>
+<span class="sd">        Initialize the InterroBotCrawler with a data source path and required adapter functions.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            datasrc: Path to the data source</span>
-<span class="sd">            get_sites_func: Function to retrieve sites from the data source</span>
-<span class="sd">            get_resources_func: Function to retrieve resources from the data source</span>
-<span class="sd">            resource_field_mapping: Mapping of resource field names to display names</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">datasrc</span><span class="p">,</span> <span class="n">get_sites</span><span class="p">,</span> <span class="n">get_resources</span><span class="p">,</span> <span class="n">resource_field_mapping</span><span class="o">=</span><span class="n">INTERROBOT_RESOURCE_FIELD_MAPPING</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">datasrc</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">and</span> <span class="n">datasrc</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.db&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> datasrc must be a db file&quot;</span></div>
@@ -157,7 +154,7 @@
 
         <span class="n">drt_props</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">default_resources_tool</span><span class="o">.</span><span class="n">inputSchema</span><span class="p">[</span><span class="s2">&quot;properties&quot;</span><span class="p">]</span>
         <span class="n">drt_props</span><span class="p">[</span><span class="s2">&quot;fields&quot;</span><span class="p">][</span><span class="s2">&quot;items&quot;</span><span class="p">][</span><span class="s2">&quot;enum&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">resources_field_options</span>
-        <span class="n">drt_props</span><span class="p">[</span><span class="s2">&quot;types&quot;</span><span class="p">][</span><span class="s2">&quot;items&quot;</span><span class="p">][</span><span class="s2">&quot;enum&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">resources_type_options</span>
+        <span class="c1"># drt_props[&quot;types&quot;][&quot;items&quot;][&quot;enum&quot;] = resources_type_options</span>
         <span class="n">drt_props</span><span class="p">[</span><span class="s2">&quot;sort&quot;</span><span class="p">][</span><span class="s2">&quot;enum&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">resources_sort_options</span>
         <span class="n">drt_props</span><span class="p">[</span><span class="s2">&quot;sites&quot;</span><span class="p">][</span><span class="s2">&quot;enum&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sites_field_options</span>
         <span class="n">drt_props</span><span class="p">[</span><span class="s2">&quot;sites&quot;</span><span class="p">][</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Optional &quot;</span>

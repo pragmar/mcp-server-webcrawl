@@ -74,9 +74,10 @@
   <h1>Source code for mcp_server_webcrawl.models.sites</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models</span> <span class="kn">import</span> <span class="n">METADATA_VALUE_TYPE</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils</span> <span class="kn">import</span> <span class="n">isoformat_zulu</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils</span> <span class="kn">import</span> <span class="n">to_isoformat_zulu</span>
 
 <span class="n">SITES_TOOL_NAME</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;webcrawl_sites&quot;</span>
 <span class="n">SITES_FIELDS_REQUIRED</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;url&quot;</span><span class="p">]</span>
@@ -95,6 +96,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">created</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">modified</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">robots</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -104,15 +106,17 @@
 <span class="sd">        Initialize a SiteResult instance.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            id: Site identifier</span>
-<span class="sd">            url: Site URL</span>
-<span class="sd">            created: Creation timestamp</span>
-<span class="sd">            modified: Last modification timestamp</span>
-<span class="sd">            robots: Robots.txt content</span>
-<span class="sd">            metadata: Additional metadata for the site</span>
+<span class="sd">            id: site identifier</span>
+<span class="sd">            url: site URL</span>
+<span class="sd">            path: path to site data, different from datasrc</span>
+<span class="sd">            created: creation timestamp</span>
+<span class="sd">            modified: last modification timestamp</span>
+<span class="sd">            robots: robots.txt content</span>
+<span class="sd">            metadata: additional metadata for the site</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">url</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">created</span> <span class="o">=</span> <span class="n">created</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">modified</span> <span class="o">=</span> <span class="n">modified</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">robots</span> <span class="o">=</span> <span class="n">robots</span>
@@ -128,8 +132,8 @@
         <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">METADATA_VALUE_TYPE</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
             <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span>
-            <span class="s2">&quot;created&quot;</span><span class="p">:</span> <span class="n">isoformat_zulu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">created</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">created</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="s2">&quot;modified&quot;</span><span class="p">:</span> <span class="n">isoformat_zulu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modified</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">modified</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;created&quot;</span><span class="p">:</span> <span class="n">to_isoformat_zulu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">created</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">created</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;modified&quot;</span><span class="p">:</span> <span class="n">to_isoformat_zulu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modified</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">modified</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="s2">&quot;robots&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">robots</span><span class="p">,</span>
             <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
         <span class="p">}</span>
@@ -147,7 +151,7 @@
 <span class="sd">        and ensuring all fields in the forcefields list exist, even if null.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            forcefields: List of field names that must appear in the output dictionary</span>
+<span class="sd">            forcefields: list of field names that must appear in the output dictionary</span>
 <span class="sd">                with at least a None value</span>
 
 <span class="sd">        Returns:</span>

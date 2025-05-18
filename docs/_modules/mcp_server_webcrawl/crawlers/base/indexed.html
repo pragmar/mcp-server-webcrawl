@@ -73,20 +73,291 @@
            <div itemprop="articleBody">
              
   <h1>Source code for mcp_server_webcrawl.crawlers.base.indexed</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span></span><span class="kn">import</span> <span class="nn">sqlite3</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
 
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">closing</span><span class="p">,</span> <span class="n">contextmanager</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span> <span class="nn">mcp.types</span> <span class="kn">import</span> <span class="n">Tool</span>
 
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.adapter</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseManager</span><span class="p">,</span>
+    <span class="n">IndexState</span><span class="p">,</span>
+    <span class="n">IndexStatus</span><span class="p">,</span>
+    <span class="n">SitesGroup</span><span class="p">,</span>
+    <span class="n">SitesStat</span><span class="p">,</span>
+    <span class="n">INDEXED_MANAGER_CACHE_MAX</span><span class="p">,</span>
+    <span class="n">INDEXED_RESOURCE_DEFAULT_PROTOCOL</span><span class="p">,</span>
+    <span class="n">INDEXED_IGNORE_DIRECTORIES</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.crawler</span> <span class="kn">import</span> <span class="n">BaseCrawler</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResourceResult</span><span class="p">,</span>
+    <span class="n">ResourceResultType</span><span class="p">,</span>
     <span class="n">RESOURCES_DEFAULT_FIELD_MAPPING</span><span class="p">,</span>
     <span class="n">RESOURCES_FIELDS_REQUIRED</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SiteResult</span><span class="p">,</span>
+    <span class="n">SITES_FIELDS_REQUIRED</span><span class="p">,</span>
+    <span class="n">SITES_FIELDS_DEFAULT</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils</span> <span class="kn">import</span> <span class="n">to_isoformat_zulu</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.tools</span> <span class="kn">import</span> <span class="n">get_crawler_tools</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
+
+<div class="viewcode-block" id="IndexedManager">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.indexed.IndexedManager">[docs]</a>
+<span class="k">class</span> <span class="nc">IndexedManager</span><span class="p">(</span><span class="n">BaseManager</span><span class="p">):</span>
+
+<div class="viewcode-block" id="IndexedManager.__init__">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.indexed.IndexedManager.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">IndexState</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">datetime</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span></div>
+
+
+<div class="viewcode-block" id="IndexedManager.get_connection">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.indexed.IndexedManager.get_connection">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">:</span> <span class="n">SitesGroup</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">IndexState</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get database connection for sites in the group, creating if needed.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            group: group of sites to connect to</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (SQLite connection to in-memory database with data loaded or None if building,</span>
+<span class="sd">                     IndexState associated with this database)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">cache_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">:</span>
+            <span class="n">build_time</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span>
+            <span class="n">get_logger</span><span class="p">()</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Database for </span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2"> is currently </span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2"> (started at </span><span class="si">{</span><span class="n">build_time</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">IndexState</span><span class="p">()</span>  <span class="c1"># Return empty IndexState for building databases</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">INDEXED_MANAGER_CACHE_MAX</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cache limit reached (</span><span class="si">{</span><span class="n">INDEXED_MANAGER_CACHE_MAX</span><span class="si">}</span><span class="s2">), clearing all cached databases&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+        <span class="n">is_cached</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">cache_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SitesStat</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">is_cached</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_cached</span><span class="p">:</span>
+            <span class="n">index_state</span> <span class="o">=</span> <span class="n">IndexState</span><span class="p">()</span>
+            <span class="n">index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">INDEXING</span><span class="p">)</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_building_lock</span><span class="p">(</span><span class="n">group</span><span class="p">):</span>
+                <span class="n">connection</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;:memory:&quot;</span><span class="p">,</span> <span class="n">check_same_thread</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_setup_database</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">site_path</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">get_sites</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_load_site_data</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">site_path</span><span class="p">),</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">index_state</span><span class="o">=</span><span class="n">index_state</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">index_state</span><span class="o">.</span><span class="n">is_timeout</span><span class="p">():</span>
+                        <span class="n">index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">PARTIAL</span><span class="p">)</span>
+                        <span class="k">break</span>
+                <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">index_state</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">IndexStatus</span><span class="o">.</span><span class="n">INDEXING</span><span class="p">:</span>
+                    <span class="n">index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">COMPLETE</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">index_state</span><span class="p">)</span>
+
+        <span class="c1"># returns cached or newly created connection with IndexState</span>
+        <span class="n">connection</span><span class="p">,</span> <span class="n">index_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">connection</span><span class="p">,</span> <span class="n">index_state</span></div>
+
+
+<div class="viewcode-block" id="IndexedManager.get_sites_for_directories">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.indexed.IndexedManager.get_sites_for_directories">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_sites_for_directories</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SiteResult</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        List site directories in the datasrc directory as sites.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            datasrc: path to the directory containing site subdirectories</span>
+<span class="sd">            ids: optional list of site IDs to filter by</span>
+<span class="sd">            fields: optional list of fields to include in the response</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of SiteResult objects, one for each site directory</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            Returns an empty list if the datasrc directory doesn&#39;t exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">datasrc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;datasrc not provided (</span><span class="si">{</span><span class="n">datasrc</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">datasrc</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Directory not found (</span><span class="si">{</span><span class="n">datasrc</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="c1"># determine which fields to include</span>
+        <span class="n">select_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">SITES_FIELDS_REQUIRED</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="n">valid_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">SITES_FIELDS_DEFAULT</span><span class="p">)</span>
+            <span class="n">select_fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">valid_fields</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">select_fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">SITES_FIELDS_DEFAULT</span><span class="p">)</span>
+
+        <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SiteResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># get all directories that contain HTTP text files</span>
+        <span class="n">site_directories</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">datasrc</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span>
+            <span class="ow">not</span> <span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">INDEXED_IGNORE_DIRECTORIES</span><span class="p">]</span>
+
+        <span class="c1"># map directory IDs to paths for filtering</span>
+        <span class="n">site_directories_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">BaseManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="p">):</span> <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">site_directories</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">ids</span><span class="p">:</span>
+            <span class="n">site_directories_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">id_val</span><span class="p">:</span> <span class="n">path</span> <span class="k">for</span> <span class="n">id_val</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">site_directories_map</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">id_val</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">}</span>
+
+        <span class="c1"># process each directory</span>
+        <span class="k">for</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">site_directory</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">site_directories_map</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="n">site_directory_stat</span> <span class="o">=</span> <span class="n">site_directory</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span>
+            <span class="n">created_time</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">site_directory_stat</span><span class="o">.</span><span class="n">st_ctime</span><span class="p">)</span>
+            <span class="n">modified_time</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">site_directory_stat</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">)</span>
+
+            <span class="c1"># check for robots.txt</span>
+            <span class="n">robots_content</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">robots_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">site_directory</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*robots.txt*&quot;</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">robots_files</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">robots_files</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                        <span class="c1"># for robots.txt files in our format, extract only the content part</span>
+                        <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                        <span class="n">parts</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+                            <span class="n">response_parts</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">response_parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                                <span class="n">robots_content</span> <span class="o">=</span> <span class="n">response_parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">robots_content</span> <span class="o">=</span> <span class="n">response_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">robots_content</span> <span class="o">=</span> <span class="n">content</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error reading robots.txt&quot;</span><span class="p">)</span>
+
+            <span class="n">site</span> <span class="o">=</span> <span class="n">SiteResult</span><span class="p">(</span>
+                <span class="n">path</span><span class="o">=</span><span class="n">site_directory</span><span class="p">,</span>
+                <span class="nb">id</span><span class="o">=</span><span class="n">site_id</span><span class="p">,</span>
+                <span class="n">url</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">INDEXED_RESOURCE_DEFAULT_PROTOCOL</span><span class="si">}{</span><span class="n">site_directory</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">,</span>  <span class="c1"># base URL from directory name</span>
+                <span class="n">created</span><span class="o">=</span><span class="n">created_time</span> <span class="k">if</span> <span class="s2">&quot;created&quot;</span> <span class="ow">in</span> <span class="n">select_fields</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">modified</span><span class="o">=</span><span class="n">modified_time</span> <span class="k">if</span> <span class="s2">&quot;modified&quot;</span> <span class="ow">in</span> <span class="n">select_fields</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">robots</span><span class="o">=</span><span class="n">robots_content</span>
+            <span class="p">)</span>
+
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">site</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">results</span></div>
+
+
+    <span class="nd">@contextmanager</span>
+    <span class="k">def</span> <span class="nf">_building_lock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">:</span> <span class="n">SitesGroup</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Context manager for database building operations.</span>
+<span class="sd">        Sets a lock during database building and releases it when done.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="s2">&quot;building&quot;</span><span class="p">)</span>
+            <span class="k">yield</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;failed: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="c1"># re-raise</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="c1"># clean up the lock</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_setup_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create the database schema for storing resource data.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            connection: SQLite connection to set up</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># store project/site (also) in fulltext, doesn&#39;t suppport &gt;= &lt;=,</span>
+        <span class="c1"># and pure fts search is much faster, want to only introduce</span>
+        <span class="c1"># Resource table sql clauses when field specified (Status,</span>
+        <span class="c1"># Size, or Time explicitly queried)</span>
+        <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">())</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+            <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;PRAGMA encoding = </span><span class="se">\&quot;</span><span class="s2">UTF-8</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;PRAGMA synchronous = OFF&quot;</span><span class="p">)</span>
+            <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;PRAGMA journal_mode = MEMORY&quot;</span><span class="p">)</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            CREATE TABLE Resources (</span>
+<span class="s2">                Id INTEGER PRIMARY KEY,</span>
+<span class="s2">                Project INTEGER NOT NULL,</span>
+<span class="s2">                Created TEXT,</span>
+<span class="s2">                Modified TEXT,</span>
+<span class="s2">                Status INTEGER NOT NULL,</span>
+<span class="s2">                Size INTEGER NOT NULL,</span>
+<span class="s2">                Time INTEGER NOT NULL</span>
+<span class="s2">            )&quot;&quot;&quot;</span><span class="p">)</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            CREATE VIRTUAL TABLE ResourcesFullText USING fts5(</span>
+<span class="s2">                Id,</span>
+<span class="s2">                Project,</span>
+<span class="s2">                Url,</span>
+<span class="s2">                Type,</span>
+<span class="s2">                Headers,</span>
+<span class="s2">                Content,</span>
+<span class="s2">                tokenize=&#39;unicode61 remove_diacritics 0&#39;</span>
+<span class="s2">            )&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_execute_batch_insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">cursor</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Cursor</span><span class="p">,</span>
+        <span class="n">batch_records</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute batch insert of records with transaction handling.</span>
+<span class="sd">        Inserts data into both ResourcesFullText and Resources tables.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            connection: SQLite connection</span>
+<span class="sd">            cursor: SQLite cursor</span>
+<span class="sd">            batch_records: list of ResourceResult objects ready for insertion</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">batch_records</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">resources_base_records</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">resources_fts_records</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">batch_records</span><span class="p">:</span>
+            <span class="n">resources_base_records</span><span class="o">.</span><span class="n">append</span><span class="p">((</span>
+                <span class="n">resource</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                <span class="n">resource</span><span class="o">.</span><span class="n">site</span><span class="p">,</span>
+                <span class="n">to_isoformat_zulu</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">created</span><span class="p">)</span> <span class="k">if</span> <span class="n">resource</span><span class="o">.</span><span class="n">created</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">to_isoformat_zulu</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">modified</span><span class="p">)</span> <span class="k">if</span> <span class="n">resource</span><span class="o">.</span><span class="n">modified</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">resource</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+                <span class="n">resource</span><span class="o">.</span><span class="n">size</span> <span class="k">if</span> <span class="n">resource</span><span class="o">.</span><span class="n">size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="n">resource</span><span class="o">.</span><span class="n">time</span> <span class="k">if</span> <span class="n">resource</span><span class="o">.</span><span class="n">time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="p">))</span>
+            <span class="n">resources_fts_records</span><span class="o">.</span><span class="n">append</span><span class="p">((</span>
+                <span class="n">resource</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                <span class="n">resource</span><span class="o">.</span><span class="n">site</span><span class="p">,</span>
+                <span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">,</span>
+                <span class="n">resource</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">resource</span><span class="o">.</span><span class="n">type</span> <span class="k">else</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">UNDEFINED</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">resource</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
+                <span class="n">resource</span><span class="o">.</span><span class="n">content</span><span class="p">,</span>
+            <span class="p">))</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;BEGIN TRANSACTION&quot;</span><span class="p">)</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">executemany</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                INSERT INTO Resources (</span>
+<span class="s2">                    Id, Project, Created, Modified, Status, Size, Time</span>
+<span class="s2">                ) VALUES (?, ?, ?, ?, ?, ?, ?)</span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">resources_base_records</span><span class="p">)</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">executemany</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                INSERT INTO ResourcesFullText (</span>
+<span class="s2">                    Id, Project, Url, Type, Headers, Content</span>
+<span class="s2">                ) VALUES (?, ?, ?, ?, ?, ?)</span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">resources_fts_records</span><span class="p">)</span>
+            <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;COMMIT&quot;</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;ROLLBACK&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error during batch insert: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="IndexedCrawler">
@@ -110,10 +381,10 @@
 <span class="sd">        Initialize the IndexedCrawler with a data source path and required adapter functions.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            datasrc: Path to the data source</span>
-<span class="sd">            get_sites_func: Function to retrieve sites from the data source</span>
-<span class="sd">            get_resources_func: Function to retrieve resources from the data source</span>
-<span class="sd">            resource_field_mapping: Mapping of resource field names to display names</span>
+<span class="sd">            datasrc: path to the data source</span>
+<span class="sd">            get_sites_func: function to retrieve sites from the data source</span>
+<span class="sd">            get_resources_func: function to retrieve resources from the data source</span>
+<span class="sd">            resource_field_mapping: mapping of resource field names to display names</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">assert</span> <span class="n">datasrc</span><span class="o">.</span><span class="n">is_dir</span><span class="p">(),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> datasrc must be a directory&quot;</span>
@@ -142,7 +413,7 @@
         <span class="n">all_sites_display</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s2"> (site: </span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">all_sites</span><span class="p">])</span>
 
         <span class="n">drt_props</span> <span class="o">=</span> <span class="n">default_resources_tool</span><span class="o">.</span><span class="n">inputSchema</span><span class="p">[</span><span class="s2">&quot;properties&quot;</span><span class="p">]</span>
-        <span class="n">drt_props</span><span class="p">[</span><span class="s2">&quot;types&quot;</span><span class="p">][</span><span class="s2">&quot;items&quot;</span><span class="p">][</span><span class="s2">&quot;enum&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">resources_type_options</span>
+        <span class="c1"># drt_props[&quot;types&quot;][&quot;items&quot;][&quot;enum&quot;] = resources_type_options</span>
         <span class="n">drt_props</span><span class="p">[</span><span class="s2">&quot;sites&quot;</span><span class="p">][</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Optional &quot;</span>
             <span class="s2">&quot;list of project ID to filter search results to a specific site. In 95% &quot;</span>
             <span class="s2">&quot;of scenarios, you&#39;d filter to only one site, but many site filtering is offered for &quot;</span>
@@ -150,7 +421,6 @@
 
         <span class="k">return</span> <span class="p">[</span><span class="n">default_sites_tool</span><span class="p">,</span> <span class="n">default_resources_tool</span><span class="p">]</span></div>
 </div>
-
 
 
 </pre></div>

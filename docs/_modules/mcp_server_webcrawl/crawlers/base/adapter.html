@@ -78,9 +78,10 @@
 <span class="kn">import</span> <span class="nn">mimetypes</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">sqlite3</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
 
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">closing</span>
 <span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
-<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">closing</span><span class="p">,</span> <span class="n">contextmanager</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
@@ -88,8 +89,17 @@
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timezone</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
 
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">ResourceResultType</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils</span> <span class="kn">import</span> <span class="n">isoformat_zulu</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResourceResult</span><span class="p">,</span>
+    <span class="n">ResourceResultType</span><span class="p">,</span>
+    <span class="n">RESOURCES_DEFAULT_FIELD_MAPPING</span><span class="p">,</span>
+    <span class="n">RESOURCES_FIELDS_REQUIRED</span><span class="p">,</span>
+    <span class="n">RESOURCES_ENUMERATED_TYPE_MAPPING</span><span class="p">,</span>
+    <span class="n">RESOURCES_LIMIT_MAX</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils</span> <span class="kn">import</span> <span class="n">to_isoformat_zulu</span><span class="p">,</span> <span class="n">from_isoformat_zulu</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.search</span> <span class="kn">import</span> <span class="n">SearchQueryParser</span><span class="p">,</span> <span class="n">SearchSubquery</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
@@ -122,14 +132,14 @@
 
 <span class="c1"># maximum indexes held in cache, an index is a unique list[site-ids] argument</span>
 <span class="n">INDEXED_MANAGER_CACHE_MAX</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span>
-
+<span class="n">INDEXED_IGNORE_DIRECTORIES</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;http-client-cache&quot;</span><span class="p">,</span> <span class="s2">&quot;result-storage&quot;</span><span class="p">]</span>
 <span class="n">INDEXED_SORT_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;+id&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Id&quot;</span><span class="p">,</span> <span class="s2">&quot;ASC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;-id&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Id&quot;</span><span class="p">,</span> <span class="s2">&quot;DESC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;+url&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Url&quot;</span><span class="p">,</span> <span class="s2">&quot;ASC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;-url&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Url&quot;</span><span class="p">,</span> <span class="s2">&quot;DESC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;+status&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Status&quot;</span><span class="p">,</span> <span class="s2">&quot;ASC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;-status&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Status&quot;</span><span class="p">,</span> <span class="s2">&quot;DESC&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;+id&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Resources.Id&quot;</span><span class="p">,</span> <span class="s2">&quot;ASC&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;-id&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Resources.Id&quot;</span><span class="p">,</span> <span class="s2">&quot;DESC&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;+url&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;ResourcesFullText.Url&quot;</span><span class="p">,</span> <span class="s2">&quot;ASC&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;-url&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;ResourcesFullText.Url&quot;</span><span class="p">,</span> <span class="s2">&quot;DESC&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;+status&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Resources.Status&quot;</span><span class="p">,</span> <span class="s2">&quot;ASC&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;-status&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Resources.Status&quot;</span><span class="p">,</span> <span class="s2">&quot;DESC&quot;</span><span class="p">),</span>
     <span class="s2">&quot;?&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Id&quot;</span><span class="p">,</span> <span class="s2">&quot;RANDOM&quot;</span><span class="p">)</span>
 <span class="p">}</span>
 
@@ -147,12 +157,20 @@
     <span class="s2">&quot;.png&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
     <span class="s2">&quot;.gif&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
     <span class="s2">&quot;.svg&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.tif&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.tiff&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.webp&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.bmp&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
     <span class="s2">&quot;.pdf&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PDF</span><span class="p">,</span>
     <span class="s2">&quot;.txt&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
     <span class="s2">&quot;.xml&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
     <span class="s2">&quot;.json&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
     <span class="s2">&quot;.doc&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">DOC</span><span class="p">,</span>
-    <span class="s2">&quot;.docx&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">DOC</span>
+    <span class="s2">&quot;.docx&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">DOC</span><span class="p">,</span>
+    <span class="s2">&quot;.mov&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">,</span>
+    <span class="s2">&quot;.mp4&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">,</span>
+    <span class="s2">&quot;.mp3&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">AUDIO</span><span class="p">,</span>
+    <span class="s2">&quot;.ogg&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">AUDIO</span><span class="p">,</span>
 <span class="p">}</span>
 
 <div class="viewcode-block" id="IndexStatus">
@@ -212,7 +230,7 @@
         <span class="n">seconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">total_seconds</span> <span class="o">%</span> <span class="mi">60</span><span class="p">)</span>
         <span class="n">milliseconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">total_seconds</span> <span class="o">%</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
 
-        <span class="c1"># Format as HH:MM:SS.mmm</span>
+        <span class="c1"># HH:MM:SS.mmm</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">hours</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">minutes</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">seconds</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">milliseconds</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">&quot;</span>
 
 <div class="viewcode-block" id="IndexState.is_timeout">
@@ -232,13 +250,11 @@
         <span class="n">result</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="n">status</span> <span class="p">}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">REMOTE</span><span class="p">,</span> <span class="n">IndexStatus</span><span class="o">.</span><span class="n">UNDEFINED</span><span class="p">):</span>
             <span class="n">result</span><span class="p">[</span><span class="s2">&quot;processed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processed</span>
-            <span class="n">result</span><span class="p">[</span><span class="s2">&quot;time_start&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">isoformat_zulu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_start</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_start</span> <span class="k">else</span> <span class="kc">None</span>
-            <span class="n">result</span><span class="p">[</span><span class="s2">&quot;time_end&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">isoformat_zulu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_end</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_end</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">result</span><span class="p">[</span><span class="s2">&quot;time_start&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_isoformat_zulu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_start</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_start</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">result</span><span class="p">[</span><span class="s2">&quot;time_end&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_isoformat_zulu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_end</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_end</span> <span class="k">else</span> <span class="kc">None</span>
             <span class="n">result</span><span class="p">[</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration</span>
         <span class="k">return</span> <span class="n">result</span></div>
 </div>
-
-
 
 
 
@@ -247,15 +263,18 @@
 <span class="k">class</span> <span class="nc">SitesGroup</span><span class="p">:</span>
 <div class="viewcode-block" id="SitesGroup.__init__">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.SitesGroup.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">site_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">site_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">site_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">site_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Simple container class supports many sites being searched at once.</span>
+<span class="sd">        Container class supports the searching of one or more sites at once.</span>
 
 <span class="sd">        Args:</span>
+<span class="sd">            datasrc: site datasrc</span>
 <span class="sd">            site_ids: site ids of the sites</span>
 <span class="sd">            site_paths: paths to site contents (directories)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">datasrc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">site_ids</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">site_paths</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cache_key</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">site_ids</span><span class="p">))</span></div>
@@ -298,26 +317,9 @@
 <div class="viewcode-block" id="BaseManager.__init__">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.__init__">[docs]</a>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the manager with empty cache and statistics.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">IndexState</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_stats</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SitesStat</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c1"># dictionary to track which database builds are in progress</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">datetime</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span></div>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the manager with statistics.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stats</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SitesStat</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span></div>
 
-
-    <span class="nd">@contextmanager</span>
-    <span class="k">def</span> <span class="nf">_building_lock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">:</span> <span class="n">SitesGroup</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Context manager for database building operations.</span>
-<span class="sd">           Sets a lock during database building and releases it when done.&quot;&quot;&quot;</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="s2">&quot;building&quot;</span><span class="p">)</span>
-            <span class="k">yield</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;failed: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="c1"># re-raise</span>
-        <span class="k">finally</span><span class="p">:</span>
-            <span class="c1"># clean up the lock</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
 <div class="viewcode-block" id="BaseManager.string_to_id">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.string_to_id">[docs]</a>
@@ -335,7 +337,7 @@
 <span class="sd">        - The big problem with larger hashspaces is the length of the ids they generate for presentation.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            dirname: Input string to convert to an ID</span>
+<span class="sd">            value: Input string to convert to an ID</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Integer ID derived from the input string</span>
@@ -440,7 +442,7 @@
 <div class="viewcode-block" id="BaseManager.decruft_path">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.decruft_path">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">decruft_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">decruft_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Very light touch cleanup of wget file naming, these tmps are creating noise</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -450,89 +452,192 @@
         <span class="k">return</span> <span class="n">decruftified</span></div>
 
 
-<div class="viewcode-block" id="BaseManager.get_connection">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.get_connection">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">:</span> <span class="n">SitesGroup</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">IndexState</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get database connection for sites in the group, creating if needed.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            group: Group of sites to connect to</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            Tuple of (SQLite connection to in-memory database with data loaded or None if building,</span>
-<span class="sd">                     IndexState associated with this database)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">cache_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">:</span>
-            <span class="n">build_time</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span>
-            <span class="n">get_logger</span><span class="p">()</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Database for </span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2"> is currently </span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2"> (started at </span><span class="si">{</span><span class="n">build_time</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">IndexState</span><span class="p">()</span>  <span class="c1"># Return empty IndexState for building databases</span>
-
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">INDEXED_MANAGER_CACHE_MAX</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-
-        <span class="n">is_cached</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">cache_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_stats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SitesStat</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">is_cached</span><span class="p">))</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_cached</span><span class="p">:</span>
-            <span class="c1"># Create fresh IndexState for this new database</span>
-            <span class="n">index_state</span> <span class="o">=</span> <span class="n">IndexState</span><span class="p">()</span>
-            <span class="n">index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">INDEXING</span><span class="p">)</span>
-
-            <span class="c1"># use the context manager to handle the building lock</span>
-            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_building_lock</span><span class="p">(</span><span class="n">group</span><span class="p">):</span>
-                <span class="n">connection</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;:memory:&quot;</span><span class="p">,</span> <span class="n">check_same_thread</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_setup_database</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
-
-                <span class="k">for</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">site_path</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">get_sites</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_load_site_data</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">site_path</span><span class="p">),</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">index_state</span><span class="o">=</span><span class="n">index_state</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">index_state</span><span class="o">.</span><span class="n">is_timeout</span><span class="p">():</span>
-                        <span class="n">index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">PARTIAL</span><span class="p">)</span>
-                        <span class="k">break</span>
-
-                <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">index_state</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">IndexStatus</span><span class="o">.</span><span class="n">INDEXING</span><span class="p">:</span>
-                    <span class="n">index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">COMPLETE</span><span class="p">)</span>
-
-                <span class="c1"># Cache both connection and its IndexState</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">index_state</span><span class="p">)</span>
-
-        <span class="c1"># Return cached or newly created connection with its IndexState</span>
-        <span class="n">connection</span><span class="p">,</span> <span class="n">index_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db_cache</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">connection</span><span class="p">,</span> <span class="n">index_state</span></div>
-
-
 <div class="viewcode-block" id="BaseManager.get_stats">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.get_stats">[docs]</a>
     <span class="k">def</span> <span class="nf">get_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SitesStat</span><span class="p">]:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stats</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_setup_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<div class="viewcode-block" id="BaseManager.get_resources_for_sites_group">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.get_resources_for_sites_group">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_resources_for_sites_group</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sites_group</span><span class="p">:</span> <span class="n">SitesGroup</span><span class="p">,</span>
+        <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sort</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">swap_values</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">],</span> <span class="nb">int</span><span class="p">,</span> <span class="n">IndexState</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create the database schema for storing resource data.</span>
+<span class="sd">        Get resources from directories using structured query parsing with SearchQueryParser.</span>
+
+<span class="sd">        This method extracts types, fields, and statuses from the querystring instead of</span>
+<span class="sd">        accepting them as separate arguments, using the new SearchSubquery functionality.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            connection: SQLite connection to set up</span>
+<span class="sd">            sites_group: Group of sites to search in</span>
+<span class="sd">            query: Search query string that can include field:value syntax for filtering</span>
+<span class="sd">            fields: resource fields to be returned by the API (Content, Headers, etc.)</span>
+<span class="sd">            sort: Sort order for results</span>
+<span class="sd">            limit: Maximum number of results to return</span>
+<span class="sd">            offset: Number of results to skip for pagination</span>
+<span class="sd">            swap_values: per-field parameterized values to check for (and replace)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (list of ResourceResult objects, total count, connection_index_state)</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            Returns empty results if sites is empty or not provided.</span>
+<span class="sd">            If the database is being built, it will log a message and return empty results.</span>
+
+<span class="sd">            This method extracts field-specific filters from the query string using SearchQueryParser:</span>
+<span class="sd">            - type:html (to filter by resource type)</span>
+<span class="sd">            - status:200 (to filter by HTTP status)</span>
+<span class="sd">            Any fields present in the SearchSubquery will be included in the response.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">())</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
-            <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;PRAGMA encoding = </span><span class="se">\&quot;</span><span class="s2">UTF-8</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;PRAGMA synchronous = OFF&quot;</span><span class="p">)</span>
-            <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;PRAGMA journal_mode = MEMORY&quot;</span><span class="p">)</span>
-            <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">                CREATE VIRTUAL TABLE ResourcesFullText USING fts5(</span>
-<span class="s2">                    Id,</span>
-<span class="s2">                    Project,</span>
-<span class="s2">                    Url,</span>
-<span class="s2">                    Type,</span>
-<span class="s2">                    Status,</span>
-<span class="s2">                    Name,</span>
-<span class="s2">                    Size,</span>
-<span class="s2">                    Time,</span>
-<span class="s2">                    Headers,</span>
-<span class="s2">                    Content,</span>
-<span class="s2">                    tokenize=&#39;unicode61 remove_diacritics 0&#39;</span>
-<span class="s2">                )</span>
-<span class="s2">            &quot;&quot;&quot;</span><span class="p">)</span>
+
+        <span class="c1"># get_connection must be defined in subclass</span>
+        <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;get_connection&quot;</span><span class="p">),</span> <span class="s2">&quot;get_connection not found&quot;</span>
+
+        <span class="n">null_result</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">],</span> <span class="nb">int</span><span class="p">,</span> <span class="n">IndexState</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span>
+
+        <span class="c1"># get sites arg from group</span>
+        <span class="n">sites</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">sites_group</span><span class="o">.</span><span class="n">ids</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sites</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">sites_group</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">sites</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">null_result</span>
+
+        <span class="n">connection</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span>
+        <span class="n">connection_index_state</span><span class="p">:</span> <span class="n">IndexState</span>
+        <span class="n">connection</span><span class="p">,</span> <span class="n">connection_index_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_connection</span><span class="p">(</span><span class="n">sites_group</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># database is currently being built</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Database for sites </span><span class="si">{</span><span class="n">sites</span><span class="si">}</span><span class="s2"> is currently being built, try again later&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">null_result</span>
+
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">SearchQueryParser</span><span class="p">()</span>
+        <span class="n">parsed_query</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">parsed_query</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error parsing query: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="c1"># fall back to simple text search</span>
+                <span class="n">parsed_query</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># determine fields to be retrieved</span>
+        <span class="n">selected_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">RESOURCES_FIELDS_REQUIRED</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="n">selected_fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">RESOURCES_DEFAULT_FIELD_MAPPING</span><span class="p">)</span>
+        <span class="n">safe_sql_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">RESOURCES_DEFAULT_FIELD_MAPPING</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">selected_fields</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^[A-Za-z\.]+$&#39;</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">safe_sql_fields</span><span class="p">),</span> <span class="s2">&quot;Unknown or unsafe field requested&quot;</span>
+        <span class="n">safe_sql_fields_joined</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">safe_sql_fields</span><span class="p">)</span>
+        <span class="n">from_clause</span> <span class="o">=</span> <span class="s2">&quot;ResourcesFullText LEFT JOIN Resources ON ResourcesFullText.Id = Resources.Id&quot;</span>
+        <span class="n">where_clauses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">sites</span><span class="p">:</span>
+            <span class="n">placeholders</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;:sites</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sites</span><span class="p">))]</span>
+            <span class="n">where_clauses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ResourcesFullText.Project IN (</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">placeholders</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="sa">f</span><span class="s2">&quot;sites</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">id_val</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">id_val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sites</span><span class="p">)})</span>
+
+        <span class="k">if</span> <span class="n">parsed_query</span><span class="p">:</span>
+            <span class="n">fts_parts</span><span class="p">,</span> <span class="n">fts_params</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">to_sqlite_fts</span><span class="p">(</span><span class="n">parsed_query</span><span class="p">,</span> <span class="n">swap_values</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fts_parts</span><span class="p">:</span>
+                <span class="n">fts_where</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">part</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fts_parts</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">part</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;AND&quot;</span><span class="p">,</span> <span class="s2">&quot;OR&quot;</span><span class="p">,</span> <span class="s2">&quot;NOT&quot;</span><span class="p">]:</span>    <span class="c1"># operator</span>
+                        <span class="n">fts_where</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">part</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="k">else</span><span class="p">:</span>                               <span class="c1"># condition</span>
+                        <span class="n">fts_where</span> <span class="o">+=</span> <span class="n">part</span>
+                <span class="c1"># fts subquery as a single condition in parentheses</span>
+                <span class="k">if</span> <span class="n">fts_where</span><span class="p">:</span>
+                    <span class="n">where_clauses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">fts_where</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">param_value</span> <span class="ow">in</span> <span class="n">fts_params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                        <span class="n">params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param_value</span>
+
+        <span class="n">where_clause</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; WHERE </span><span class="si">{</span><span class="s1">&#39; AND &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">where_clauses</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">where_clauses</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">sort</span> <span class="ow">in</span> <span class="n">INDEXED_SORT_MAPPING</span><span class="p">:</span>
+            <span class="n">field</span><span class="p">,</span> <span class="n">direction</span> <span class="o">=</span> <span class="n">INDEXED_SORT_MAPPING</span><span class="p">[</span><span class="n">sort</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">&quot;RANDOM&quot;</span><span class="p">:</span>
+                <span class="n">order_clause</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot; ORDER BY RANDOM()&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">order_clause</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; ORDER BY </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">direction</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">order_clause</span> <span class="o">=</span> <span class="s2">&quot; ORDER BY Resources.Id ASC&quot;</span>
+
+        <span class="n">limit</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">limit</span><span class="p">),</span> <span class="n">RESOURCES_LIMIT_MAX</span><span class="p">)</span>
+        <span class="n">limit_clause</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; LIMIT </span><span class="si">{</span><span class="n">limit</span><span class="si">}</span><span class="s2"> OFFSET </span><span class="si">{</span><span class="n">offset</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;SELECT </span><span class="si">{</span><span class="n">safe_sql_fields_joined</span><span class="si">}</span><span class="s2"> FROM </span><span class="si">{</span><span class="n">from_clause</span><span class="si">}{</span><span class="n">where_clause</span><span class="si">}{</span><span class="n">order_clause</span><span class="si">}{</span><span class="n">limit_clause</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">total_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">())</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+                <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">statement</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+                <span class="n">rows</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="n">rows</span><span class="p">:</span>
+                    <span class="n">column_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">description</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">description</span> <span class="ow">in</span> <span class="n">cursor</span><span class="o">.</span><span class="n">description</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+                        <span class="n">row_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">column_names</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">row</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">column_names</span><span class="p">))}</span>
+                        <span class="n">type_value</span> <span class="o">=</span> <span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                        <span class="n">resource_type</span> <span class="o">=</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">UNDEFINED</span>
+
+                        <span class="c1"># map the type string back to enum</span>
+                        <span class="k">for</span> <span class="n">rt</span> <span class="ow">in</span> <span class="n">ResourceResultType</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">rt</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">type_value</span><span class="p">:</span>
+                                <span class="n">resource_type</span> <span class="o">=</span> <span class="n">rt</span>
+                                <span class="k">break</span>
+
+                        <span class="c1"># also accept InterroBot ints</span>
+                        <span class="c1"># if resource_type == ResourceResultType.UNDEFINED and isinstance(type_value, int):</span>
+                        <span class="c1">#     enum_members = list(ResourceResultType)</span>
+                        <span class="c1">#     if 0 &lt;= type_value &lt; len(enum_members):</span>
+                        <span class="c1">#         resource_type = enum_members[type_value]</span>
+                        <span class="k">if</span> <span class="n">resource_type</span> <span class="o">==</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">UNDEFINED</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">type_value</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">type_value</span> <span class="ow">in</span> <span class="n">RESOURCES_ENUMERATED_TYPE_MAPPING</span><span class="p">:</span>
+                                <span class="n">resource_type</span> <span class="o">=</span> <span class="n">RESOURCES_ENUMERATED_TYPE_MAPPING</span><span class="p">[</span><span class="n">type_value</span><span class="p">]</span>
+
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">ResourceResult</span><span class="p">(</span>
+                            <span class="nb">id</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">),</span>
+                            <span class="n">site</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;project&quot;</span><span class="p">),</span>
+                            <span class="n">created</span><span class="o">=</span><span class="n">from_isoformat_zulu</span><span class="p">(</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;created&quot;</span><span class="p">)),</span>
+                            <span class="n">modified</span><span class="o">=</span><span class="n">from_isoformat_zulu</span><span class="p">(</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;modified&quot;</span><span class="p">)),</span>
+                            <span class="n">url</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;url&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+                            <span class="nb">type</span><span class="o">=</span><span class="n">resource_type</span><span class="p">,</span>
+                            <span class="n">name</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">),</span>
+                            <span class="n">headers</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;headers&quot;</span><span class="p">),</span>
+                            <span class="n">content</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;content&quot;</span> <span class="ow">in</span> <span class="n">selected_fields</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                            <span class="n">status</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">),</span>
+                            <span class="n">size</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;size&quot;</span><span class="p">),</span>
+                            <span class="n">time</span><span class="o">=</span><span class="n">row_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">),</span>
+                            <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="p">)</span>
+
+                        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+                <span class="c1"># get total count</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">limit</span><span class="p">:</span>
+                    <span class="n">total_count</span> <span class="o">=</span> <span class="n">offset</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">count_statement</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;SELECT COUNT(*) as total FROM </span><span class="si">{</span><span class="n">from_clause</span><span class="si">}{</span><span class="n">where_clause</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">count_statement</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+                    <span class="n">count_row</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+                    <span class="n">total_count</span> <span class="o">=</span> <span class="n">count_row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">count_row</span> <span class="k">else</span> <span class="mi">0</span>
+
+        <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SQLite error in structured query: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">statement</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">null_result</span>
+
+        <span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">total_count</span><span class="p">,</span> <span class="n">connection_index_state</span></div>
+
 
     <span class="k">def</span> <span class="nf">_load_site_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">site_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
             <span class="n">site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">index_state</span><span class="p">:</span> <span class="n">IndexState</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>

@@ -79,6 +79,7 @@
  | <a href="#B"><strong>B</strong></a>
  | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
  | <a href="#I"><strong>I</strong></a>
@@ -86,7 +87,6 @@
  | <a href="#M"><strong>M</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
- | <a href="#Q"><strong>Q</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
@@ -107,15 +107,17 @@
 </li>
         <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.indexed.IndexedCrawler.__init__">(IndexedCrawler method)</a>
 </li>
+        <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.indexed.IndexedManager.__init__">(IndexedManager method)</a>
+</li>
         <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.IndexState.__init__">(IndexState method)</a>
 </li>
         <li><a href="mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.crawler.InterroBotCrawler.__init__">(InterroBotCrawler method)</a>
 </li>
+        <li><a href="mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.adapter.InterroBotManager.__init__">(InterroBotManager method)</a>
+</li>
         <li><a href="mcp_server_webcrawl.crawlers.katana.html#mcp_server_webcrawl.crawlers.katana.crawler.KatanaCrawler.__init__">(KatanaCrawler method)</a>
 </li>
         <li><a href="mcp_server_webcrawl.crawlers.katana.html#mcp_server_webcrawl.crawlers.katana.adapter.KatanaManager.__init__">(KatanaManager method)</a>
-</li>
-        <li><a href="mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.querycache.QueryCountCache.__init__">(QueryCountCache method)</a>
 </li>
         <li><a href="mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.resources.ResourceResult.__init__">(ResourceResult method)</a>
 </li>
@@ -176,12 +178,10 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.querycache.QueryCountCache.clear">clear() (QueryCountCache method)</a>
+      <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.COMPLETE">COMPLETE (IndexStatus attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.COMPLETE">COMPLETE (IndexStatus attribute)</a>
-</li>
       <li><a href="mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.resources.ResourceResultType.CSS">CSS (ResourceResultType attribute)</a>
 </li>
   </ul></td>
@@ -205,6 +205,14 @@
   </ul></td>
 </tr></table>
 
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.extras">extras (BaseCrawler property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -218,18 +226,22 @@
 </li>
       <li><a href="mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.resources.ResourceResultType.FRAME">FRAME (ResourceResultType attribute)</a>
 </li>
+      <li><a href="mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.from_isoformat_zulu">from_isoformat_zulu() (in module mcp_server_webcrawl.utils)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.querycache.QueryCountCache.get">get() (QueryCountCache method)</a>
-</li>
       <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.get_basic_headers">get_basic_headers() (BaseManager static method)</a>
 </li>
-      <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.get_connection">get_connection() (BaseManager method)</a>
+      <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.indexed.IndexedManager.get_connection">get_connection() (IndexedManager method)</a>
+
+      <ul>
+        <li><a href="mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.adapter.InterroBotManager.get_connection">(InterroBotManager method)</a>
 </li>
+      </ul></li>
       <li><a href="mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.tools.get_crawler_tools">get_crawler_tools() (in module mcp_server_webcrawl.utils.tools)</a>
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.html#mcp_server_webcrawl.crawlers.get_fixture_directory">get_fixture_directory() (in module mcp_server_webcrawl.crawlers)</a>
@@ -262,7 +274,7 @@
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.get_resources_api_json">get_resources_api_json() (BaseCrawler method)</a>
 </li>
-      <li><a href="mcp_server_webcrawl.crawlers.wget.html#mcp_server_webcrawl.crawlers.wget.adapter.get_resources_with_manager">get_resources_with_manager() (in module mcp_server_webcrawl.crawlers.wget.adapter)</a>
+      <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.get_resources_for_sites_group">get_resources_for_sites_group() (BaseManager method)</a>
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.api.BaseJsonApi.get_results">get_results() (BaseJsonApi method)</a>
 </li>
@@ -270,6 +282,8 @@
 
       <ul>
         <li><a href="mcp_server_webcrawl.crawlers.katana.html#mcp_server_webcrawl.crawlers.katana.adapter.get_sites">(in module mcp_server_webcrawl.crawlers.katana.adapter)</a>
+</li>
+        <li><a href="mcp_server_webcrawl.crawlers.siteone.html#mcp_server_webcrawl.crawlers.siteone.adapter.get_sites">(in module mcp_server_webcrawl.crawlers.siteone.adapter)</a>
 </li>
         <li><a href="mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.adapter.get_sites">(in module mcp_server_webcrawl.crawlers.warc.adapter)</a>
 </li>
@@ -281,6 +295,8 @@
       <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.get_sites_api">get_sites_api() (BaseCrawler method)</a>
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.get_sites_api_json">get_sites_api_json() (BaseCrawler method)</a>
+</li>
+      <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.indexed.IndexedManager.get_sites_for_directories">get_sites_for_directories() (IndexedManager method)</a>
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.get_stats">get_stats() (BaseManager method)</a>
 </li>
@@ -304,27 +320,27 @@
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.indexed.IndexedCrawler">IndexedCrawler (class in mcp_server_webcrawl.crawlers.base.indexed)</a>
 </li>
+      <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.indexed.IndexedManager">IndexedManager (class in mcp_server_webcrawl.crawlers.base.indexed)</a>
+</li>
       <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus.INDEXING">INDEXING (IndexStatus attribute)</a>
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.IndexState">IndexState (class in mcp_server_webcrawl.crawlers.base.adapter)</a>
 </li>
-      <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus">IndexStatus (class in mcp_server_webcrawl.crawlers.base.adapter)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus">IndexStatus (class in mcp_server_webcrawl.crawlers.base.adapter)</a>
+</li>
       <li><a href="mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.logger.initialize_logger">initialize_logger() (in module mcp_server_webcrawl.utils.logger)</a>
 </li>
       <li><a href="mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.server.initialize_mcp_server">initialize_mcp_server() (in module mcp_server_webcrawl.utils.server)</a>
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.crawler.InterroBotCrawler">InterroBotCrawler (class in mcp_server_webcrawl.crawlers.interrobot.crawler)</a>
 </li>
+      <li><a href="mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.adapter.InterroBotManager">InterroBotManager (class in mcp_server_webcrawl.crawlers.interrobot.adapter)</a>
+</li>
       <li><a href="mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests">InterroBotTests (class in mcp_server_webcrawl.crawlers.interrobot.tests)</a>
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.IndexState.is_timeout">is_timeout() (IndexState method)</a>
-</li>
-      <li><a href="mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.adapter.iso_to_datetime">iso_to_datetime() (in module mcp_server_webcrawl.crawlers.interrobot.adapter)</a>
-</li>
-      <li><a href="mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.isoformat_zulu">isoformat_zulu() (in module mcp_server_webcrawl.utils)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -556,6 +572,8 @@
         <li><a href="mcp_server_webcrawl.crawlers.wget.html#module-mcp_server_webcrawl.crawlers.wget.tests">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     mcp_server_webcrawl.models
 
@@ -563,8 +581,6 @@
         <li><a href="mcp_server_webcrawl.models.html#module-mcp_server_webcrawl.models">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     mcp_server_webcrawl.models.resources
 
@@ -619,13 +635,6 @@
 
       <ul>
         <li><a href="mcp_server_webcrawl.utils.html#module-mcp_server_webcrawl.utils.logger">module</a>
-</li>
-      </ul></li>
-      <li>
-    mcp_server_webcrawl.utils.querycache
-
-      <ul>
-        <li><a href="mcp_server_webcrawl.utils.html#module-mcp_server_webcrawl.utils.querycache">module</a>
 </li>
       </ul></li>
       <li>
@@ -720,8 +729,6 @@
 </li>
         <li><a href="mcp_server_webcrawl.utils.html#module-mcp_server_webcrawl.utils.logger">mcp_server_webcrawl.utils.logger</a>
 </li>
-        <li><a href="mcp_server_webcrawl.utils.html#module-mcp_server_webcrawl.utils.querycache">mcp_server_webcrawl.utils.querycache</a>
-</li>
         <li><a href="mcp_server_webcrawl.utils.html#module-mcp_server_webcrawl.utils.server">mcp_server_webcrawl.utils.server</a>
 </li>
         <li><a href="mcp_server_webcrawl.utils.html#module-mcp_server_webcrawl.utils.tools">mcp_server_webcrawl.utils.tools</a>
@@ -754,14 +761,6 @@
   </ul></td>
 </tr></table>
 
-<h2 id="Q">Q</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.querycache.QueryCountCache">QueryCountCache (class in mcp_server_webcrawl.utils.querycache)</a>
-</li>
-  </ul></td>
-</tr></table>
-
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -786,8 +785,6 @@
       <li><a href="mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.resources.ResourceResultType.SCRIPT">SCRIPT (ResourceResultType attribute)</a>
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.serve">serve() (BaseCrawler method)</a>
-</li>
-      <li><a href="mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.querycache.QueryCountCache.set">set() (QueryCountCache method)</a>
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.api.BaseJsonApi.set_results">set_results() (BaseJsonApi method)</a>
 </li>
@@ -831,6 +828,8 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_image">test_interrobot_image() (InterroBotTests method)</a>
+</li>
       <li><a href="mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_mcp">test_interrobot_mcp() (InterroBotTests method)</a>
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_pulse">test_interrobot_pulse() (InterroBotTests method)</a>
@@ -840,8 +839,6 @@
       <li><a href="mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_resources">test_interrobot_resources() (InterroBotTests method)</a>
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_sites">test_interrobot_sites() (InterroBotTests method)</a>
-</li>
-      <li><a href="mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_thumbnail">test_interrobot_thumbnail() (InterroBotTests method)</a>
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.katana.html#mcp_server_webcrawl.crawlers.katana.tests.KatanaTests.test_katana_content_parsing">test_katana_content_parsing() (KatanaTests method)</a>
 </li>
@@ -865,10 +862,10 @@
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_warc_resources">test_warc_resources() (WarcTests method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_warc_sites">test_warc_sites() (WarcTests method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="mcp_server_webcrawl.crawlers.wget.html#mcp_server_webcrawl.crawlers.wget.tests.WgetTests.test_wget_pulse">test_wget_pulse() (WgetTests method)</a>
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.wget.html#mcp_server_webcrawl.crawlers.wget.tests.WgetTests.test_wget_random_sort">test_wget_random_sort() (WgetTests method)</a>
@@ -880,8 +877,6 @@
       <li><a href="mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.resources.ResourceResultType.TEXT">TEXT (ResourceResultType attribute)</a>
 </li>
       <li><a href="mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.blobs.ThumbnailManager">ThumbnailManager (class in mcp_server_webcrawl.utils.blobs)</a>
-</li>
-      <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.thumbnails">thumbnails (BaseCrawler property)</a>
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.IndexState.time_end">time_end (IndexState attribute)</a>
 </li>
@@ -903,6 +898,10 @@
         <li><a href="mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.sites.SiteResult.to_forcefield_dict">(SiteResult method)</a>
 </li>
       </ul></li>
+      <li><a href="mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.resources.ResourceResultType.to_int_map">to_int_map() (ResourceResultType class method)</a>
+</li>
+      <li><a href="mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.to_isoformat_zulu">to_isoformat_zulu() (in module mcp_server_webcrawl.utils)</a>
+</li>
       <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.api.BaseJsonApi.to_json">to_json() (BaseJsonApi method)</a>
 </li>
       <li><a href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.api.BaseJsonApi.total">total (BaseJsonApi property)</a>

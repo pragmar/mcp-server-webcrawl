@@ -35,3 +35,5 @@ htmlcov/
 soho.nascom.nasa.com/
 *.7z
 *.diff
+*instructions.txt
+README_pypi.md

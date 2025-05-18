@@ -73,13 +73,12 @@
            <div itemprop="articleBody">
              
   <h1>Source code for mcp_server_webcrawl.crawlers.wget.tests</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.wget.crawler</span> <span class="kn">import</span> <span class="n">WgetCrawler</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">ResourceResultType</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.tests</span> <span class="kn">import</span> <span class="n">BaseCrawlerTests</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers</span> <span class="kn">import</span> <span class="n">get_fixture_directory</span>
+<span></span><span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers</span> <span class="kn">import</span> <span class="n">get_fixture_directory</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.wget.adapter</span> <span class="kn">import</span> <span class="n">WgetManager</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.wget.crawler</span> <span class="kn">import</span> <span class="n">WgetCrawler</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.tests</span> <span class="kn">import</span> <span class="n">BaseCrawlerTests</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">ResourceResultType</span>
 
-<span class="c1"># Calculate IDs for test directories using same hash function as adapter</span>
 <span class="n">EXAMPLE_SITE_ID</span> <span class="o">=</span> <span class="n">WgetManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="s2">&quot;example.com&quot;</span><span class="p">)</span>
 <span class="n">PRAGMAR_SITE_ID</span> <span class="o">=</span> <span class="n">WgetManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="s2">&quot;pragmar.com&quot;</span><span class="p">)</span>
 
@@ -153,6 +152,21 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">query_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Search query should return results&quot;</span><span class="p">)</span>
 
+        <span class="c1"># test less often used, more invisible fields</span>
+        <span class="n">timestamp_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s2">&quot;privacy&quot;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="s2">&quot;modified&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">timestamp_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Search query should return results&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Verify timestamps are not None</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">timestamp_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+            <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">resource_dict</span><span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">],</span> <span class="s2">&quot;Created timestamp should not be None&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">resource_dict</span><span class="p">[</span><span class="s2">&quot;modified&quot;</span><span class="p">],</span> <span class="s2">&quot;Modified timestamp should not be None&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">resource_dict</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="s2">&quot;Modified timestamp should not be None&quot;</span><span class="p">)</span>
+
         <span class="c1"># search term exists in returned resources</span>
         <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">query_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
             <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
@@ -168,7 +182,8 @@
             <span class="n">first_resource</span> <span class="o">=</span> <span class="n">resources_json</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">id_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
                 <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">first_resource</span><span class="o">.</span><span class="n">site</span><span class="p">],</span>  <span class="c1"># Use the site ID from the resource</span>
-                <span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="n">first_resource</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
+                <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;id: </span><span class="si">{</span><span class="n">first_resource</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="c1"># ids=[first_resource.id]</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">id_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">id_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">first_resource</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
@@ -182,8 +197,8 @@
         <span class="c1"># type filtering</span>
         <span class="n">html_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
             <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
-            <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="p">],</span>
-            <span class="n">query</span><span class="o">=</span><span class="s2">&quot;html&quot;</span>  <span class="c1"># Only look for HTML files explicitly</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;html AND type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">]</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">html_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;HTML filtering should return results&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">html_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
@@ -195,7 +210,7 @@
         <span class="c1"># multiple resource types</span>
         <span class="n">mixed_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
             <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
-            <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> OR type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">mixed_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">types_found</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">type</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">mixed_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">}</span>
@@ -213,7 +228,7 @@
         <span class="n">custom_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">]</span>
         <span class="n">field_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
             <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
-            <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="n">fields</span><span class="o">=</span><span class="n">custom_fields</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">field_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
@@ -247,7 +262,10 @@
             <span class="p">)</span>
 
         <span class="c1"># status code filtering</span>
-        <span class="n">status_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span> <span class="n">statuses</span><span class="o">=</span><span class="p">[</span><span class="mi">200</span><span class="p">])</span>
+        <span class="n">status_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s2">&quot;status: 200&quot;</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">status_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Status filtering should return results&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">status_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
@@ -255,8 +273,7 @@
         <span class="c1"># combined filtering</span>
         <span class="n">combined_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
             <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
-            <span class="n">query</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">,</span>
-            <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;index AND type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">],</span>
             <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;+url&quot;</span><span class="p">,</span>
             <span class="n">limit</span><span class="o">=</span><span class="mi">3</span>
@@ -273,7 +290,7 @@
         <span class="c1"># multi-site search</span>
         <span class="n">multisite_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
             <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">EXAMPLE_SITE_ID</span><span class="p">,</span> <span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
-            <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;+url&quot;</span><span class="p">,</span>
             <span class="n">limit</span><span class="o">=</span><span class="mi">100</span>
         <span class="p">)</span>
