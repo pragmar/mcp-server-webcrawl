@@ -1,7 +1,7 @@
 Katana MCP Setup Guide
 ======================
 
-Instructions for setting up `mcp-server-webcrawl <https://pragmar.com/mcp-server-webcrawl/>`_ with `Katana <https://github.com/projectdiscovery/katana>`_ crawler. 
+Instructions for setting up `mcp-server-webcrawl <https://pragmar.com/mcp-server-webcrawl/>`_ with `Katana <https://github.com/projectdiscovery/katana>`_ crawler.
 This allows your LLM (e.g. Claude Desktop) to search content and metadata from websites you've crawled using Katana.
 
 .. raw:: html
@@ -18,7 +18,7 @@ Before you begin, ensure you have:
 - `Claude Desktop <https://claude.ai/download>`_ installed
 - `Python <https://python.org>`_ 3.10 or later installed
 - `Go programming language <https://go.dev/doc/install>`_ installed
-- `Katana crawler <https://github.com/projectdiscovery/katana>`_ installed 
+- `Katana crawler <https://github.com/projectdiscovery/katana>`_ installed
 
 - Basic familiarity with command line interfaces
 
@@ -61,15 +61,20 @@ Verify installation was successful::
 
     # Create a directory for storing crawls
     mkdir crawls
-    
+
     # Run Katana with storage options
-    katana -u https://example.com -store-response -store-response-dir crawls/
+    katana -u https://example.com -store-response -store-response-dir archives/example.com/
 
 4. Repeat for additional websites as needed::
 
-    katana -u https://pragmar.com -store-response -store-response-dir crawls/
+    katana -u https://pragmar.com -store-response -store-response-dir archives/pragmar.com/
 
-The crawler will create a separate host directory for each crawled site within your specified directory.
+In this case, the ./archives directory is the datasrc. The crawler will create
+a separate host directory for each unique host within
+the specified directory. This is consistent with the behavior of Katana,
+example.com/example.com is expected. Sites with external dependencies will branch
+out by origin host in the -store-response-dir, and continue to be searchable as a
+singular site search.
 
 3. Configure Claude Desktop
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,7 +89,7 @@ The crawler will create a separate host directory for each crawled site within y
       "mcpServers": {
         "webcrawl": {
           "command": "/path/to/mcp-server-webcrawl",
-          "args": ["--crawler", "katana", "--datasrc", 
+          "args": ["--crawler", "katana", "--datasrc",
             "/path/to/katana/crawls/"]
         }
       }

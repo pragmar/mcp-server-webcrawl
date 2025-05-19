@@ -16,7 +16,7 @@ To use mcp-server-webcrawl effectively, you need:
 * `Python`_ installed on your command line interface
 * Basic familiarity with running Python packages
 
-After ensuring these prerequisites are met, run the pip install command above to add the package to your environment. 
+After ensuring these prerequisites are met, run the pip install command above to add the package to your environment.
 
 MCP Configuration
 -----------------
@@ -30,12 +30,12 @@ wget
 
 .. code-block:: json
 
-   { 
+   {
      "mcpServers": {
        "webcrawl": {
          "command": "/path/to/mcp-server-webcrawl",
-          "args": ["--crawler", "wget", "--datasrc", 
-            "/path/to/wget/archives/"]     
+          "args": ["--crawler", "wget", "--datasrc",
+            "/path/to/wget/archives/"]
        }
      }
    }
@@ -55,12 +55,12 @@ WARC
 
 .. code-block:: json
 
-   { 
+   {
      "mcpServers": {
        "webcrawl": {
          "command": "/path/to/mcp-server-webcrawl",
-          "args": ["--crawler", "warc", "--datasrc", 
-            "/path/to/warc/archives/"]     
+          "args": ["--crawler", "warc", "--datasrc",
+            "/path/to/warc/archives/"]
        }
      }
    }
@@ -79,11 +79,11 @@ InterroBot
 
 .. code-block:: json
 
-   { 
+   {
      "mcpServers": {
        "webcrawl": {
          "command": "/path/to/mcp-server-webcrawl",
-          "args": ["--crawler", "interrobot", "--datasrc", 
+          "args": ["--crawler", "interrobot", "--datasrc",
             "[homedir]/Documents/InterroBot/interrobot.v2.db"]
        }
      }
@@ -101,11 +101,11 @@ Katana
 
 .. code-block:: json
 
-   { 
+   {
      "mcpServers": {
        "webcrawl": {
          "command": "/path/to/mcp-server-webcrawl",
-          "args": ["--crawler", "katana", "--datasrc", 
+          "args": ["--crawler", "katana", "--datasrc",
             "/path/to/katana/crawls/"]
        }
      }
@@ -117,8 +117,11 @@ Katana
 
    # (macOS Terminal/Powershell/WSL)
    # -store-response to save crawl contents
-   # -store-response-dir allows for many site crawls in one dir
-   $ katana -u https://example.com -store-response -store-response-dir crawls/
+   # -store-response-dir for expansion of hosts
+   # &nbsp; consistent with default Katana behavior to
+   # &nbsp; spread assets across origin host directories
+
+   $ katana -u https://example.com -store-response -store-response-dir crawls/example.com/
 
 
 SiteOne
@@ -126,12 +129,12 @@ SiteOne
 
 .. code-block:: json
 
-   { 
+   {
      "mcpServers": {
        "webcrawl": {
          "command": "/path/to/mcp-server-webcrawl",
-          "args": ["--crawler", "siteone", "--datasrc", 
-            "/path/to/siteone/archives/"]     
+          "args": ["--crawler", "siteone", "--datasrc",
+            "/path/to/siteone/archives/"]
        }
      }
    }
@@ -148,15 +151,15 @@ You can set up multiple **mcp-server-webcrawl** connections under the ``mcpServe
 
 .. code-block:: json
 
-   { 
+   {
      "mcpServers": {
        "webcrawl_warc": {
          "command": "/path/to/mcp-server-webcrawl",
-          "args": ["--crawler", "warc", "--datasrc", "/path/to/warc/archives/"]     
+          "args": ["--crawler", "warc", "--datasrc", "/path/to/warc/archives/"]
        },
        "webcrawl_wget": {
          "command": "/path/to/mcp-server-webcrawl",
-          "args": ["--crawler", "wget", "--datasrc", "/path/to/wget/archives/"]     
+          "args": ["--crawler", "wget", "--datasrc", "/path/to/wget/archives/"]
        }
      }
    }

@@ -258,20 +258,20 @@ the MCP collapsable.
      - fulltext single keyword match
    * - "privacy policy"
      - fulltext match exact phrase
-   * - privacy*
-     - fulltext wildcard matches results starting with "privacy"
+   * - boundar*
+     - fulltext wildcard matches results starting with *boundar* (boundary, boundaries)
    * - id: 12345
      - id field matches a specific resource by ID
    * - url: example.com/*
-     - url field matches results with URL containing example.com
+     - url field matches results with URL containing example.com/
    * - type: html
      - type field matches for HTML pages only
    * - status: 200
      - status field matches specific HTTP status codes (equal to 200)
    * - status: >=400
      - status field matches specific HTTP status code (greater than or equal to 400)
-   * - content: javascript
-     - content field matches javascript in HTTP body (often, but not always HTML)
+   * - content: h1
+     - content field matches content (HTTP response body, often, but not always HTML)
    * - headers: text/xml
      - headers field matches HTTP response headers
    * - privacy AND policy
@@ -328,15 +328,15 @@ supported content types in the search system.
    * - Type
      - Description
    * - html
-     - web page
+     - webpages
    * - iframe
-     - embedded iframe
+     - iframes
    * - img
-     - web image formats
+     - web images
    * - audio
-     - audio files
+     - web audio files
    * - video
-     - video files
+     - web video files
    * - font
      - web font files
    * - style
@@ -344,7 +344,7 @@ supported content types in the search system.
    * - script
      - JavaScript files
    * - rss
-     - RSS syndication feed
+     - RSS syndication feeds
    * - text
      - plain text content
    * - pdf

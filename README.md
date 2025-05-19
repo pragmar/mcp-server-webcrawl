@@ -59,9 +59,9 @@ For step-by-step setup, refer to the [Setup Guides](https://pragmar.github.io/mc
 
 ### Windows vs. macOS
 
-On Windows with Python installed on path, the command should simply be `mcp-server-webcrawl`.
+Windows: command set to "mcp-server-webcrawl"
 
-On macOS, you must use the absolute path to the `mcp-server-webcrawl` executable in the `command` field, rather than just the command name.
+macOS: command set to absolute path, i.e. the value of $ which mcp-server-webcrawl
 
 For example:
 
@@ -101,7 +101,9 @@ The datasrc argument should be set to the direct path to the database.
 
 ### Katana
 
-The datasrc argument should be set to the parent directory of the text cache files.
+The datasrc argument should be set to the directory of root hosts. Katana separates pages and
+media by hosts, ./archives/example.com/example.com is expected, and appropriate. More
+complicated sites expand the crawl data into origin host directories.
 
 ```
 "args": ["--crawler", "katana", "--datasrc", "/path/to/katana/archives/"]

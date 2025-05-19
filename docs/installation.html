@@ -51,7 +51,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="guides.html">Setup Guides</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">mcp-server-webcrawl Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -176,8 +176,11 @@ $<span class="w"> </span>wget<span class="w"> </span>--warc-file<span class="o">
 <p><strong>Tested Katana commands:</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># (macOS Terminal/Powershell/WSL)</span>
 <span class="c1"># -store-response to save crawl contents</span>
-<span class="c1"># -store-response-dir allows for many site crawls in one dir</span>
-$<span class="w"> </span>katana<span class="w"> </span>-u<span class="w"> </span>https://example.com<span class="w"> </span>-store-response<span class="w"> </span>-store-response-dir<span class="w"> </span>crawls/
+<span class="c1"># -store-response-dir for expansion of hosts</span>
+<span class="c1"># &amp;nbsp; consistent with default Katana behavior to</span>
+<span class="c1"># &amp;nbsp; spread assets across origin host directories</span>
+
+$<span class="w"> </span>katana<span class="w"> </span>-u<span class="w"> </span>https://example.com<span class="w"> </span>-store-response<span class="w"> </span>-store-response-dir<span class="w"> </span>crawls/example.com/
 </pre></div>
 </div>
 </section>

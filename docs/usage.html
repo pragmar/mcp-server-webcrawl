@@ -10,7 +10,7 @@
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
-
+  
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=5929fcd5"></script>
@@ -20,17 +20,17 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="mcp_server_webcrawl" href="modules.html" />
-    <link rel="prev" title="SiteOne MCP Setup Guide" href="guides/siteone.html" />
+    <link rel="prev" title="SiteOne MCP Setup Guide" href="guides/siteone.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
 
-
-
+          
+          
           <a href="index.html" class="icon icon-home">
             mcp-server-webcrawl
           </a>
@@ -76,7 +76,7 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-
+             
   <style>
 .wy-table-responsive table td, .wy-table-responsive table th {
   white-space: normal !important;
@@ -181,7 +181,7 @@ following is the currect API interface for your reference.</p>
 <tr class="row-odd"><td><p>extras</p></td>
 <td><p>array&lt;string&gt;</p></td>
 <td><p>No</p></td>
-<td><p>List of additional operations to perform with query. <br><em>thumbnails</em>: This creates small thumbnails that enable basic image recognition while keeping token output minimal. Only works for image (img) types. SVG format is not currently supported. <br><em>markdown</em>: Directly transforms the HTML content field into concise markdown, reducing token usage and improving readability for LLMs. This does not create a separate field but replaces the HTML in the content field with its markdown equivalent. Must be used with the content field in the fields parameter.</p></td>
+<td><p>List of additional operations to perform with query. <em>thumbnails</em>: This creates small thumbnails that enable basic image recognition while keeping token output minimal. Only works for image (img) types. SVG format is not currently supported. <em>markdown</em>: Directly transforms the HTML content field into concise markdown, reducing token usage and improving readability for LLMs. This does not create a separate field but replaces the HTML in the content field with its markdown equivalent. Must be used with the content field in the fields parameter.</p></td>
 </tr>
 </tbody>
 </table>
@@ -389,14 +389,14 @@ the MCP collapsable.</p>
 <tr class="row-odd"><td><p>“privacy policy”</p></td>
 <td><p>fulltext match exact phrase</p></td>
 </tr>
-<tr class="row-even"><td><p>privacy*</p></td>
-<td><p>fulltext wildcard matches results starting with “privacy”</p></td>
+<tr class="row-even"><td><p>boundar*</p></td>
+<td><p>fulltext wildcard matches results starting with <em>boundar</em> (boundary, boundaries)</p></td>
 </tr>
 <tr class="row-odd"><td><p>id: 12345</p></td>
 <td><p>id field matches a specific resource by ID</p></td>
 </tr>
 <tr class="row-even"><td><p>url: example.com/*</p></td>
-<td><p>url field matches results with URL containing example.com</p></td>
+<td><p>url field matches results with URL containing example.com/</p></td>
 </tr>
 <tr class="row-odd"><td><p>type: html</p></td>
 <td><p>type field matches for HTML pages only</p></td>
@@ -407,8 +407,8 @@ the MCP collapsable.</p>
 <tr class="row-odd"><td><p>status: &gt;=400</p></td>
 <td><p>status field matches specific HTTP status code (greater than or equal to 400)</p></td>
 </tr>
-<tr class="row-even"><td><p>content: javascript</p></td>
-<td><p>content field matches javascript in HTTP body (often, but not always HTML)</p></td>
+<tr class="row-even"><td><p>content: h1</p></td>
+<td><p>content field matches content (HTTP response body, often, but not always HTML)</p></td>
 </tr>
 <tr class="row-odd"><td><p>headers: text/xml</p></td>
 <td><p>headers field matches HTTP response headers</p></td>
@@ -488,19 +488,19 @@ supported content types in the search system.</p>
 </thead>
 <tbody>
 <tr class="row-even"><td><p>html</p></td>
-<td><p>web page</p></td>
+<td><p>webpages</p></td>
 </tr>
 <tr class="row-odd"><td><p>iframe</p></td>
-<td><p>embedded iframe</p></td>
+<td><p>iframes</p></td>
 </tr>
 <tr class="row-even"><td><p>img</p></td>
-<td><p>web image formats</p></td>
+<td><p>web images</p></td>
 </tr>
 <tr class="row-odd"><td><p>audio</p></td>
-<td><p>audio files</p></td>
+<td><p>web audio files</p></td>
 </tr>
 <tr class="row-even"><td><p>video</p></td>
-<td><p>video files</p></td>
+<td><p>web video files</p></td>
 </tr>
 <tr class="row-odd"><td><p>font</p></td>
 <td><p>web font files</p></td>
@@ -512,7 +512,7 @@ supported content types in the search system.</p>
 <td><p>JavaScript files</p></td>
 </tr>
 <tr class="row-even"><td><p>rss</p></td>
-<td><p>RSS syndication feed</p></td>
+<td><p>RSS syndication feeds</p></td>
 </tr>
 <tr class="row-odd"><td><p>text</p></td>
 <td><p>plain text content</p></td>
@@ -549,7 +549,7 @@ supported content types in the search system.</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-
+   
 
 </footer>
         </div>
@@ -560,7 +560,7 @@ supported content types in the search system.</p>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
+  </script> 
 
 </body>
 </html>
