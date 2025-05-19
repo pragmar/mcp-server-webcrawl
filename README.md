@@ -24,7 +24,7 @@ a variety of web crawlers:
 * [Katana](https://github.com/projectdiscovery/katana)
 * [SiteOne](https://crawler.siteone.io)
 
-**mcp-server-webcrawl** is free and open source, and requires Claude Desktop, Python (>=3.10). It is installed on the command line, via pip install:
+**mcp-server-webcrawl** is free and open source, and requires Claude Desktop and Python (>=3.10). It is installed on the command line, via pip install:
 
 ```bash
 pip install mcp-server-webcrawl
