@@ -116,7 +116,7 @@ must be enabled.
 "args": ["--crawler", "siteone", "--datasrc", "/path/to/SiteOne/archives/"]
 ```
 
-## Boolean Search
+## Boolean Search Syntax
 
 The query engine supports field-specific (`field: value`) searches and complex boolean
 expressions. Fulltext is supported as a combination of the url, content, and headers fields.
@@ -128,44 +128,55 @@ the MCP collapsable.
 
 **Example Queries**
 
-| Query | Description |
-|-------|-------------|
-| privacy | single fulltext search |
+| Query Example | Description |
+|--------------|-------------|
+| privacy | fulltext single keyword match |
 | "privacy policy" | fulltext match exact phrase |
-| privacy* | matches wildcard fulltext results starting with "privacy" |
-| id: 12345 | matches a specific resource by ID |
-| url: example.com/* | matches results with URL containing example.com |
-| type: html | HTML pages only |
-| status: 200 | matches specific HTTP status code (equal) |
-| status: >=400 | matches specific HTTP status code (greater than or equal to) |
-| content: javascript | find javascript in HTTP body (often, but not always HTML) |
-| headers: application/json | match HTTP response headers |
-| privacy AND policy | match both as fulltext search |
-| privacy OR policy | match either as fulltext search |
-| policy NOT privacy | match fullext policies not containing privacy |
-| (login OR signin) AND form | match fullext login or signin with form |
-| type: html AND status: 200 | match only HTML pages with HTTP success |
+| boundar* | fulltext wildcard matches results starting with *boundar* (boundary, boundaries) |
+| id: 12345 | id field matches a specific resource by ID |
+| url: example.com/* | url field matches results with URL containing example.com/ |
+| type: html | type field matches for HTML pages only |
+| status: 200 | status field matches specific HTTP status codes (equal to 200) |
+| status: >=400 | status field matches specific HTTP status code (greater than or equal to 400) |
+| content: h1 | content field matches content (HTTP response body, often, but not always HTML) |
+| headers: text/xml | headers field matches HTTP response headers |
+| privacy AND policy | fulltext matches both |
+| privacy OR policy | fulltext matches either |
+| policy NOT privacy | fulltext matches policies not containing privacy |
+| (login OR signin) AND form | fulltext matches fullext login or signin with form |
+| type: html AND status: 200 | fulltext matches only HTML pages with HTTP success |
 
-**Field Search Definitions**
+## Field Search Definitions
+
+Field search provides search precision, allowing you to specify which columns of the search index to filter.
+Rather than searching the entire content, you can restrict your query to specific attributes like URLs,
+headers, or content body. This approach improves efficiency when looking for
+specific attributes or patterns within crawl data.
 
 | Field | Description |
 |-------|-------------|
 | id | database ID |
 | url | resource URL |
 | type | enumerated list of types (see types table) |
-| status | HTTP response code of result |
+| status | HTTP response codes |
 | headers | HTTP response headers |
 | content | HTTP body—HTML, CSS, JS, and more |
 
-**Content Types**
+## Content Types
+
+Crawls contain a multitude of resource types beyond HTML pages. The `type:` field search
+allows filtering by broad content type groups, particularly useful when filtering images without complex extension queries.
+For example, you might search for `type: html NOT content: login`
+to find pages without "login," or `type: img` to analyze image resources. The table below lists all
+supported content types in the search system.
 
 | Type | Description |
 |------|-------------|
-| html | web page |
-| iframe | embedded iframe |
-| img | web image formats |
-| audio | audio files |
-| video | video files |
+| html | webpages |
+| iframe | iframes |
+| img | web images |
+| audio | web audio files |
+| video | web video files |
 | font | web font files |
 | style | CSS stylesheets |
 | script | JavaScript files |
