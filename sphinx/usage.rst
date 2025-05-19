@@ -59,10 +59,6 @@ This tool searches for resources (webpages, CSS, images, etc.) across projects a
      - Type
      - Required
      - Description
-   * - ids
-     - array<int>
-     - No
-     - Optional list of resource IDs to retrieve specific resources directly.
    * - sites
      - array<int>
      - No

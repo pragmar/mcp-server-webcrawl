@@ -143,42 +143,37 @@ following is the currect API interface for your reference.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>ids</p></td>
-<td><p>array&lt;int&gt;</p></td>
-<td><p>No</p></td>
-<td><p>Optional list of resource IDs to retrieve specific resources directly.</p></td>
-</tr>
-<tr class="row-odd"><td><p>sites</p></td>
+<tr class="row-even"><td><p>sites</p></td>
 <td><p>array&lt;int&gt;</p></td>
 <td><p>No</p></td>
 <td><p>Optional list of project IDs to filter search results to specific sites. In most scenarios, you’d filter to only one site.</p></td>
 </tr>
-<tr class="row-even"><td><p>query</p></td>
+<tr class="row-odd"><td><p>query</p></td>
 <td><p>string</p></td>
 <td><p>No</p></td>
 <td><p>Fulltext search query string. Leave empty to return all resources when filtering on other fields for better precision. Supports fulltext and boolean operators (AND, OR, NOT), quoted phrases, and suffix wildcards, but not prefix wildcards. See below for complete boolean and field search capabilities.</p></td>
 </tr>
-<tr class="row-odd"><td><p>fields</p></td>
+<tr class="row-even"><td><p>fields</p></td>
 <td><p>array&lt;string&gt;</p></td>
 <td><p>No</p></td>
 <td><p>List of additional fields to include beyond defaults (modified, created). Empty list means default fields only. The content field can lead to large results and should be used with LIMIT.</p></td>
 </tr>
-<tr class="row-even"><td><p>sort</p></td>
+<tr class="row-odd"><td><p>sort</p></td>
 <td><p>string</p></td>
 <td><p>No</p></td>
 <td><p>Sort order for results. Prefixed with + for ascending, - for descending. ? is a special option for random sort, useful in statistical sampling. Options include: +id, -id, +url, -url, +status, -status, ?.</p></td>
 </tr>
-<tr class="row-odd"><td><p>limit</p></td>
+<tr class="row-even"><td><p>limit</p></td>
 <td><p>integer</p></td>
 <td><p>No</p></td>
 <td><p>Maximum number of results to return. Default is 20, max is 100.</p></td>
 </tr>
-<tr class="row-even"><td><p>offset</p></td>
+<tr class="row-odd"><td><p>offset</p></td>
 <td><p>integer</p></td>
 <td><p>No</p></td>
 <td><p>Number of results to skip for pagination. Default is 0.</p></td>
 </tr>
-<tr class="row-odd"><td><p>extras</p></td>
+<tr class="row-even"><td><p>extras</p></td>
 <td><p>array&lt;string&gt;</p></td>
 <td><p>No</p></td>
 <td><p>List of additional operations to perform with query. <em>thumbnails</em>: This creates small thumbnails that enable basic image recognition while keeping token output minimal. Only works for image (img) types. SVG format is not currently supported. <em>markdown</em>: Directly transforms the HTML content field into concise markdown, reducing token usage and improving readability for LLMs. This does not create a separate field but replaces the HTML in the content field with its markdown equivalent. Must be used with the content field in the fields parameter.</p></td>

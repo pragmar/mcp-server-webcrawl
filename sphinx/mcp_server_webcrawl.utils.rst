@@ -28,14 +28,6 @@ mcp\_server\_webcrawl.utils.logger module
    :undoc-members:
    :show-inheritance:
 
-mcp\_server\_webcrawl.utils.querycache module
----------------------------------------------
-
-.. automodule:: mcp_server_webcrawl.utils.querycache
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 mcp\_server\_webcrawl.utils.server module
 -----------------------------------------
 

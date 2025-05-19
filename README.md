@@ -109,7 +109,7 @@ complicated sites expand the crawl data into origin host directories.
 "args": ["--crawler", "katana", "--datasrc", "/path/to/katana/archives/"]
 ```
 
-### SiteOne (using archiving)
+### SiteOne (using *Generate offline website*)
 
 The datasrc argument should be set to the parent directory of the archives, archiving
 must be enabled.
@@ -182,7 +182,7 @@ supported content types in the search system.
 | font | web font files |
 | style | CSS stylesheets |
 | script | JavaScript files |
-| rss | RSS syndication feed |
+| rss | RSS syndication feeds |
 | text | plain text content |
 | pdf | PDF files |
 | doc | MS Word documents |
