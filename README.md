@@ -195,5 +195,5 @@ The `extras` parameter provides additional processing options for search results
 | Extra | Description |
 |-------|-------------|
 | thumbnails | Generates base64 encoded thumbnails for image resources that can be viewed and analyzed by AI models. Enables image description, content analysis, and visual understanding while keeping token output minimal. Only works for image (img) types, which can be filtered using `type: img` in queries. SVG is not supported. |
-| markdown | Transforms the HTML content field into concise markdown, reducing token usage and improving readability for LLMs. This does not create a separate field but replaces the HTML in the content field with its markdown equivalent. Must be used with the content field in the fields parameter. |
+| markdown | Transforms the HTML content field into concise markdown, reducing token usage and improving readability for LLMs. |
 | snippets | Matches fulltext queries to contextual keyword usage within the content. When used without requesting the content field (or markdown extra), it can provide an efficient means of refining a search without pulling down the complete page contents. Also great for rendering old school hit-highlighted results as a list, like Google search in 1999. Works with HTML, CSS, JS, or any text-based, crawled file. |
