@@ -18,6 +18,7 @@ from mcp_server_webcrawl.models.resources import (
     ResourceResult,
     ResourceResultType,
     RESOURCES_DEFAULT_FIELD_MAPPING,
+    RESOURCES_DEFAULT_SORT_MAPPING,
     RESOURCES_FIELDS_REQUIRED,
     RESOURCES_ENUMERATED_TYPE_MAPPING,
     RESOURCES_LIMIT_MAX,
@@ -42,7 +43,6 @@ INDEXED_BINARY_EXTENSIONS: Final[tuple[str, ...]] = (
     ".swf",".svgz",".dat",".db",".sqlite",".class",".pyc",".o"
 )
 
-
 # files on disk will need default for reassembly {proto}{dir}
 # these things are already approximations (perhaps) having passed through wget filtering (--adjust-extension)
 # representative of the file on disk, also https is what the LLM is going to guess in all cases
@@ -58,15 +58,6 @@ INDEXED_MAX_PROCESS_TIME: Final[timedelta] = timedelta(minutes=10)
 # maximum indexes held in cache, an index is a unique list[site-ids] argument
 INDEXED_MANAGER_CACHE_MAX: Final[int] = 20
 INDEXED_IGNORE_DIRECTORIES: Final[list[str]] = ["http-client-cache", "result-storage"]
-INDEXED_SORT_MAPPING: Final[dict[str, tuple[str, str]]] = {
-    "+id": ("Resources.Id", "ASC"),
-    "-id": ("Resources.Id", "DESC"),
-    "+url": ("ResourcesFullText.Url", "ASC"),
-    "-url": ("ResourcesFullText.Url", "DESC"),
-    "+status": ("Resources.Status", "ASC"),
-    "-status": ("Resources.Status", "DESC"),
-    "?": ("Id", "RANDOM")
-}
 
 INDEXED_TYPE_MAPPING: Final[dict[str, ResourceResultType]] = {
     "": ResourceResultType.PAGE,
@@ -397,6 +388,16 @@ class BaseManager:
                 # fall back to simple text search
                 parsed_query = []
 
+        # if status not explicitly in query, add status >=100
+        status_applied = False
+        for squery in parsed_query:
+            if squery.field == "status":
+                status_applied = True
+                break
+        if not status_applied:
+            http_status_received = SearchSubquery("status", 100, "term", [], "AND", comparator=">=")
+            parsed_query.append(http_status_received)
+
         # determine fields to be retrieved
         selected_fields: set[str] = set(RESOURCES_FIELDS_REQUIRED)
         if fields:
@@ -417,7 +418,7 @@ class BaseManager:
             fts_parts, fts_params = parser.to_sqlite_fts(parsed_query, swap_values)
             if fts_parts:
                 fts_where = ""
-                for i, part in enumerate(fts_parts):
+                for part in fts_parts:
                     if part in ["AND", "OR", "NOT"]:    # operator
                         fts_where += f" {part} "
                     else:                               # condition
@@ -430,8 +431,8 @@ class BaseManager:
 
         where_clause: str = f" WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
-        if sort in INDEXED_SORT_MAPPING:
-            field, direction = INDEXED_SORT_MAPPING[sort]
+        if sort in RESOURCES_DEFAULT_SORT_MAPPING:
+            field, direction = RESOURCES_DEFAULT_SORT_MAPPING[sort]
             if direction == "RANDOM":
                 order_clause: str = " ORDER BY RANDOM()"
             else:
@@ -463,11 +464,6 @@ class BaseManager:
                                 resource_type = rt
                                 break
 
-                        # also accept InterroBot ints
-                        # if resource_type == ResourceResultType.UNDEFINED and isinstance(type_value, int):
-                        #     enum_members = list(ResourceResultType)
-                        #     if 0 <= type_value < len(enum_members):
-                        #         resource_type = enum_members[type_value]
                         if resource_type == ResourceResultType.UNDEFINED and isinstance(type_value, int):
                             if type_value in RESOURCES_ENUMERATED_TYPE_MAPPING:
                                 resource_type = RESOURCES_ENUMERATED_TYPE_MAPPING[type_value]

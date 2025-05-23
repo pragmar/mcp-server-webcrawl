@@ -74,15 +74,14 @@
              
   <h1>Source code for mcp_server_webcrawl.crawlers.interrobot.tests</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">asyncio</span>
-
 <span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
 <span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">Logger</span>
+<span class="kn">from</span> <span class="nn">mcp.types</span> <span class="kn">import</span> <span class="n">EmbeddedResource</span><span class="p">,</span> <span class="n">ImageContent</span><span class="p">,</span> <span class="n">TextContent</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.tests</span> <span class="kn">import</span> <span class="n">BaseCrawlerTests</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.interrobot.crawler</span> <span class="kn">import</span> <span class="n">InterroBotCrawler</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">ResourceResultType</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">ResourceResultType</span><span class="p">,</span> <span class="n">RESOURCES_TOOL_NAME</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers</span> <span class="kn">import</span> <span class="n">get_fixture_directory</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
-
 <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
 
 <div class="viewcode-block" id="InterroBotTests">
@@ -139,17 +138,29 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">thumbnail_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Should find exactly one resource&quot;</span><span class="p">)</span></div>
 
 
-    <span class="c1">#def test_interrobot_markdown(self):</span>
-    <span class="c1">#    &quot;&quot;&quot;</span>
-    <span class="c1">#    Test markdwon transform for content resources.</span>
-    <span class="c1">#    &quot;&quot;&quot;</span>
-    <span class="c1">#    crawler = InterroBotCrawler(self.fixture_path)</span>
-<span class="c1">#</span>
-    <span class="c1">#    markdown_resources = crawler.get_resources_api(</span>
-    <span class="c1">#        query=f&quot;type: html&quot;,</span>
-    <span class="c1">#        extras=[&quot;markdown&quot;],</span>
-    <span class="c1">#    )</span>
-    <span class="c1">#    self.assertEqual(markdown_resources.total, 1, &quot;Should find exactly one resource&quot;)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">__test_thumbnails</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        thumbnails are a special case</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
+        <span class="n">thumbnail_args</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;datasrc&quot;</span><span class="p">:</span> <span class="n">crawler</span><span class="o">.</span><span class="n">datasrc</span><span class="p">,</span>
+            <span class="s2">&quot;sites&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+            <span class="s2">&quot;extras&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;thumbnails&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;type: img AND url: *.png&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;limit&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">thumbnail_result</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TextContent</span> <span class="o">|</span> <span class="n">ImageContent</span> <span class="o">|</span> <span class="n">EmbeddedResource</span><span class="p">]</span> <span class="o">=</span> <span class="k">await</span> <span class="n">crawler</span><span class="o">.</span><span class="n">mcp_call_tool</span><span class="p">(</span>
+            <span class="n">RESOURCES_TOOL_NAME</span><span class="p">,</span> <span class="n">thumbnail_args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">thumbnail_result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="s2">&quot;ImageContent should be included in thumbnails response&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="InterroBotTests.test_thumbnails_sync">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_thumbnails_sync">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_thumbnails_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Synchronous wrapper for the async test&quot;&quot;&quot;</span>
+        <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__test_thumbnails</span><span class="p">())</span></div>
+
 
 <div class="viewcode-block" id="InterroBotTests.test_interrobot_sites">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_sites">[docs]</a>
@@ -208,6 +219,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">site_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Site filtering should return results&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">site_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">site</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># markdown</span>
+        <span class="n">site_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="s2">&quot;type: html&quot;</span><span class="p">,</span> <span class="n">extras</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;markdown&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">site_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()[</span><span class="s2">&quot;extras&quot;</span><span class="p">][</span><span class="s2">&quot;markdown&quot;</span><span class="p">],</span> <span class="s2">&quot;markdown extra failed to materialize&quot;</span><span class="p">)</span>
+
+        <span class="c1"># HTML snippets</span>
+        <span class="n">site_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="s2">&quot;appstat AND type: html&quot;</span><span class="p">,</span> <span class="n">extras</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;snippets&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">site_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()[</span><span class="s2">&quot;extras&quot;</span><span class="p">][</span><span class="s2">&quot;snippets&quot;</span><span class="p">],</span> <span class="s2">&quot;snippet extra failed to materialize&quot;</span><span class="p">)</span>
+
+        <span class="c1"># CSS snippets</span>
+        <span class="n">site_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="s2">&quot;height AND type: style&quot;</span><span class="p">,</span> <span class="n">extras</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;snippets&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">site_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()[</span><span class="s2">&quot;extras&quot;</span><span class="p">][</span><span class="s2">&quot;snippets&quot;</span><span class="p">],</span> <span class="s2">&quot;snippet extra failed to materialize&quot;</span><span class="p">)</span>
 
         <span class="c1"># type filtering</span>
         <span class="n">type_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>

@@ -77,7 +77,6 @@
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">sqlite3</span>
 <span class="kn">import</span> <span class="nn">traceback</span>
-<span class="kn">import</span> <span class="nn">html2text</span>
 
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Final</span>
@@ -94,9 +93,11 @@
     <span class="n">ResourceResult</span><span class="p">,</span>
     <span class="n">ResourceResultType</span><span class="p">,</span>
     <span class="n">RESOURCES_DEFAULT_FIELD_MAPPING</span><span class="p">,</span>
+    <span class="n">RESOURCE_EXTRAS_ALLOWED</span><span class="p">,</span>
     <span class="n">RESOURCES_TOOL_NAME</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.blobs</span> <span class="kn">import</span> <span class="n">ThumbnailManager</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.extras</span> <span class="kn">import</span> <span class="n">get_markdown</span><span class="p">,</span> <span class="n">get_snippets</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="n">SITES_TOOL_NAME</span>
 
@@ -143,7 +144,6 @@
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resource_field_mapping</span><span class="p">,</span> <span class="nb">dict</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> resource_field_mapping must be a dict&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">datasrc</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_extras</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_module_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">module_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_module_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">module_version</span>
@@ -162,10 +162,6 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">datasrc</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">extras</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extras</span>
 
 <div class="viewcode-block" id="BaseCrawler.mcp_list_prompts">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler.mcp_list_prompts">[docs]</a>
@@ -247,14 +243,10 @@
             <span class="n">fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseJsonApi</span><span class="p">:</span>
         <span class="n">sites</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adapter_get_sites</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="n">fields</span><span class="p">)</span>
-
-        <span class="c1"># sites_args = {k: v for k, v in locals().items() if k != &quot;self&quot;}</span>
         <span class="n">sites_kwargs</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;ids&quot;</span><span class="p">:</span> <span class="n">ids</span><span class="p">,</span>
             <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">fields</span><span class="p">,</span>
         <span class="p">}</span>
-
-        <span class="c1"># print(resources_args)</span>
         <span class="n">json_result</span> <span class="o">=</span> <span class="n">BaseJsonApi</span><span class="p">(</span><span class="s2">&quot;GetProjects&quot;</span><span class="p">,</span> <span class="n">sites_kwargs</span><span class="p">)</span>
         <span class="n">json_result</span><span class="o">.</span><span class="n">set_results</span><span class="p">(</span><span class="n">sites</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sites</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sites</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">json_result</span></div>
@@ -270,6 +262,7 @@
         <span class="n">sort</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">extras</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseJsonApi</span><span class="p">:</span>
         <span class="n">resources_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">METADATA_VALUE_TYPE</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;sites&quot;</span><span class="p">:</span> <span class="n">sites</span><span class="p">,</span>
@@ -292,8 +285,8 @@
             <span class="c1"># set to default of all sites if not specified</span>
             <span class="n">sites</span> <span class="o">=</span> <span class="p">[</span><span class="n">site</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">all_sites</span><span class="p">]</span>
 
-        <span class="c1"># sometimes the AI gets it in their head this is a good idea</span>
-        <span class="c1"># but they mean no query, it can get tedious, nip in the bud</span>
+        <span class="c1"># sometimes the AI gets it in its head this is a good idea</span>
+        <span class="c1"># but it means no query, just take care of it here</span>
         <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;&quot;&quot;&#39;</span><span class="p">,</span><span class="s2">&quot;&#39;&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;``&quot;</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">):</span>
             <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
 
@@ -301,18 +294,46 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">site_matches</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">no_results</span><span class="p">()</span>
 
-        <span class="c1"># convert to enums</span>
-        <span class="c1"># resource_types = self._convert_to_resource_types(types)</span>
+        <span class="c1"># Handle stealth fields for extras</span>
+        <span class="n">extras</span> <span class="o">=</span> <span class="n">extras</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="n">fields</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="n">fields_extras_override</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="s2">&quot;markdown&quot;</span> <span class="ow">in</span> <span class="n">extras</span> <span class="ow">or</span> <span class="s2">&quot;snippets&quot;</span> <span class="ow">in</span> <span class="n">extras</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;content&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="n">fields_extras_override</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;snippets&quot;</span> <span class="ow">in</span> <span class="n">extras</span> <span class="ow">and</span> <span class="s2">&quot;headers&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="n">fields_extras_override</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;headers&quot;</span><span class="p">)</span>
+
         <span class="n">results</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">index_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adapter_get_resources</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">,</span>
             <span class="n">sites</span><span class="o">=</span><span class="n">sites</span><span class="p">,</span>
             <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
-            <span class="n">fields</span><span class="o">=</span><span class="n">fields</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="n">fields_extras_override</span><span class="p">,</span>
             <span class="n">sort</span><span class="o">=</span><span class="n">sort</span><span class="p">,</span>
             <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span>
             <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
         <span class="p">)</span>
 
+        <span class="k">if</span> <span class="s2">&quot;markdown&quot;</span> <span class="ow">in</span> <span class="n">extras</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">:</span> <span class="n">ResourceResult</span>
+            <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+                <span class="n">markdown_result</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">get_markdown</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;markdown&quot;</span><span class="p">,</span> <span class="n">markdown_result</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;snippets&quot;</span> <span class="ow">in</span> <span class="n">extras</span> <span class="ow">and</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="n">result</span><span class="p">:</span> <span class="n">ResourceResult</span>
+            <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+                <span class="n">snippets</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">get_snippets</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;snippets&quot;</span><span class="p">,</span> <span class="n">snippets</span><span class="p">)</span>
+
+        <span class="n">extras_only_fields</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">fields_extras_override</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">extras_only_fields</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">extras_only_fields</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
+                        <span class="nb">setattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="c1"># note: thumbnails extra a special case, handled in mcp_call_tool</span>
         <span class="n">api_result</span> <span class="o">=</span> <span class="n">BaseJsonApi</span><span class="p">(</span><span class="s2">&quot;GetResources&quot;</span><span class="p">,</span> <span class="n">resources_kwargs</span><span class="p">,</span> <span class="n">index_state</span><span class="o">=</span><span class="n">index_state</span><span class="p">)</span>
         <span class="n">api_result</span><span class="o">.</span><span class="n">set_results</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">api_result</span></div>
@@ -364,49 +385,40 @@
 
             <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="n">RESOURCES_TOOL_NAME</span><span class="p">:</span>
 
-                <span class="c1"># because this process happens after the normal filtering, it is flagged for later</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_extras</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;extras&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;extras&quot;</span><span class="p">]</span>
+                <span class="n">extras</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;extras&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;extras&quot;</span><span class="p">]</span>
+                <span class="n">extras_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">extras</span><span class="p">)</span>
+                <span class="n">extras_removed</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">extras_set</span> <span class="o">-</span> <span class="n">RESOURCE_EXTRAS_ALLOWED</span>
+                <span class="k">if</span> <span class="n">extras_removed</span><span class="p">:</span>
+                    <span class="c1"># only allow known extras</span>
+                    <span class="n">extras</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">RESOURCE_EXTRAS_ALLOWED</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">extras</span><span class="p">))</span>
 
                 <span class="c1"># regular args pass through to the result</span>
                 <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;query&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;query&quot;</span><span class="p">]</span>
-                <span class="n">ids</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;ids&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;ids&quot;</span><span class="p">]</span>
-                <span class="n">sites</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;sites&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;sites&quot;</span><span class="p">]</span>
-                <span class="n">types</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;types&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;types&quot;</span><span class="p">]</span>
                 <span class="n">fields</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;fields&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;fields&quot;</span><span class="p">]</span>
-                <span class="n">statuses</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;statuses&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;statuses&quot;</span><span class="p">]</span>
+                <span class="n">sites</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;sites&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;sites&quot;</span><span class="p">]</span>
                 <span class="n">sort</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;sort&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;sort&quot;</span><span class="p">]</span>
                 <span class="n">limit</span> <span class="o">=</span> <span class="mi">20</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;limit&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;limit&quot;</span><span class="p">]</span>
                 <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;offset&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;offset&quot;</span><span class="p">]</span>
+
                 <span class="n">api_result</span><span class="p">:</span> <span class="n">BaseJsonApi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
                     <span class="n">sites</span><span class="o">=</span><span class="n">sites</span><span class="p">,</span>
                     <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
                     <span class="n">fields</span><span class="o">=</span><span class="n">fields</span><span class="p">,</span>
                     <span class="n">sort</span><span class="o">=</span><span class="n">sort</span><span class="p">,</span>
                     <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span>
-                    <span class="n">offset</span><span class="o">=</span><span class="n">offset</span>
+                    <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
+                    <span class="n">extras</span><span class="o">=</span><span class="n">extras</span><span class="p">,</span>
                 <span class="p">)</span>
+                <span class="k">if</span> <span class="n">extras_removed</span><span class="p">:</span>
+                    <span class="c1"># only allow known extras</span>
+                    <span class="n">api_result</span><span class="o">.</span><span class="n">append_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;invalid extras requested (</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">extras_removed</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
 
-                <span class="c1"># build mcp response, imagedata is a different content type, and is</span>
-                <span class="c1"># collected independent of the archive data</span>
 
                 <span class="n">crawl_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">]</span> <span class="o">=</span> <span class="n">api_result</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
-
-                <span class="k">if</span> <span class="s2">&quot;markdown&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extras</span><span class="p">:</span>
-                    <span class="n">converter</span> <span class="o">=</span> <span class="n">html2text</span><span class="o">.</span><span class="n">HTML2Text</span><span class="p">()</span>
-                    <span class="n">converter</span><span class="o">.</span><span class="n">ignore_links</span> <span class="o">=</span> <span class="kc">False</span>
-                    <span class="n">converter</span><span class="o">.</span><span class="n">ignore_images</span> <span class="o">=</span> <span class="kc">True</span>
-                    <span class="n">converter</span><span class="o">.</span><span class="n">ignore_tables</span> <span class="o">=</span> <span class="kc">False</span>
-                    <span class="n">converter</span><span class="o">.</span><span class="n">body_width</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># don&#39;t wrap</span>
-                    <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">crawl_results</span><span class="p">:</span>
-                        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">content</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">result</span><span class="o">.</span><span class="n">content</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
-                            <span class="k">continue</span>
-                        <span class="c1"># claude HTML to markdown</span>
-                        <span class="n">result</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">converter</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
-
                 <span class="n">results_json</span> <span class="o">=</span> <span class="n">api_result</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
                 <span class="n">mcp_result</span> <span class="o">=</span> <span class="p">[</span><span class="n">TextContent</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">results_json</span><span class="p">)]</span>
 
-                <span class="k">if</span> <span class="s2">&quot;thumbnails&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extras</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">&quot;thumbnails&quot;</span> <span class="ow">in</span> <span class="n">extras</span><span class="p">:</span>
                     <span class="n">crawl_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">]</span> <span class="o">=</span> <span class="n">api_result</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
                     <span class="n">mcp_result</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_thumbnails</span><span class="p">(</span><span class="n">crawl_results</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
 
@@ -425,33 +437,31 @@
     <span class="k">def</span> <span class="nf">get_thumbnails</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ImageContent</span><span class="p">]:</span>
 
         <span class="n">thumbnails_result</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ImageContent</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c1">#if self._thumbnails:</span>
-        <span class="k">if</span> <span class="s2">&quot;thumbnails&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extras</span><span class="p">:</span>
-            <span class="n">image_paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">result</span><span class="o">.</span><span class="n">url</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">url</span> <span class="ow">and</span> <span class="n">result</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">]))</span>
-            <span class="n">valid_paths</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">image_paths</span><span class="p">:</span>
-                <span class="n">parsed</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;https&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">parsed</span><span class="o">.</span><span class="n">netloc</span><span class="p">:</span>
-                    <span class="n">clean_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span><span class="si">}</span><span class="s2">://</span><span class="si">{</span><span class="n">parsed</span><span class="o">.</span><span class="n">netloc</span><span class="si">}{</span><span class="n">parsed</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span>
-                    <span class="n">valid_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">clean_path</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\.(jpg|jpeg|png|gif|bmp|webp)$&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">):</span>
-                    <span class="n">clean_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="n">valid_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">clean_path</span><span class="p">)</span>
+        <span class="n">image_paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">result</span><span class="o">.</span><span class="n">url</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">url</span> <span class="ow">and</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">]))</span>
+        <span class="n">valid_paths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">image_paths</span><span class="p">:</span>
+            <span class="n">parsed</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;https&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">parsed</span><span class="o">.</span><span class="n">netloc</span><span class="p">:</span>
+                <span class="n">clean_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span><span class="si">}</span><span class="s2">://</span><span class="si">{</span><span class="n">parsed</span><span class="o">.</span><span class="n">netloc</span><span class="si">}{</span><span class="n">parsed</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="n">valid_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">clean_path</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\.(jpg|jpeg|png|gif|bmp|webp)$&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">):</span>
+                <span class="n">clean_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">valid_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">clean_path</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">valid_paths</span><span class="p">:</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">thumbnail_manager</span> <span class="o">=</span> <span class="n">ThumbnailManager</span><span class="p">()</span>
-                    <span class="n">thumbnail_data</span> <span class="o">=</span> <span class="n">thumbnail_manager</span><span class="o">.</span><span class="n">get_thumbnails</span><span class="p">(</span><span class="n">valid_paths</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="n">thumbnail_url</span><span class="p">,</span> <span class="n">thumbnail_base64</span> <span class="ow">in</span> <span class="n">thumbnail_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                        <span class="k">if</span> <span class="n">thumbnail_base64</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Thumbnail encountered error during request. </span><span class="si">{</span><span class="n">thumbnail_url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                            <span class="k">continue</span>
-                        <span class="n">image_content</span> <span class="o">=</span> <span class="n">ImageContent</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">thumbnail_base64</span><span class="p">,</span> <span class="n">mimeType</span><span class="o">=</span><span class="s2">&quot;image/webp&quot;</span><span class="p">)</span>
-                        <span class="n">thumbnails_result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">image_content</span><span class="p">)</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fetched </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">thumbnail_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> thumbnails out of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">valid_paths</span><span class="p">)</span><span class="si">}</span><span class="s2"> requested URLs&quot;</span><span class="p">)</span>
-                    <span class="c1"># print(thumbnail_data)</span>
-                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error fetching thumbnails: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">valid_paths</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">thumbnail_manager</span> <span class="o">=</span> <span class="n">ThumbnailManager</span><span class="p">()</span>
+                <span class="n">thumbnail_data</span> <span class="o">=</span> <span class="n">thumbnail_manager</span><span class="o">.</span><span class="n">get_thumbnails</span><span class="p">(</span><span class="n">valid_paths</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">thumbnail_url</span><span class="p">,</span> <span class="n">thumbnail_base64</span> <span class="ow">in</span> <span class="n">thumbnail_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">thumbnail_base64</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Thumbnail encountered error during request. </span><span class="si">{</span><span class="n">thumbnail_url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                    <span class="n">image_content</span> <span class="o">=</span> <span class="n">ImageContent</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">thumbnail_base64</span><span class="p">,</span> <span class="n">mimeType</span><span class="o">=</span><span class="s2">&quot;image/webp&quot;</span><span class="p">)</span>
+                    <span class="n">thumbnails_result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">image_content</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fetched </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">thumbnail_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> thumbnails out of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">valid_paths</span><span class="p">)</span><span class="si">}</span><span class="s2"> requested URLs&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error fetching thumbnails: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">thumbnails_result</span></div>
 

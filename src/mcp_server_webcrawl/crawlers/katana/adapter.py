@@ -147,7 +147,7 @@ class KatanaManager(IndexedManager):
                 content=body if self._is_text_content(content_type) else None,
                 status=status_code,
                 size=content_size,
-                time=0  # time not available
+                time=0  # time not available in file or Katana index
             )
 
         except Exception as e:

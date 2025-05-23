@@ -209,16 +209,21 @@
                         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
                         <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span>
                             <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-                            <span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;thumbnails&quot;</span><span class="p">,</span> <span class="s2">&quot;markdown&quot;</span><span class="p">]</span>
+                            <span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;thumbnails&quot;</span><span class="p">,</span> <span class="s2">&quot;markdown&quot;</span><span class="p">,</span> <span class="s2">&quot;snippets&quot;</span><span class="p">]</span>
                         <span class="p">},</span>
                         <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Optional array of extra features to include in results. Available options include:</span><span class="se">\n</span><span class="s2">&quot;</span>
-                            <span class="s2">&quot;- &#39;thumbnails&#39;: Generates base64 encoded thumbnails for image resources. Creates small previews &quot;</span>
-                            <span class="s2">&quot;that enable basic image recognition while keeping token output minimal. Only works for image &quot;</span>
-                            <span class="s2">&quot;(img) types, which can be filtered using `type: img` in queries. SVG format is not supported.</span><span class="se">\n</span><span class="s2">&quot;</span>
-                            <span class="s2">&quot;- &#39;markdown&#39;: Directly transforms the HTML content field into concise markdown, &quot;</span>
-                            <span class="s2">&quot;reducing token usage and improving readability for LLMs. This does not create a separate field &quot;</span>
-                            <span class="s2">&quot;but replaces the HTML in the content field with its markdown equivalent. Must be used with &quot;</span>
-                            <span class="s2">&quot;the content field in the fields parameter.&quot;</span><span class="p">)</span>
+                            <span class="s2">&quot;- &#39;thumbnails&#39;: generates base64 encoded thumbnails for image resources that can be viewed and &quot;</span>
+                            <span class="s2">&quot;analyzed by AI models. Enables image description, content analysis, and visual understanding while&quot;</span>
+                            <span class="s2">&quot;keeping token output minimal. Only works for image &quot;</span>
+                            <span class="s2">&quot;(img) types, which can be filtered using `type: img` in queries. SVG is not supported.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                            <span class="s2">&quot;- &#39;markdown&#39;: transforms the HTML content field into concise markdown, &quot;</span>
+                            <span class="s2">&quot;reducing token usage and improving readability for LLMs.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                            <span class="s2">&quot;- &#39;snippets&#39;: matches fulltext queries to contextual keyword usage within the content. When &quot;</span>
+                            <span class="s2">&quot;used without requesting the content field (or markdown extra), it can provide an efficient means &quot;</span>
+                            <span class="s2">&quot;of refining a search without pulling down the complete page contents. Also great for rendering &quot;</span>
+                            <span class="s2">&quot;old school hit-highlighted results as a list, like Google search in 1999. Works with HTML, CSS, JS, &quot;</span>
+                            <span class="s2">&quot;or any text-based, crawled file.&quot;</span>
+                            <span class="s2">&quot;&quot;</span><span class="p">)</span>
                     <span class="p">},</span>
                 <span class="p">},</span>
                 <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[]</span>

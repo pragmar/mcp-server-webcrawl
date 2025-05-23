@@ -2,7 +2,6 @@ import anyio
 import re
 import sqlite3
 import traceback
-import html2text
 
 from pathlib import Path
 from typing import Any, Callable, Final
@@ -19,9 +18,11 @@ from mcp_server_webcrawl.models.resources import (
     ResourceResult,
     ResourceResultType,
     RESOURCES_DEFAULT_FIELD_MAPPING,
+    RESOURCE_EXTRAS_ALLOWED,
     RESOURCES_TOOL_NAME,
 )
 from mcp_server_webcrawl.utils.blobs import ThumbnailManager
+from mcp_server_webcrawl.utils.extras import get_markdown, get_snippets
 from mcp_server_webcrawl.utils.logger import get_logger
 from mcp_server_webcrawl.models.sites import SITES_TOOL_NAME
 
@@ -64,7 +65,6 @@ class BaseCrawler:
         assert isinstance(resource_field_mapping, dict), f"{self.__class__.__name__} resource_field_mapping must be a dict"
 
         self._datasrc: Path = Path(datasrc)
-        self._extras: list[str] = []
 
         self._module_name: str = module_name
         self._module_version: str = module_version
@@ -82,10 +82,6 @@ class BaseCrawler:
     @property
     def datasrc(self) -> Path:
         return self._datasrc
-
-    @property
-    def extras(self) -> list[str]:
-        return self._extras
 
     async def mcp_list_prompts(self) -> list:
         """List available prompts (currently none)."""
@@ -147,14 +143,10 @@ class BaseCrawler:
             fields: list[str] | None = None,
     ) -> BaseJsonApi:
         sites = self._adapter_get_sites(self._datasrc, ids=ids, fields=fields)
-
-        # sites_args = {k: v for k, v in locals().items() if k != "self"}
         sites_kwargs = {
             "ids": ids,
             "fields": fields,
         }
-
-        # print(resources_args)
         json_result = BaseJsonApi("GetProjects", sites_kwargs)
         json_result.set_results(sites, len(sites), 0, len(sites))
         return json_result
@@ -167,6 +159,7 @@ class BaseCrawler:
         sort: str | None = None,
         limit: int = 20,
         offset: int = 0,
+        extras: list[str] | None = None,
     ) -> BaseJsonApi:
         resources_kwargs: dict[str, METADATA_VALUE_TYPE] = {
             "sites": sites,
@@ -189,8 +182,8 @@ class BaseCrawler:
             # set to default of all sites if not specified
             sites = [site.id for site in all_sites]
 
-        # sometimes the AI gets it in their head this is a good idea
-        # but they mean no query, it can get tedious, nip in the bud
+        # sometimes the AI gets it in its head this is a good idea
+        # but it means no query, just take care of it here
         if query.strip() in ('""',"''", "``", "*"):
             query = ""
 
@@ -198,18 +191,46 @@ class BaseCrawler:
         if not site_matches:
             return no_results()
 
-        # convert to enums
-        # resource_types = self._convert_to_resource_types(types)
+        # Handle stealth fields for extras
+        extras = extras or []
+        fields = fields or []
+        fields_extras_override: list[str] = fields.copy()
+
+        if ("markdown" in extras or "snippets" in extras) and "content" not in fields:
+            fields_extras_override.append("content")
+        if "snippets" in extras and "headers" not in fields:
+            fields_extras_override.append("headers")
+
         results, total, index_state = self._adapter_get_resources(
             self._datasrc,
             sites=sites,
             query=query,
-            fields=fields,
+            fields=fields_extras_override,
             sort=sort,
             limit=limit,
             offset=offset,
         )
 
+        if "markdown" in extras:
+            result: ResourceResult
+            for result in results:
+                markdown_result: str | None = get_markdown(result.content)
+                result.set_extra("markdown", markdown_result)
+
+        if "snippets" in extras and query.strip():
+            result: ResourceResult
+            for result in results:
+                snippets: str | None = get_snippets(result.headers, result.content, query)
+                result.set_extra("snippets", snippets)
+
+        extras_only_fields = set(fields_extras_override) - set(fields)
+        if extras_only_fields:
+            for result in results:
+                for field in extras_only_fields:
+                    if hasattr(result, field):
+                        setattr(result, field, None)
+
+        # note: thumbnails extra a special case, handled in mcp_call_tool
         api_result = BaseJsonApi("GetResources", resources_kwargs, index_state=index_state)
         api_result.set_results(results, total, offset, limit)
         return api_result
@@ -255,49 +276,40 @@ class BaseCrawler:
 
             elif name == RESOURCES_TOOL_NAME:
 
-                # because this process happens after the normal filtering, it is flagged for later
-                self._extras = [] if not arguments or "extras" not in arguments else arguments["extras"]
+                extras: list[str] = [] if not arguments or "extras" not in arguments else arguments["extras"]
+                extras_set: set[str] = set(extras)
+                extras_removed: set[str] = extras_set - RESOURCE_EXTRAS_ALLOWED
+                if extras_removed:
+                    # only allow known extras
+                    extras = list(RESOURCE_EXTRAS_ALLOWED.intersection(extras))
 
                 # regular args pass through to the result
                 query = "" if not arguments or "query" not in arguments else arguments["query"]
-                ids = [] if not arguments or "ids" not in arguments else arguments["ids"]
-                sites = [] if not arguments or "sites" not in arguments else arguments["sites"]
-                types = [] if not arguments or "types" not in arguments else arguments["types"]
                 fields = [] if not arguments or "fields" not in arguments else arguments["fields"]
-                statuses = [] if not arguments or "statuses" not in arguments else arguments["statuses"]
+                sites = [] if not arguments or "sites" not in arguments else arguments["sites"]
                 sort = None if not arguments or "sort" not in arguments else arguments["sort"]
                 limit = 20 if not arguments or "limit" not in arguments else arguments["limit"]
                 offset = 0 if not arguments or "offset" not in arguments else arguments["offset"]
+
                 api_result: BaseJsonApi = self.get_resources_api(
                     sites=sites,
                     query=query,
                     fields=fields,
                     sort=sort,
                     limit=limit,
-                    offset=offset
+                    offset=offset,
+                    extras=extras,
                 )
+                if extras_removed:
+                    # only allow known extras
+                    api_result.append_error(f"invalid extras requested ({', '.join(extras_removed)})")
 
-                # build mcp response, imagedata is a different content type, and is
-                # collected independent of the archive data
 
                 crawl_results: list[ResourceResult] = api_result.get_results()
-
-                if "markdown" in self._extras:
-                    converter = html2text.HTML2Text()
-                    converter.ignore_links = False
-                    converter.ignore_images = True
-                    converter.ignore_tables = False
-                    converter.body_width = 0  # don't wrap
-                    for result in crawl_results:
-                        if result.content is None or result.content == "":
-                            continue
-                        # claude HTML to markdown
-                        result.content = converter.handle(result.content)
-
                 results_json = api_result.to_json()
                 mcp_result = [TextContent(type="text", text=results_json)]
 
-                if "thumbnails" in self._extras:
+                if "thumbnails" in extras:
                     crawl_results: list[ResourceResult] = api_result.get_results()
                     mcp_result += self.get_thumbnails(crawl_results) or []
 
@@ -313,33 +325,31 @@ class BaseCrawler:
     def get_thumbnails(self, results: list[ResourceResult]) -> list[ImageContent]:
 
         thumbnails_result: list[ImageContent] = []
-        #if self._thumbnails:
-        if "thumbnails" in self._extras:
-            image_paths = list(set([result.url for result in results if result.url and result.type == ResourceResultType.IMAGE]))
-            valid_paths = []
-            for path in image_paths:
-                parsed = urlparse(path)
-                if parsed.scheme in ("http", "https") and parsed.netloc:
-                    clean_path: str = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
-                    valid_paths.append(clean_path)
-                elif re.search(r"\.(jpg|jpeg|png|gif|bmp|webp)$", path, re.IGNORECASE):
-                    clean_path: str = path.split("?")[0]
-                    valid_paths.append(clean_path)
+        image_paths = list(set([result.url for result in results if result.url and
+                result.type == ResourceResultType.IMAGE]))
+        valid_paths = []
+        for path in image_paths:
+            parsed = urlparse(path)
+            if parsed.scheme in ("http", "https") and parsed.netloc:
+                clean_path: str = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+                valid_paths.append(clean_path)
+            elif re.search(r"\.(jpg|jpeg|png|gif|bmp|webp)$", path, re.IGNORECASE):
+                clean_path: str = path.split("?")[0]
+                valid_paths.append(clean_path)
 
-            if valid_paths:
-                try:
-                    thumbnail_manager = ThumbnailManager()
-                    thumbnail_data = thumbnail_manager.get_thumbnails(valid_paths)
-                    for thumbnail_url, thumbnail_base64 in thumbnail_data.items():
-                        if thumbnail_base64 is None:
-                            logger.debug(f"Thumbnail encountered error during request. {thumbnail_url}")
-                            continue
-                        image_content = ImageContent(type="image", data=thumbnail_base64, mimeType="image/webp")
-                        thumbnails_result.append(image_content)
-                    logger.debug(f"Fetched {len(thumbnail_data)} thumbnails out of {len(valid_paths)} requested URLs")
-                    # print(thumbnail_data)
-                except Exception as ex:
-                    logger.error(f"Error fetching thumbnails: {ex}\n{traceback.format_exc()}")
+        if valid_paths:
+            try:
+                thumbnail_manager = ThumbnailManager()
+                thumbnail_data = thumbnail_manager.get_thumbnails(valid_paths)
+                for thumbnail_url, thumbnail_base64 in thumbnail_data.items():
+                    if thumbnail_base64 is None:
+                        logger.debug(f"Thumbnail encountered error during request. {thumbnail_url}")
+                        continue
+                    image_content = ImageContent(type="image", data=thumbnail_base64, mimeType="image/webp")
+                    thumbnails_result.append(image_content)
+                logger.debug(f"Fetched {len(thumbnail_data)} thumbnails out of {len(valid_paths)} requested URLs")
+            except Exception as ex:
+                logger.error(f"Error fetching thumbnails: {ex}\n{traceback.format_exc()}")
 
         return thumbnails_result
 

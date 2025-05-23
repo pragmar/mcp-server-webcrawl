@@ -115,7 +115,6 @@ class WarcManager(IndexedManager):
             content_type: str = record.http_headers.get_header("Content-Type", "")
             status: int = int(record.http_headers.get_statuscode()) or 200
             resource_type: ResourceResultType = self._determine_resource_type(content_type)
-            # print(resource_type)
             content: bytes = record.content_stream().read()
             content_size: int = len(content)
 
@@ -155,8 +154,6 @@ class WarcManager(IndexedManager):
                 size=content_size,
                 time=0  # time not available
             )
-            # print(status)
-            # print(result.to_dict())
             return result
         except Exception as e:
             logger.error(f"Error processing WARC record for URL {url if 'url' in locals() else 'unknown'}: {e}")

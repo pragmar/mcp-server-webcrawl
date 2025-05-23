@@ -5,14 +5,13 @@ from datetime import datetime
 from mcp_server_webcrawl.models import METADATA_VALUE_TYPE
 from mcp_server_webcrawl.utils import to_isoformat_zulu
 
-RESOURCES_TOOL_NAME: str = "webcrawl_search"
-RESOURCES_LIMIT_DEFAULT: int = 20
-RESOURCES_LIMIT_MAX: int = 100
-
+RESOURCES_TOOL_NAME: Final[str] = "webcrawl_search"
+RESOURCES_LIMIT_DEFAULT: Final[int] = 20
+RESOURCES_LIMIT_MAX: Final[int] = 100
+RESOURCE_EXTRAS_ALLOWED: Final[set[str]] = {"markdown", "snippets", "thumbnails"}
 RESOURCES_FIELDS_REQUIRED: Final[list[str]] = ["id", "url", "site", "type", "status"]
 RESOURCES_FIELDS_DEFAULT: Final[list[str]] = RESOURCES_FIELDS_REQUIRED + ["created", "modified"]
 RESOURCES_SORT_OPTIONS_DEFAULT: Final[list[str]] = ["+id", "-id", "+url", "-url", "+status", "-status", "?"]
-
 RESOURCES_DEFAULT_FIELD_MAPPING: Final[dict[str, str]] = {
     "id": "ResourcesFullText.Id",
     "site": "ResourcesFullText.Project",
@@ -26,6 +25,15 @@ RESOURCES_DEFAULT_FIELD_MAPPING: Final[dict[str, str]] = {
     "content": "ResourcesFullText.Content",
     "time": "Resources.Time",
     "fulltext": "ResourcesFullText",
+}
+RESOURCES_DEFAULT_SORT_MAPPING: Final[dict[str, tuple[str, str]]] = {
+    "+id": ("Resources.Id", "ASC"),
+    "-id": ("Resources.Id", "DESC"),
+    "+url": ("ResourcesFullText.Url", "ASC"),
+    "-url": ("ResourcesFullText.Url", "DESC"),
+    "+status": ("Resources.Status", "ASC"),
+    "-status": ("Resources.Status", "DESC"),
+    "?": ("Resources.Id", "RANDOM")
 }
 
 class ResourceResultType(Enum):
@@ -140,14 +148,13 @@ class ResourceResult:
         self.time = time  # in millis
         self.metadata = metadata  # reserved
 
-        # print(f"** {self.url} {self.created} {self.modified}")
+        # set externally
+        self.__extras: dict[str, str] = {}
 
     def to_dict(self) -> dict[str, METADATA_VALUE_TYPE]:
         """
         Convert the object to a dictionary suitable for JSON serialization.
         """
-        # print(f"!! {self.url} {self.created}")
-        # api_type = self.type.value if self.type else None
         result: dict[str, METADATA_VALUE_TYPE] = {
             "id": self.id,
             "url": self.url,
@@ -164,8 +171,14 @@ class ResourceResult:
             "time": self.time,
             "metadata": self.metadata  # reserved
         }
+        if self.__extras:
+            result["extras"] = {k: v for k, v in self.__extras.items()}
 
         return {k: v for k, v in result.items() if v is not None and not (k == "metadata" and v == {})}
+
+    def set_extra(self, extra_name: str, extra_value: str) -> None:
+        assert extra_name in RESOURCE_EXTRAS_ALLOWED, f"Unexpected extra requested. {extra_name}"
+        self.__extras[extra_name] = extra_value
 
     def to_forcefield_dict(self, forcefields=None) -> dict[str, METADATA_VALUE_TYPE]:
         """

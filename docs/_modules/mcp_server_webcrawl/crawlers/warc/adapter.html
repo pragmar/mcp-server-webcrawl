@@ -195,7 +195,6 @@
             <span class="n">content_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">http_headers</span><span class="o">.</span><span class="n">get_header</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
             <span class="n">status</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">http_headers</span><span class="o">.</span><span class="n">get_statuscode</span><span class="p">())</span> <span class="ow">or</span> <span class="mi">200</span>
             <span class="n">resource_type</span><span class="p">:</span> <span class="n">ResourceResultType</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_determine_resource_type</span><span class="p">(</span><span class="n">content_type</span><span class="p">)</span>
-            <span class="c1"># print(resource_type)</span>
             <span class="n">content</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">content_stream</span><span class="p">()</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
             <span class="n">content_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
 
@@ -235,8 +234,6 @@
                 <span class="n">size</span><span class="o">=</span><span class="n">content_size</span><span class="p">,</span>
                 <span class="n">time</span><span class="o">=</span><span class="mi">0</span>  <span class="c1"># time not available</span>
             <span class="p">)</span>
-            <span class="c1"># print(status)</span>
-            <span class="c1"># print(result.to_dict())</span>
             <span class="k">return</span> <span class="n">result</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing WARC record for URL </span><span class="si">{</span><span class="n">url</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="s1">&#39;url&#39;</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nb">locals</span><span class="p">()</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;unknown&#39;</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>

@@ -3,7 +3,6 @@ from ply import yacc
 from logging import Logger
 
 from mcp_server_webcrawl.models.resources import RESOURCES_DEFAULT_FIELD_MAPPING
-from mcp_server_webcrawl.settings import DEBUG, DATA_DIRECTORY
 from mcp_server_webcrawl.utils.logger import get_logger
 
 logger: Logger = get_logger()
@@ -451,8 +450,32 @@ class SearchQueryParser:
 
             query_parts.append(sql_part)
 
-            # only operator if it's not the last element
-            if operator and i < len(parsed_query) - 1:
-                query_parts.append(operator)
+            if i < len(parsed_query) - 1:
+                if operator in ("AND", "OR", "NOT"):
+                    op = operator
+                elif operator in (None, ""):
+                    op = "AND"  # default
+                else:
+                    op = "AND"  # fallback
+                query_parts.append(op)
 
         return query_parts, params
+
+    def get_fulltext_terms(self, query: str) -> list[str]:
+        """
+        Extract fulltext search terms from a query string.
+        Returns list of search terms suitable for snippet extraction.
+        """
+        parsed_query = self.parse(query)
+        search_terms = []
+        fulltext_fields = ("content", "headers", "fulltext", "", None)
+
+        # prepare for match, lowercase and eliminate wildcards
+        for subquery in parsed_query:
+            if subquery.field in fulltext_fields:
+                term = subquery.value.lower().strip("*")
+                if term:
+                    search_terms.append(term)
+
+        return search_terms
+

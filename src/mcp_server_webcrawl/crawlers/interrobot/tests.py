@@ -1,13 +1,12 @@
 import asyncio
-
 from pprint import pprint
 from logging import Logger
+from mcp.types import EmbeddedResource, ImageContent, TextContent
 from mcp_server_webcrawl.crawlers.base.tests import BaseCrawlerTests
 from mcp_server_webcrawl.crawlers.interrobot.crawler import InterroBotCrawler
-from mcp_server_webcrawl.models.resources import ResourceResultType
+from mcp_server_webcrawl.models.resources import ResourceResultType, RESOURCES_TOOL_NAME
 from mcp_server_webcrawl.crawlers import get_fixture_directory
 from mcp_server_webcrawl.utils.logger import get_logger
-
 logger: Logger = get_logger()
 
 class InterroBotTests(BaseCrawlerTests):
@@ -50,17 +49,26 @@ class InterroBotTests(BaseCrawlerTests):
         )
         self.assertEqual(thumbnail_resources.total, 1, "Should find exactly one resource")
 
-    #def test_interrobot_markdown(self):
-    #    """
-    #    Test markdwon transform for content resources.
-    #    """
-    #    crawler = InterroBotCrawler(self.fixture_path)
-#
-    #    markdown_resources = crawler.get_resources_api(
-    #        query=f"type: html",
-    #        extras=["markdown"],
-    #    )
-    #    self.assertEqual(markdown_resources.total, 1, "Should find exactly one resource")
+    async def __test_thumbnails(self):
+        """
+        thumbnails are a special case
+        """
+        crawler = InterroBotCrawler(self.fixture_path)
+        thumbnail_args = {
+            "datasrc": crawler.datasrc,
+            "sites": [2],
+            "extras": ["thumbnails"],
+            "query": "type: img AND url: *.png",
+            "limit": 4,
+        }
+        thumbnail_result: list[TextContent | ImageContent | EmbeddedResource] = await crawler.mcp_call_tool(
+            RESOURCES_TOOL_NAME, thumbnail_args)
+        self.assertTrue(thumbnail_result[1].type == "image", "ImageContent should be included in thumbnails response")
+
+
+    def test_thumbnails_sync(self):
+        """Synchronous wrapper for the async test"""
+        asyncio.run(self.__test_thumbnails())
 
     def test_interrobot_sites(self):
         """
@@ -114,6 +122,18 @@ class InterroBotTests(BaseCrawlerTests):
         self.assertTrue(site_resources.total > 0, "Site filtering should return results")
         for resource in site_resources._results:
             self.assertEqual(resource.site, 1)
+
+        # markdown
+        site_resources = crawler.get_resources_api(sites=[2], limit=1, query="type: html", extras=["markdown"])
+        self.assertIsNotNone(site_resources._results[0].to_dict()["extras"]["markdown"], "markdown extra failed to materialize")
+
+        # HTML snippets
+        site_resources = crawler.get_resources_api(sites=[2], limit=1, query="appstat AND type: html", extras=["snippets"])
+        self.assertIsNotNone(site_resources._results[0].to_dict()["extras"]["snippets"], "snippet extra failed to materialize")
+
+        # CSS snippets
+        site_resources = crawler.get_resources_api(sites=[2], limit=1, query="height AND type: style", extras=["snippets"])
+        self.assertIsNotNone(site_resources._results[0].to_dict()["extras"]["snippets"], "snippet extra failed to materialize")
 
         # type filtering
         type_resources = crawler.get_resources_api(

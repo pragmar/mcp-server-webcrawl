@@ -93,6 +93,7 @@
     <span class="n">ResourceResult</span><span class="p">,</span>
     <span class="n">ResourceResultType</span><span class="p">,</span>
     <span class="n">RESOURCES_DEFAULT_FIELD_MAPPING</span><span class="p">,</span>
+    <span class="n">RESOURCES_DEFAULT_SORT_MAPPING</span><span class="p">,</span>
     <span class="n">RESOURCES_FIELDS_REQUIRED</span><span class="p">,</span>
     <span class="n">RESOURCES_ENUMERATED_TYPE_MAPPING</span><span class="p">,</span>
     <span class="n">RESOURCES_LIMIT_MAX</span><span class="p">,</span>
@@ -117,7 +118,6 @@
     <span class="s2">&quot;.swf&quot;</span><span class="p">,</span><span class="s2">&quot;.svgz&quot;</span><span class="p">,</span><span class="s2">&quot;.dat&quot;</span><span class="p">,</span><span class="s2">&quot;.db&quot;</span><span class="p">,</span><span class="s2">&quot;.sqlite&quot;</span><span class="p">,</span><span class="s2">&quot;.class&quot;</span><span class="p">,</span><span class="s2">&quot;.pyc&quot;</span><span class="p">,</span><span class="s2">&quot;.o&quot;</span>
 <span class="p">)</span>
 
-
 <span class="c1"># files on disk will need default for reassembly {proto}{dir}</span>
 <span class="c1"># these things are already approximations (perhaps) having passed through wget filtering (--adjust-extension)</span>
 <span class="c1"># representative of the file on disk, also https is what the LLM is going to guess in all cases</span>
@@ -133,15 +133,6 @@
 <span class="c1"># maximum indexes held in cache, an index is a unique list[site-ids] argument</span>
 <span class="n">INDEXED_MANAGER_CACHE_MAX</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span>
 <span class="n">INDEXED_IGNORE_DIRECTORIES</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;http-client-cache&quot;</span><span class="p">,</span> <span class="s2">&quot;result-storage&quot;</span><span class="p">]</span>
-<span class="n">INDEXED_SORT_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;+id&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Resources.Id&quot;</span><span class="p">,</span> <span class="s2">&quot;ASC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;-id&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Resources.Id&quot;</span><span class="p">,</span> <span class="s2">&quot;DESC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;+url&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;ResourcesFullText.Url&quot;</span><span class="p">,</span> <span class="s2">&quot;ASC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;-url&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;ResourcesFullText.Url&quot;</span><span class="p">,</span> <span class="s2">&quot;DESC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;+status&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Resources.Status&quot;</span><span class="p">,</span> <span class="s2">&quot;ASC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;-status&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Resources.Status&quot;</span><span class="p">,</span> <span class="s2">&quot;DESC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;?&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Id&quot;</span><span class="p">,</span> <span class="s2">&quot;RANDOM&quot;</span><span class="p">)</span>
-<span class="p">}</span>
 
 <span class="n">INDEXED_TYPE_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
@@ -530,6 +521,16 @@
                 <span class="c1"># fall back to simple text search</span>
                 <span class="n">parsed_query</span> <span class="o">=</span> <span class="p">[]</span>
 
+        <span class="c1"># if status not explicitly in query, add status &gt;=100</span>
+        <span class="n">status_applied</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">squery</span> <span class="ow">in</span> <span class="n">parsed_query</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">squery</span><span class="o">.</span><span class="n">field</span> <span class="o">==</span> <span class="s2">&quot;status&quot;</span><span class="p">:</span>
+                <span class="n">status_applied</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">status_applied</span><span class="p">:</span>
+            <span class="n">http_status_received</span> <span class="o">=</span> <span class="n">SearchSubquery</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;term&quot;</span><span class="p">,</span> <span class="p">[],</span> <span class="s2">&quot;AND&quot;</span><span class="p">,</span> <span class="n">comparator</span><span class="o">=</span><span class="s2">&quot;&gt;=&quot;</span><span class="p">)</span>
+            <span class="n">parsed_query</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">http_status_received</span><span class="p">)</span>
+
         <span class="c1"># determine fields to be retrieved</span>
         <span class="n">selected_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">RESOURCES_FIELDS_REQUIRED</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">fields</span><span class="p">:</span>
@@ -550,7 +551,7 @@
             <span class="n">fts_parts</span><span class="p">,</span> <span class="n">fts_params</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">to_sqlite_fts</span><span class="p">(</span><span class="n">parsed_query</span><span class="p">,</span> <span class="n">swap_values</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">fts_parts</span><span class="p">:</span>
                 <span class="n">fts_where</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">part</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fts_parts</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">fts_parts</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">part</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;AND&quot;</span><span class="p">,</span> <span class="s2">&quot;OR&quot;</span><span class="p">,</span> <span class="s2">&quot;NOT&quot;</span><span class="p">]:</span>    <span class="c1"># operator</span>
                         <span class="n">fts_where</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">part</span><span class="si">}</span><span class="s2"> &quot;</span>
                     <span class="k">else</span><span class="p">:</span>                               <span class="c1"># condition</span>
@@ -563,8 +564,8 @@
 
         <span class="n">where_clause</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; WHERE </span><span class="si">{</span><span class="s1">&#39; AND &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">where_clauses</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">where_clauses</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
 
-        <span class="k">if</span> <span class="n">sort</span> <span class="ow">in</span> <span class="n">INDEXED_SORT_MAPPING</span><span class="p">:</span>
-            <span class="n">field</span><span class="p">,</span> <span class="n">direction</span> <span class="o">=</span> <span class="n">INDEXED_SORT_MAPPING</span><span class="p">[</span><span class="n">sort</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">sort</span> <span class="ow">in</span> <span class="n">RESOURCES_DEFAULT_SORT_MAPPING</span><span class="p">:</span>
+            <span class="n">field</span><span class="p">,</span> <span class="n">direction</span> <span class="o">=</span> <span class="n">RESOURCES_DEFAULT_SORT_MAPPING</span><span class="p">[</span><span class="n">sort</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">&quot;RANDOM&quot;</span><span class="p">:</span>
                 <span class="n">order_clause</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot; ORDER BY RANDOM()&quot;</span>
             <span class="k">else</span><span class="p">:</span>
@@ -596,11 +597,6 @@
                                 <span class="n">resource_type</span> <span class="o">=</span> <span class="n">rt</span>
                                 <span class="k">break</span>
 
-                        <span class="c1"># also accept InterroBot ints</span>
-                        <span class="c1"># if resource_type == ResourceResultType.UNDEFINED and isinstance(type_value, int):</span>
-                        <span class="c1">#     enum_members = list(ResourceResultType)</span>
-                        <span class="c1">#     if 0 &lt;= type_value &lt; len(enum_members):</span>
-                        <span class="c1">#         resource_type = enum_members[type_value]</span>
                         <span class="k">if</span> <span class="n">resource_type</span> <span class="o">==</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">UNDEFINED</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">type_value</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
                             <span class="k">if</span> <span class="n">type_value</span> <span class="ow">in</span> <span class="n">RESOURCES_ENUMERATED_TYPE_MAPPING</span><span class="p">:</span>
                                 <span class="n">resource_type</span> <span class="o">=</span> <span class="n">RESOURCES_ENUMERATED_TYPE_MAPPING</span><span class="p">[</span><span class="n">type_value</span><span class="p">]</span>

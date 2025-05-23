@@ -86,7 +86,7 @@ This tool searches for resources (webpages, CSS, images, etc.) across projects a
    * - extras
      - array<string>
      - No
-     - List of additional operations to perform with query. *thumbnails*: This creates small thumbnails that enable basic image recognition while keeping token output minimal. Only works for image (img) types. SVG format is not currently supported. *markdown*: Directly transforms the HTML content field into concise markdown, reducing token usage and improving readability for LLMs. This does not create a separate field but replaces the HTML in the content field with its markdown equivalent. Must be used with the content field in the fields parameter.
+     - List of additional operations to perform with query. *thumbnails*: This creates small thumbnails that enable basic image recognition while keeping token output minimal. Only works for image (img) types. SVG format is not currently supported. *markdown*: Directly transforms the HTML content field into concise markdown, reducing token usage and improving readability for LLMs. This does not create a separate field but replaces the HTML in the content field with its markdown equivalent. Must be used with the content field in the fields parameter. <br> 'snippets': matches fulltext queries to contextual keyword usage within the content. When used without requesting the content field (or markdown extra), it can provide an efficient means of refining a search without pulling down the entire page content. Also great for rendering old school hit-highlighted results as a list, like Google search in 1999. Works with HTML, CSS, JS, or any text-based, crawled file.
 
 Crawler Features Support
 ~~~~~~~~~~~~~~~~~~~~~~~~

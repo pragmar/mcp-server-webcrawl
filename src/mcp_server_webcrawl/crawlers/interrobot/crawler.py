@@ -7,13 +7,13 @@ from mcp_server_webcrawl.models.sites import SiteResult
 from mcp_server_webcrawl.models.resources import (
     RESOURCES_FIELDS_DEFAULT,
     RESOURCES_FIELDS_REQUIRED,
+    RESOURCES_DEFAULT_SORT_MAPPING,
 )
 from mcp_server_webcrawl.crawlers.base.crawler import BaseCrawler
 from mcp_server_webcrawl.crawlers.interrobot.adapter import (
     get_sites,
     get_resources,
     INTERROBOT_RESOURCE_FIELD_MAPPING,
-    INTERROBOT_SORT_MAPPING,
     INTERROBOT_SITE_FIELD_MAPPING,
     INTERROBOT_SITE_FIELD_REQUIRED,
 )
@@ -67,12 +67,11 @@ class InterroBotCrawler(BaseCrawler):
 
         resources_field_options: list[str] = list(set(RESOURCES_FIELDS_DEFAULT) - set(RESOURCES_FIELDS_REQUIRED))
         resources_type_options: list[str] = list(set(INTERROBOT_RESOURCE_FIELD_MAPPING.keys()) - set(RESOURCES_FIELDS_REQUIRED))
-        resources_sort_options: list[str] = list(INTERROBOT_SORT_MAPPING.keys())
+        resources_sort_options: list[str] = list(RESOURCES_DEFAULT_SORT_MAPPING.keys())
         all_sites_display: str = ", ".join([f"{s.url} (site: {s.id})" for s in all_sites])
 
         drt_props: dict = default_resources_tool.inputSchema["properties"]
         drt_props["fields"]["items"]["enum"] = resources_field_options
-        # drt_props["types"]["items"]["enum"] = resources_type_options
         drt_props["sort"]["enum"] = resources_sort_options
         drt_props["sites"]["enum"] = sites_field_options
         drt_props["sites"]["description"] = ("Optional "

@@ -111,7 +111,7 @@
 
 <span class="n">INTERROBOT_SITE_FIELD_REQUIRED</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;url&quot;</span><span class="p">])</span>
 
-<span class="c1"># legit different from INDEXED version (extra robots)</span>
+<span class="c1"># legit different from default version (extra robots)</span>
 <span class="n">INTERROBOT_SITE_FIELD_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;Project.Id&quot;</span><span class="p">,</span>
     <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;Project.Url&quot;</span><span class="p">,</span>
@@ -121,35 +121,15 @@
 <span class="p">}</span>
 
 <span class="c1"># maybe dedupe with near match INDEXED version</span>
-<span class="n">INTERROBOT_SORT_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;+id&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;ResourcesFullText.Id&quot;</span><span class="p">,</span> <span class="s2">&quot;ASC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;-id&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;ResourcesFullText.Id&quot;</span><span class="p">,</span> <span class="s2">&quot;DESC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;+url&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;ResourcesFullText.Url&quot;</span><span class="p">,</span> <span class="s2">&quot;ASC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;-url&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;ResourcesFullText.Url&quot;</span><span class="p">,</span> <span class="s2">&quot;DESC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;+status&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;ResourcesFullText.Status&quot;</span><span class="p">,</span> <span class="s2">&quot;ASC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;-status&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;ResourcesFullText.Status&quot;</span><span class="p">,</span> <span class="s2">&quot;DESC&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;?&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;ResourcesFullText.Id&quot;</span><span class="p">,</span> <span class="s2">&quot;?&quot;</span><span class="p">),</span>
-<span class="p">}</span>
-
-<span class="c1"># maybe dedupe with near match INDEXED version</span>
-<span class="c1">#INTERROBOT_TYPE_INT_MAPPING: Final[dict[int, ResourceResultType]] = {</span>
-<span class="c1">#    0: ResourceResultType.UNDEFINED,</span>
-<span class="c1">#    1: ResourceResultType.PAGE,</span>
-<span class="c1">#    2: ResourceResultType.OTHER,</span>
-<span class="c1">#    3: ResourceResultType.FEED,</span>
-<span class="c1">#    4: ResourceResultType.FRAME,</span>
-<span class="c1">#    5: ResourceResultType.OTHER,</span>
-<span class="c1">#    6: ResourceResultType.IMAGE,</span>
-<span class="c1">#    7: ResourceResultType.AUDIO,</span>
-<span class="c1">#    8: ResourceResultType.VIDEO,</span>
-<span class="c1">#    9: ResourceResultType.FONT,</span>
-<span class="c1">#    10: ResourceResultType.CSS,</span>
-<span class="c1">#    11: ResourceResultType.SCRIPT,</span>
-<span class="c1">#    12: ResourceResultType.OTHER,</span>
-<span class="c1">#    13: ResourceResultType.TEXT,</span>
-<span class="c1">#    14: ResourceResultType.PDF,</span>
-<span class="c1">#    15: ResourceResultType.DOC</span>
-<span class="c1">#}</span>
+<span class="c1"># INTERROBOT_SORT_MAPPING: Final[dict[str, tuple[str, str]]] = {</span>
+<span class="c1">#     &quot;+id&quot;: (&quot;ResourcesFullText.Id&quot;, &quot;ASC&quot;),</span>
+<span class="c1">#     &quot;-id&quot;: (&quot;ResourcesFullText.Id&quot;, &quot;DESC&quot;),</span>
+<span class="c1">#     &quot;+url&quot;: (&quot;ResourcesFullText.Url&quot;, &quot;ASC&quot;),</span>
+<span class="c1">#     &quot;-url&quot;: (&quot;ResourcesFullText.Url&quot;, &quot;DESC&quot;),</span>
+<span class="c1">#     &quot;+status&quot;: (&quot;ResourcesFullText.Status&quot;, &quot;ASC&quot;),</span>
+<span class="c1">#     &quot;-status&quot;: (&quot;ResourcesFullText.Status&quot;, &quot;DESC&quot;),</span>
+<span class="c1">#     &quot;?&quot;: (&quot;ResourcesFullText.Id&quot;, &quot;?&quot;),</span>
+<span class="c1"># }</span>
 
 <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
 
@@ -241,7 +221,7 @@
         <span class="n">selected_fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">site_fields_default</span><span class="p">)</span>
 
     <span class="n">safe_sql_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">INTERROBOT_SITE_FIELD_MAPPING</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">selected_fields</span><span class="p">]</span>
-    <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^[A-Za-z\.]+$&#39;</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">safe_sql_fields</span><span class="p">),</span> <span class="s2">&quot;Unknown or unsafe field requested&quot;</span>
+    <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^[A-Za-z\.]+$&quot;</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">safe_sql_fields</span><span class="p">),</span> <span class="s2">&quot;Unknown or unsafe field requested&quot;</span>
     <span class="n">safe_sql_fields_joined</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">safe_sql_fields</span><span class="p">)</span>
 
     <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;SELECT </span><span class="si">{</span><span class="n">safe_sql_fields_joined</span><span class="si">}</span><span class="s2"> FROM Projects AS Project</span><span class="si">{</span><span class="n">ids_clause</span><span class="si">}</span><span class="s2"> ORDER BY Project.Url ASC&quot;</span>
@@ -269,8 +249,8 @@
             <span class="n">path</span><span class="o">=</span><span class="n">datasrc</span><span class="p">,</span>
             <span class="nb">id</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">),</span>
             <span class="n">url</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;url&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-            <span class="n">created</span><span class="o">=</span><span class="n">from_isoformat_zulu</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;created&#39;</span><span class="p">)),</span>
-            <span class="n">modified</span><span class="o">=</span><span class="n">from_isoformat_zulu</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;modified&#39;</span><span class="p">)),</span>
+            <span class="n">created</span><span class="o">=</span><span class="n">from_isoformat_zulu</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;created&quot;</span><span class="p">)),</span>
+            <span class="n">modified</span><span class="o">=</span><span class="n">from_isoformat_zulu</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;modified&quot;</span><span class="p">)),</span>
             <span class="n">robots</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;robotstext&quot;</span><span class="p">),</span>
             <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">))</span>
@@ -309,7 +289,7 @@
     <span class="n">site_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">site</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">sites_results</span><span class="p">]</span>
     <span class="n">sites_group</span> <span class="o">=</span> <span class="n">SitesGroup</span><span class="p">(</span><span class="n">datasrc</span><span class="p">,</span> <span class="n">sites</span><span class="p">,</span> <span class="n">site_paths</span><span class="p">)</span>
 
-    <span class="c1"># fieldname: dict of swaps</span>
+    <span class="c1"># InterroBot uses ints in place of strings</span>
     <span class="n">swap_values</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;type&quot;</span> <span class="p">:</span> <span class="p">{</span>
             <span class="s2">&quot;&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>             <span class="c1"># UNDEFINED</span>

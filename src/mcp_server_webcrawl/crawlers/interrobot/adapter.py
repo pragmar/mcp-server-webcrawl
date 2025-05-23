@@ -36,7 +36,7 @@ INTERROBOT_RESOURCE_FIELD_MAPPING: Final[dict[str, str]] = {
 
 INTERROBOT_SITE_FIELD_REQUIRED: Final[set[str]] = set(["id", "url"])
 
-# legit different from INDEXED version (extra robots)
+# legit different from default version (extra robots)
 INTERROBOT_SITE_FIELD_MAPPING: Final[dict[str, str]] = {
     "id": "Project.Id",
     "url": "Project.Url",
@@ -46,35 +46,15 @@ INTERROBOT_SITE_FIELD_MAPPING: Final[dict[str, str]] = {
 }
 
 # maybe dedupe with near match INDEXED version
-INTERROBOT_SORT_MAPPING: Final[dict[str, tuple[str, str]]] = {
-    "+id": ("ResourcesFullText.Id", "ASC"),
-    "-id": ("ResourcesFullText.Id", "DESC"),
-    "+url": ("ResourcesFullText.Url", "ASC"),
-    "-url": ("ResourcesFullText.Url", "DESC"),
-    "+status": ("ResourcesFullText.Status", "ASC"),
-    "-status": ("ResourcesFullText.Status", "DESC"),
-    "?": ("ResourcesFullText.Id", "?"),
-}
-
-# maybe dedupe with near match INDEXED version
-#INTERROBOT_TYPE_INT_MAPPING: Final[dict[int, ResourceResultType]] = {
-#    0: ResourceResultType.UNDEFINED,
-#    1: ResourceResultType.PAGE,
-#    2: ResourceResultType.OTHER,
-#    3: ResourceResultType.FEED,
-#    4: ResourceResultType.FRAME,
-#    5: ResourceResultType.OTHER,
-#    6: ResourceResultType.IMAGE,
-#    7: ResourceResultType.AUDIO,
-#    8: ResourceResultType.VIDEO,
-#    9: ResourceResultType.FONT,
-#    10: ResourceResultType.CSS,
-#    11: ResourceResultType.SCRIPT,
-#    12: ResourceResultType.OTHER,
-#    13: ResourceResultType.TEXT,
-#    14: ResourceResultType.PDF,
-#    15: ResourceResultType.DOC
-#}
+# INTERROBOT_SORT_MAPPING: Final[dict[str, tuple[str, str]]] = {
+#     "+id": ("ResourcesFullText.Id", "ASC"),
+#     "-id": ("ResourcesFullText.Id", "DESC"),
+#     "+url": ("ResourcesFullText.Url", "ASC"),
+#     "-url": ("ResourcesFullText.Url", "DESC"),
+#     "+status": ("ResourcesFullText.Status", "ASC"),
+#     "-status": ("ResourcesFullText.Status", "DESC"),
+#     "?": ("ResourcesFullText.Id", "?"),
+# }
 
 logger: Logger = get_logger()
 
@@ -155,7 +135,7 @@ def get_sites(datasrc: Path, ids=None, fields=None) -> list[SiteResult]:
         selected_fields.update(site_fields_default)
 
     safe_sql_fields = [INTERROBOT_SITE_FIELD_MAPPING[f] for f in selected_fields]
-    assert all(re.match(r'^[A-Za-z\.]+$', field) for field in safe_sql_fields), "Unknown or unsafe field requested"
+    assert all(re.match(r"^[A-Za-z\.]+$", field) for field in safe_sql_fields), "Unknown or unsafe field requested"
     safe_sql_fields_joined: str = ", ".join(safe_sql_fields)
 
     statement: str = f"SELECT {safe_sql_fields_joined} FROM Projects AS Project{ids_clause} ORDER BY Project.Url ASC"
@@ -183,8 +163,8 @@ def get_sites(datasrc: Path, ids=None, fields=None) -> list[SiteResult]:
             path=datasrc,
             id=row.get("id"),
             url=row.get("url", ""),
-            created=from_isoformat_zulu(row.get('created')),
-            modified=from_isoformat_zulu(row.get('modified')),
+            created=from_isoformat_zulu(row.get("created")),
+            modified=from_isoformat_zulu(row.get("modified")),
             robots=row.get("robotstext"),
             metadata=None,
         ))
@@ -220,7 +200,7 @@ def get_resources(
     site_paths = [site.path for site in sites_results]
     sites_group = SitesGroup(datasrc, sites, site_paths)
 
-    # fieldname: dict of swaps
+    # InterroBot uses ints in place of strings
     swap_values = {
         "type" : {
             "": 0,             # UNDEFINED

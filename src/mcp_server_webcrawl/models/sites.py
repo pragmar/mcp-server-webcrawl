@@ -74,7 +74,7 @@ class SiteResult:
             Dictionary containing all non-None object attributes, plus forced fields
             set to None if not already present
         """
-        # None self annihilates in filter, forcefields can force their existence, as null
+        # None self-annihilates in filter, forcefields can force their existence, as null
         result = {}
         if forcefields:
             result = {k: None for k in forcefields}
