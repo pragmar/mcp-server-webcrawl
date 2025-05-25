@@ -33,10 +33,11 @@ pip install mcp-server-webcrawl
 ## Features
 
 * Claude Desktop ready
-* Fulltext search support
-* Filter by type, status, and more
 * Multi-crawler compatible
-* Supports advanced/boolean and field searching
+* Filter by type, status, and more
+* Boolean search support
+* Support for Markdown and snippets
+* Roll your own website knowledgebase
 
 ## MCP Configuration
 
@@ -190,10 +191,10 @@ supported content types in the search system.
 
 ## Extras
 
-The `extras` parameter provides additional processing options for search results, enhancing the output format and capabilities while optimizing token usage. These options can be combined as needed to achieve the desired result format.
+The `extras` parameter provides additional processing options, transforming result data (markdown, snippets), or connecting the LLM to external data (thumbnails). These options can be combined as needed to achieve the desired result format.
 
 | Extra | Description |
 |-------|-------------|
-| thumbnails | Generates base64 encoded thumbnails for image resources that can be viewed and analyzed by AI models. Enables image description, content analysis, and visual understanding while keeping token output minimal. Only works for image (img) types, which can be filtered using `type: img` in queries. SVG is not supported. |
-| markdown | Transforms the HTML content field into concise markdown, reducing token usage and improving readability for LLMs. |
+| thumbnails | Generates base64 encoded images to be viewed and analyzed by AI models. Enables image description, content analysis, and visual understanding while keeping token output minimal. Works with images, which can be filtered using `type: img` in queries. SVG is not supported. |
+| markdown | Provides the HTML content field as concise markdown, reducing token usage and improving readability for LLMs. Works with HTML, which can be filtered using `type: html` in queries. |
 | snippets | Matches fulltext queries to contextual keyword usage within the content. When used without requesting the content field (or markdown extra), it can provide an efficient means of refining a search without pulling down the complete page contents. Also great for rendering old school hit-highlighted results as a list, like Google search in 1999. Works with HTML, CSS, JS, or any text-based, crawled file. |
