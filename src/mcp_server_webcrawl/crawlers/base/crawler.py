@@ -102,8 +102,6 @@ class BaseCrawler:
         Returns:
             The MCP server over stdio
         """
-        # awaiting on caller end as well, but if not awaiting here
-        # RuntimeWarning: coroutine 'Server.run' was never awaited (serial)
         return await self._server.run(stdin, stdout, self.get_initialization_options())
 
     def get_initialization_options(self) -> InitializationOptions:

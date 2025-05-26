@@ -51,19 +51,41 @@ class WarcTests(BaseCrawlerTests):
         resources_json = crawler.get_resources_api()
         self.assertTrue(resources_json.total > 0)
 
-        # query parameter (search for specific content)
-        query_resources = crawler.get_resources_api(sites=[PRAGMAR_WARC_ID], query="appstat", fields=["content", "headers"])
-        self.assertTrue(query_resources.total > 0, "Search query should return results")
+        # fulltext keyword search
+        query_keyword = "privacy"
+        keyword_resources = crawler.get_resources_api(
+            sites=[PRAGMAR_WARC_ID],
+            query=query_keyword,
+            fields=["content", "headers"]
+        )
+        self.assertTrue(keyword_resources.total > 0, "Keyword query should return results")
 
-        # ensure the term exists somewhere in the resource data - could be URL, content, headers, etc.
-        for resource in query_resources._results:
+        # search term exists in returned resources
+        for resource in keyword_resources._results:
             resource_dict = resource.to_dict()
             found = False
             for field, value in resource_dict.items():
-                if isinstance(value, str) and "appstat" in value.lower():
+                if isinstance(value, str) and query_keyword in value.lower():
                     found = True
                     break
             self.assertTrue(found, f"Search term not found in any field of resource {resource.id}")
+
+        # fulltext OR search
+        or_resources = crawler.get_resources_api(
+            sites=[PRAGMAR_WARC_ID],
+            query="qbit OR appstat",
+            fields=[]
+        )
+        self.assertTrue(or_resources.total > 0, "Fulltext OR query should return results")
+
+        # fulltext AND search
+        and_resources = crawler.get_resources_api(
+            sites=[PRAGMAR_WARC_ID],
+            query="monitor AND appstat",
+            fields=[]
+        )
+        self.assertTrue(and_resources.total > 0, "Fulltext AND query should return results")
+        self.assertTrue(or_resources.total >= and_resources.total, "Fulltext OR counts should be >= AND counts")
 
         # retrieving resources by specific ids
         if resources_json.total > 0:

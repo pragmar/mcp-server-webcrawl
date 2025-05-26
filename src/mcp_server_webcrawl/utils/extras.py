@@ -35,6 +35,7 @@ class HTMLContentExtractor(HTMLParser):
         self.__text_content = []
         self.__html_markup = []
         self.__html_attributes = []
+        self.__html_comments = []
         self.__text_accumulator = []
 
     def __flush_text(self) -> str:
@@ -73,6 +74,11 @@ class HTMLContentExtractor(HTMLParser):
         if cleaned:
             self.__text_accumulator.append(cleaned)
 
+    def handle_comment(self, data):
+        cleaned = data.strip()
+        if cleaned:
+            self.__html_comments.append(cleaned)
+
     def close(self):
         self.__flush_text()
         super().close()
@@ -96,6 +102,13 @@ class HTMLContentExtractor(HTMLParser):
         Get all attribute values joined and normalized.
         """
         joined: str = " ".join(self.__html_attributes)
+        return self.__normalize_whitespace(joined)
+
+    def get_comments_content(self) -> str:
+        """
+        Get all HTML comments joined and normalized.
+        """
+        joined: str = " ".join(self.__html_comments)
         return self.__normalize_whitespace(joined)
 
 def get_markdown(content: str) -> str | None:
@@ -183,6 +196,7 @@ def get_snippets(headers: str, content: str, query: str) -> str | None:
         "headers": headers_one_liner,
         "text": "",
         "html_attributes": "",
+        "html_comments": "",
         "html_markup": "",
     }
 
@@ -192,14 +206,15 @@ def get_snippets(headers: str, content: str, query: str) -> str | None:
         search_terms_parser.close()
         search_groups["text"] = search_terms_parser.get_text_content()
         search_groups["html_attributes"] = search_terms_parser.get_attributes_content()
+        search_groups["html_comments"] = search_terms_parser.get_comments_content()
         search_groups["html_markup"] = search_terms_parser.get_markup_content()
     except Exception as e:
         # fallback to plain text, if <=1MB
         if len(content) < 1024 * 1024:
             search_groups["text"] = content
 
-    # priority order text, attributes, headers, markup
-    for group_name in ["text", "html_attributes", "headers", "html_markup"]:
+    # priority order text, attributes, comments, headers, markup
+    for group_name in ["text", "html_attributes", "html_comments", "headers", "html_markup"]:
         search_group_text = search_groups[group_name]
         if not search_group_text:
             continue

@@ -57,13 +57,41 @@ class SiteOneTests(BaseCrawlerTests):
         resources_json = crawler.get_resources_api()
         self.assertTrue(resources_json.total > 0)
 
-        # query
-        query_resources = crawler.get_resources_api(
+        # fulltext keyword search
+        query_keyword = "privacy"
+        keyword_resources = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            query="privacy",
+            query=query_keyword,
             fields=["content", "headers"]
         )
-        self.assertTrue(query_resources.total > 0, "Search query should return results")
+        self.assertTrue(keyword_resources.total > 0, "Keyword query should return results")
+
+        # search term exists in returned resources
+        for resource in keyword_resources._results:
+            resource_dict = resource.to_dict()
+            found = False
+            for field, value in resource_dict.items():
+                if isinstance(value, str) and query_keyword in value.lower():
+                    found = True
+                    break
+            self.assertTrue(found, f"Search term not found in any field of resource {resource.id}")
+
+        # fulltext OR search
+        or_resources = crawler.get_resources_api(
+            sites=[PRAGMAR_SITE_ID],
+            query="qbit OR appstat",
+            fields=[]
+        )
+        self.assertTrue(or_resources.total > 0, "Fulltext OR query should return results")
+
+        # fulltext AND search
+        and_resources = crawler.get_resources_api(
+            sites=[PRAGMAR_SITE_ID],
+            query="monitor AND appstat",
+            fields=[]
+        )
+        self.assertTrue(and_resources.total > 0, "Fulltext AND query should return results")
+        self.assertTrue(or_resources.total >= and_resources.total, "Fulltext OR counts should be >= AND counts")
 
         # test less often used, more invisible fields
         timestamp_resources = crawler.get_resources_api(
@@ -72,24 +100,11 @@ class SiteOneTests(BaseCrawlerTests):
             fields=["created", "modified", "time"]
         )
         self.assertTrue(timestamp_resources.total > 0, "Search query should return results")
-
-        # Verify timestamps are not None
         for resource in timestamp_resources._results:
             resource_dict = resource.to_dict()
             self.assertIsNotNone(resource_dict["created"], "Created timestamp should not be None")
             self.assertIsNotNone(resource_dict["modified"], "Modified timestamp should not be None")
             self.assertIsNotNone(resource_dict["time"], "Modified timestamp should not be None")
-
-
-        # search term exists in returned resources
-        for resource in query_resources._results:
-            resource_dict = resource.to_dict()
-            found = False
-            for field, value in resource_dict.items():
-                if isinstance(value, str) and "privacy" in value.lower():
-                    found = True
-                    break
-            self.assertTrue(found, f"Search term not found in any field of resource {resource.id}")
 
         # resource id filtering
         if resources_json.total > 0:

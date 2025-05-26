@@ -104,9 +104,47 @@ class InterroBotTests(BaseCrawlerTests):
         resources_json = crawler.get_resources_api()
         self.assertTrue(resources_json.total > 0)
 
-        # query parameter
-        query_resources = crawler.get_resources_api(query="example")
-        self.assertTrue(query_resources.total > 0, "Search query should return results")
+        # site filtering
+        site_resources = crawler.get_resources_api(sites=[1])
+        self.assertTrue(site_resources.total > 0, "Site filtering should return results")
+        for resource in site_resources._results:
+            self.assertEqual(resource.site, 1)
+
+        # fulltext keyword search
+        query_keyword = "privacy"
+        keyword_resources = crawler.get_resources_api(
+            sites=[2],
+            query=query_keyword,
+            fields=["content", "headers"]
+        )
+        self.assertTrue(keyword_resources.total > 0, "Keyword query should return results")
+
+        # search term exists in returned resources
+        for resource in keyword_resources._results:
+            resource_dict = resource.to_dict()
+            found = False
+            for field, value in resource_dict.items():
+                if isinstance(value, str) and query_keyword in value.lower():
+                    found = True
+                    break
+            self.assertTrue(found, f"Search term not found in any field of resource {resource.id}")
+
+        # fulltext OR search
+        or_resources = crawler.get_resources_api(
+            sites=[2],
+            query="qbit OR appstat",
+            fields=[]
+        )
+        self.assertTrue(or_resources.total > 0, "Fulltext OR query should return results")
+
+        # fulltext AND search
+        and_resources = crawler.get_resources_api(
+            sites=[2],
+            query="monitor AND appstat",
+            fields=[]
+        )
+        self.assertTrue(and_resources.total > 0, "Fulltext AND query should return results")
+        self.assertTrue(or_resources.total >= and_resources.total, "Fulltext OR counts should be >= AND counts")
 
         # retrieving resources by specific IDs
         if resources_json.total > 0:
@@ -116,12 +154,6 @@ class InterroBotTests(BaseCrawlerTests):
             )
             self.assertEqual(id_resources.total, 1)
             self.assertEqual(id_resources._results[0].id, first_id)
-
-        # site filtering
-        site_resources = crawler.get_resources_api(sites=[1])
-        self.assertTrue(site_resources.total > 0, "Site filtering should return results")
-        for resource in site_resources._results:
-            self.assertEqual(resource.site, 1)
 
         # markdown
         site_resources = crawler.get_resources_api(sites=[2], limit=1, query="type: html", extras=["markdown"])
@@ -244,5 +276,3 @@ class InterroBotTests(BaseCrawlerTests):
             )
         else:
             print(f"Skip randomness verification: Not enough resources ({random2_resources.total})")
-
-
