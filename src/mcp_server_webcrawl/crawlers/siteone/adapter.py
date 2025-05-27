@@ -167,7 +167,7 @@ class SiteOneManager(IndexedManager):
                     try:
                         result: ResourceResult | None = self._prepare_siteone_record(file_path,
                                 site_id, directory, log_data, file_contents.get(file_path))
-                        if result:
+                        if result and result.url not in processed_urls:
                             batch_insert_crawled.append(result)
                             processed_urls.add(result.url)
                             if index_state is not None:
@@ -246,11 +246,11 @@ class SiteOneManager(IndexedManager):
             # look up metadata from log if available, otherwise use defaults
             metadata = None
             wget_aliases = list(set([
-                url,
-                url.replace("index.html", ""),
-                url.replace(".html", "/"),
-                url.replace(".html", ""),
-                re.sub(wget_static_pattern, ".", url)
+                url,                                   # exact match first
+                re.sub(wget_static_pattern, ".", url), # static pattern
+                url.replace(".html", ""),              # file without extension (redirects)
+                url.replace(".html", "/"),             # directory style (targets)
+                url.replace("index.html", ""),         # index removal
             ]))
 
             for wget_alias in wget_aliases:
@@ -258,7 +258,18 @@ class SiteOneManager(IndexedManager):
                 if metadata is not None:
                     break
 
-            if metadata is None:
+            if metadata is not None:
+                # preventing duplicate html pages ./appstat.html and ./appstat/index.html
+                # prefer one if possible, using canonical URL from log
+                canonical_url = None
+                for wget_alias in wget_aliases:
+                    if log_data.get(wget_alias) == metadata:
+                        canonical_url = wget_alias
+                        break
+
+                if canonical_url:
+                    url = canonical_url  # Use the log URL instead of file URL
+            else:
                 metadata = {}
 
             status_code = metadata.get("status", 200)
@@ -266,7 +277,8 @@ class SiteOneManager(IndexedManager):
             log_type = metadata.get("type", "").lower()
 
             if log_type:
-                # no type for redirects, but more often than not pages
+                # no type for redirects, but more often than not
+                # redirection to another page
                 type_mapping = {
                     "html": ResourceResultType.PAGE,
                     "redirect": ResourceResultType.PAGE,

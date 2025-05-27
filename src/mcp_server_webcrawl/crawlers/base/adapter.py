@@ -246,11 +246,13 @@ class BaseManager:
 
     @staticmethod
     def __read_files_contents(file_path) -> tuple[Path, str | None]:
-        """Read content from text files with better error handling and encoding detection."""
-        #if resource_type not in [ResourceResultType.PAGE, ResourceResultType.TEXT,
-        #            ResourceResultType.CSS, ResourceResultType.SCRIPT, ResourceResultType.OTHER]:
-        #    return None
+        """
+        Read content from text files with better error handling and encoding detection.
+        """
 
+        # a null result just means we're not dealing with the content
+        # which has been determined to be binary or of unknown format
+        # we can still maintain a record the URL/headers/whatever as Resource
         null_result: tuple[Path, str] = file_path, None
 
         extension = os.path.splitext(file_path)[1].lower()
@@ -265,7 +267,11 @@ class BaseManager:
 
         content = None
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            # errors="ignore" or "replace" required to read Katana txt files with
+            # data payloads and still capture url, headers, etc. replace supposedly
+            # softer touch generally, but not any better for Katana specifically
+            # as payload will not be stored
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
         except UnicodeDecodeError:
             logger.debug(f"Could not decode file as UTF-8: {file_path}")
@@ -548,3 +554,4 @@ class BaseManager:
         return any(t in content_type.lower() for t in [
             "text/", "javascript", "json", "xml", "html", "css"
         ])
+

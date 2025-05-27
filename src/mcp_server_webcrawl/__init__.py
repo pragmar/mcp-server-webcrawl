@@ -11,7 +11,7 @@ from argparse import ArgumentParser
 from mcp_server_webcrawl.utils.cli import get_help_short_message, get_help_long_message
 from mcp_server_webcrawl.settings import DEBUG
 
-__version__: str = "0.10.1"
+__version__: str = "0.10.2"
 __name__: str = "mcp-server-webcrawl"
 
 if DEBUG:

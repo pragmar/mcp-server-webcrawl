@@ -73,6 +73,9 @@ class KatanaManager(IndexedManager):
                 batch_file_contents = BaseManager.read_files(batch_file_paths)
                 batch_insert_resource_results: list[ResourceResult] = []
                 for file_path, content in batch_file_contents.items():
+                    # avoid readme in repo, katana crawl files should be named 9080ef8...
+                    if file_path.name.lower().endswith("readme.txt"):
+                        continue
                     try:
                         record = self._prepare_katana_record(file_path, site_id, content)
                         if record:
