@@ -247,5 +247,3 @@ def get_resources(
     site_paths = [site.path for site in sites_results]
     sites_group = SitesGroup(datasrc, sites, site_paths)
     return manager.get_resources_for_sites_group(sites_group, query, fields, sort, limit, offset)
-
-

@@ -260,15 +260,15 @@ class SiteOneManager(IndexedManager):
 
             if metadata is not None:
                 # preventing duplicate html pages ./appstat.html and ./appstat/index.html
-                # prefer one if possible, using canonical URL from log
+                # prefer index.html (actual content) over redirect stubs
                 canonical_url = None
-                for wget_alias in wget_aliases:
-                    if log_data.get(wget_alias) == metadata:
-                        canonical_url = wget_alias
-                        break
+                # Sort aliases to prefer index.html files over redirect stubs
+                sorted_aliases = sorted([alias for alias in wget_aliases if log_data.get(alias) == metadata],
+                                    key=lambda x: (not x.endswith('index.html'), x))
 
-                if canonical_url:
-                    url = canonical_url  # Use the log URL instead of file URL
+                if sorted_aliases:
+                    canonical_url = sorted_aliases[0]  # Take the preferred one
+                    url = canonical_url
             else:
                 metadata = {}
 
@@ -299,6 +299,10 @@ class SiteOneManager(IndexedManager):
             file_content = content
             if file_content is None:
                 file_content = BaseManager.read_file_contents(file_path, resource_type)
+
+            # skip redirect stub files left in SiteOne archive (duplicate, wait for real content)
+            if status_code == 200 and file_content and '<meta http-equiv="refresh" content="0' in file_content:
+                return None
 
             record = ResourceResult(
                 id=BaseManager.string_to_id(url),
@@ -370,6 +374,3 @@ def get_resources(
     site_paths = [site.path for site in sites_results]
     sites_group = SitesGroup(datasrc, sites, site_paths)
     return manager.get_resources_for_sites_group(sites_group, query, fields, sort, limit, offset)
-
-
-

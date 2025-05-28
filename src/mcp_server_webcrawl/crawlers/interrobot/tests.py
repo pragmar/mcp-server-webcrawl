@@ -129,3 +129,10 @@ class InterroBotTests(BaseCrawlerTests):
             result = site_multiple_fields_json._results[0].to_dict()
             self.assertIn("robots", result, "robots field should be present in response")
             self.assertIn("created", result, "created field should be present in response")
+
+    def test_report(self):
+        """
+        Test thumbnail generation functionality (InterroBot-specific).
+        """
+        crawler = InterroBotCrawler(self.fixture_path)
+        logger.info(self.run_pragmar_report(crawler, PRAGMAR_SITE_ID, "InterroBot"))

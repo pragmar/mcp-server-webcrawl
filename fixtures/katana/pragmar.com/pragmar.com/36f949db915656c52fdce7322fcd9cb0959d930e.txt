@@ -11,26 +11,27 @@ Accept-Encoding: gzip
 HTTP/1.1 200 OK
 Transfer-Encoding: chunked
 Connection: keep-alive
-Content-Security-Policy: default-src 'self'; script-src 'self' https://stats.pragmar.com https://*.youtube.com https://*.ytimg.com; img-src 'self' https://*.pragmar.com https://*.youtube.com https://*.ytimg.com; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-src https://*.youtube.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+Content-Security-Policy: default-src 'self'; script-src 'self' https://stats.pragmar.com https://*.youtube.com https://*.ytimg.com; img-src 'self' data: https://*.pragmar.com https://*.youtube.com https://*.ytimg.com; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-src https://*.youtube.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
 Content-Type: text/html; charset=utf-8
 Cross-Origin-Opener-Policy: same-origin
-Date: Sun, 23 Mar 2025 00:54:19 GMT
+Date: Tue, 27 May 2025 17:41:43 GMT
 Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
 Referrer-Policy: same-origin
+Referrer-Policy: origin-when-cross-origin
 Server: nginx
 Vary: Accept-Encoding
 X-Content-Type-Options: nosniff
 X-Frame-Options: DENY
 
-1212
+14c5
 <!DOCTYPE html>
 <html lang="en" class="noscript flex svg">
     <head>
         <title>Pragmar</title>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <meta name="description" content="Creator of fine developer tools: InterroBot, appstat, and more." />
-        <link rel="shortcut icon" href="/media/static/images/favicon.png?202503110208"/>
-        <link type="text/css" rel="stylesheet" href="/media/static/styles/css/main.min.css?202503110208" /> 
+        <link rel="shortcut icon" href="/media/static/images/favicon.png?202505251919"/>
+        <link type="text/css" rel="stylesheet" href="/media/static/styles/css/main.min.css?202505251919" /> 
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />        
     </head>
     <body>
@@ -59,19 +60,29 @@ X-Frame-Options: DENY
                     </p>
                     <div class="products">
                         <a class="product" href="https://interro.bot">
-                            <img src="/media/static/images/home/interrobot.png" alt="InterroBot"/>
+                            <img src="/media/static/images/home/interrobot.png" alt="InterroBot icon"/>
                             <div><strong>InterroBot</strong> 
-                                <br/>(2018-) Advanced web crawler utility. Shareware.</div>
+                                <br/>Advanced web crawler and analyzer. Free/paid.</div>
                         </a>
                         <a class="product" href="./appstat/">
-                            <img src="/media/static/images/home/appstat.png" alt="Moffitor"/>
+                            <img src="/media/static/images/home/appstat.png" alt="appstat icon"/>
                             <div><strong>appstat</strong> 
-                                <br/>(2025) Windows application monitor. Freeware.</div>
+                                <br/>Windows application monitor. Free.</div>
                         </a>
                         <a class="product" href="./qbit/">
-                            <img src="/media/static/images/home/qbit.png" alt="Moffitor"/>
+                            <img src="/media/static/images/home/qbit.png" alt="qbit icon"/>
                             <div><strong>Qbit</strong> 
-                                <br/>(2017-)  Skybox generator for game devs. Freeware.</div>
+                                <br/>Skybox generator for game devs. Free/paid.</div>
+                        </a>
+                        <a class="product" href="./mcp-server-webcrawl/">
+                            <img src="/media/static/images/home/mcp-server-webcrawl.png" alt="mcp-server-webcrawl icon"/>
+                            <div><strong>mcp-server-webcrawl</strong> 
+                                <br/>MCP server for web archives. Free.</div>
+                        </a>
+                        <a class="product" href="./moffitor/">
+                            <img src="/media/static/images/home/moffitor.png" alt="Moffitor"/>
+                            <div><strong>Moffitor</strong> 
+                                <br/>One-click monitor sleep utility. Free.</div>
                         </a>
                     </div>
                 </div>
@@ -110,7 +121,7 @@ X-Frame-Options: DENY
                 
             </div>
         </main>
-        <script src="/media/static/scripts/js/main.min.js?202503110208"></script>
+        <script src="/media/static/scripts/js/main.min.js?202505251919"></script>
     </body>
 </html>
 0

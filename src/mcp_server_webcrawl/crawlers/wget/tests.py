@@ -2,6 +2,9 @@ from mcp_server_webcrawl.crawlers import get_fixture_directory
 from mcp_server_webcrawl.crawlers.wget.adapter import WgetManager
 from mcp_server_webcrawl.crawlers.wget.crawler import WgetCrawler
 from mcp_server_webcrawl.crawlers.base.tests import BaseCrawlerTests
+from mcp_server_webcrawl.utils.logger import get_logger
+
+logger = get_logger()
 
 EXAMPLE_SITE_ID = WgetManager.string_to_id("example.com")
 PRAGMAR_SITE_ID = WgetManager.string_to_id("pragmar.com")
@@ -62,3 +65,10 @@ class WgetTests(BaseCrawlerTests):
         """
         crawler = WgetCrawler(self._datasrc)
         self.run_pragmar_content_tests(crawler, PRAGMAR_SITE_ID, False)
+
+    def test_report(self):
+        """
+        Test thumbnail generation functionality (InterroBot-specific).
+        """
+        crawler = WgetCrawler(self._datasrc)
+        logger.info(self.run_pragmar_report(crawler, PRAGMAR_SITE_ID, "wget"))

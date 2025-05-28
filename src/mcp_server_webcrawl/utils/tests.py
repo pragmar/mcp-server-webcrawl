@@ -2,6 +2,7 @@ import unittest
 from mcp_server_webcrawl.utils.search import SearchQueryParser, SearchSubquery
 
 class TestSearchQueryParser(unittest.TestCase):
+
     def setUp(self):
         """
         Set up a parser instance for each test
@@ -220,10 +221,9 @@ class TestSearchQueryParser(unittest.TestCase):
         self.assertEqual(result[1].operator, "OR")
         self.assertEqual(result[2].field, "status")
         self.assertEqual(result[2].value, 500)
-        self.assertEqual(result[2].operator, "AND")
+        self.assertEqual(result[2].operator, "NOT")
         self.assertEqual(result[3].field, "url")
         self.assertEqual(result[3].value, "example.com")
-        self.assertTrue('NOT' in result[3].modifiers)
 
     def test_all_features_combined(self):
         """

@@ -1,15 +1,16 @@
 from logging import Logger
 from mcp_server_webcrawl.crawlers.katana.crawler import KatanaCrawler
 from mcp_server_webcrawl.crawlers.katana.adapter import KatanaManager
+from mcp_server_webcrawl.crawlers.base.adapter import SitesGroup
 from mcp_server_webcrawl.crawlers.base.tests import BaseCrawlerTests
 from mcp_server_webcrawl.crawlers import get_fixture_directory
 from mcp_server_webcrawl.utils.logger import get_logger
 
-logger: Logger = get_logger()
-
 # calculate ids for test directories using the same hash function as adapter
 EXAMPLE_SITE_ID = KatanaManager.string_to_id("example.com")
 PRAGMAR_SITE_ID = KatanaManager.string_to_id("pragmar.com")
+
+logger: Logger = get_logger()
 
 class KatanaTests(BaseCrawlerTests):
     """
@@ -46,6 +47,14 @@ class KatanaTests(BaseCrawlerTests):
         crawler = KatanaCrawler(self._datasrc)
         self.run_pragmar_search_tests(crawler, PRAGMAR_SITE_ID)
 
+    def test_pragmar_tokenizer(self):
+        """
+        tokenizer search tests
+        """
+        crawler = KatanaCrawler(self._datasrc)
+        self.run_pragmar_tokenizer_tests(crawler, PRAGMAR_SITE_ID)
+
+
     def test_katana_resources(self):
         """
         resource retrieval API functionality with various parameters.
@@ -73,3 +82,10 @@ class KatanaTests(BaseCrawlerTests):
         """
         crawler = KatanaCrawler(self._datasrc)
         self.run_pragmar_content_tests(crawler, PRAGMAR_SITE_ID, False)
+
+    def test_report(self):
+        """
+        Test thumbnail generation functionality (InterroBot-specific).
+        """
+        crawler = KatanaCrawler(self._datasrc)
+        logger.info(self.run_pragmar_report(crawler, PRAGMAR_SITE_ID, "Katana"))

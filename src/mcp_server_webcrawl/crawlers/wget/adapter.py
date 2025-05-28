@@ -124,7 +124,6 @@ class WgetManager(IndexedManager):
             file_size = file_stat.st_size
             file_created = datetime.fromtimestamp(file_stat.st_ctime, tz=timezone.utc)
             file_modified = datetime.fromtimestamp(file_stat.st_mtime, tz=timezone.utc)
-            # print(f"{file_path} {file_created} {file_modified}")
 
             # use pre-loaded content if available, otherwise rely on read_file_contents
             file_content = content

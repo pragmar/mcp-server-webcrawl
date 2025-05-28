@@ -80,4 +80,3 @@ class InterroBotCrawler(BaseCrawler):
                 f"for advanced search scenarios. Available sites include {all_sites_display}.")
 
         return [default_sites_tool, default_resources_tool]
-

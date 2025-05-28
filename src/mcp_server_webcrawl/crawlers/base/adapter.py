@@ -314,11 +314,18 @@ class BaseManager:
     @staticmethod
     def decruft_path(path:str) -> str:
         """
-        Very light touch cleanup of wget file naming, these tmps are creating noise
+        Very light touch cleanup of file naming, these tmps are creating noise
+        and extensions are useful in classifying resources
         """
+        # clean path/file from wget modifications we don't want
         decruftified = str(path)
         decruftified = decruftified.lower()
         decruftified = re.sub(r"[\u00b7·]?\d+\.tmp|\d{12}|\.tmp", "", decruftified)
+
+        # clean extension from non alpha
+        # S1/wget can generate some weird extensions with URL args
+        # filenames such as main.min.js202505251919
+        decruftified = re.sub(r'\.(\w+)[^\w]*$', r'.\1', decruftified)
         return decruftified
 
     def get_stats(self) -> list[SitesStat]:
@@ -408,6 +415,7 @@ class BaseManager:
         selected_fields: set[str] = set(RESOURCES_FIELDS_REQUIRED)
         if fields:
             selected_fields.update(f for f in fields if f in RESOURCES_DEFAULT_FIELD_MAPPING)
+
         safe_sql_fields = [RESOURCES_DEFAULT_FIELD_MAPPING[f] for f in selected_fields]
         assert all(re.match(r'^[A-Za-z\.]+$', field) for field in safe_sql_fields), "Unknown or unsafe field requested"
         safe_sql_fields_joined: str = ", ".join(safe_sql_fields)
@@ -543,15 +551,19 @@ class BaseManager:
 
     def _is_text_content(self, content_type: str) -> bool:
         """
-        Check if content type represents text.
-
-        Args:
-            content_type: HTTP Content-Type header value
-
-        Returns:
-            True if the content is textual, False otherwise
+        Check if content should be stored as text. Filter out deadweight content in fts index.
         """
-        return any(t in content_type.lower() for t in [
-            "text/", "javascript", "json", "xml", "html", "css"
-        ])
+        content_type_lower = content_type.lower()
+        if content_type_lower.startswith("text/"):
+            return True
+        elif content_type_lower.startswith(("font/", "image/", "audio/", "video/", "application/octet-stream")):
+            return False
+        elif content_type_lower.startswith("application/"):
+            return content_type_lower in {
+                "application/atom+xml", "application/ld+json", "application/rss+xml",
+                "application/x-www-form-urlencoded", "application/xml", "application/json",
+                "application/javascript"
+            }
+        else:
+            return True
 

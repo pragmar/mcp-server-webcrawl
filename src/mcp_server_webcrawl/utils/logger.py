@@ -5,9 +5,9 @@ from typing import Final
 import mcp_server_webcrawl.settings as settings
 from mcp_server_webcrawl.settings import DEBUG, DATA_DIRECTORY
 
-DEFAULT_LOG_KEY: Final[str] = "mcp_server_webcrawler"
-DEFAULT_LOG_PATH: Final[Path] = DATA_DIRECTORY / "mcp_server_log.txt"
-DEFAULT_LOG_LEVEL: Final[int] = logging.NOTSET
+DEFAULT_LOG_KEY: Final[str] = "mcp-server-webcrawl"
+DEFAULT_LOG_PATH: Final[Path] = DATA_DIRECTORY / "mcp-server-webcrawl.log"
+DEFAULT_LOG_LEVEL: Final[int] = logging.WARNING
 
 def get_logger_configuration() -> tuple[str, Path, int]:
     """
@@ -22,7 +22,6 @@ def get_logger_configuration() -> tuple[str, Path, int]:
 
     log_level = logging.DEBUG if DEBUG else getattr(settings, "LOG_LEVEL", DEFAULT_LOG_LEVEL)
     log_path = getattr(settings, "LOG_PATH", DEFAULT_LOG_PATH)
-
     return (DEFAULT_LOG_KEY, log_path, log_level)
 
 def get_logger() -> logging.Logger:

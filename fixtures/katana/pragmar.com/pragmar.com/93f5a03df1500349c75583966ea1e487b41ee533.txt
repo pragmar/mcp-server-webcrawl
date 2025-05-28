@@ -1,0 +1,383 @@
+https://pragmar.com/mcp-server-webcrawl/
+
+
+GET /mcp-server-webcrawl/ HTTP/1.1
+Host: pragmar.com
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36
+Accept-Encoding: gzip
+
+
+
+HTTP/1.1 200 OK
+Transfer-Encoding: chunked
+Connection: keep-alive
+Content-Security-Policy: default-src 'self'; script-src 'self' https://stats.pragmar.com https://*.youtube.com https://*.ytimg.com; img-src 'self' data: https://*.pragmar.com https://*.youtube.com https://*.ytimg.com; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-src https://*.youtube.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+Content-Type: text/html; charset=utf-8
+Cross-Origin-Opener-Policy: same-origin
+Date: Tue, 27 May 2025 17:41:44 GMT
+Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+Referrer-Policy: same-origin
+Referrer-Policy: origin-when-cross-origin
+Server: nginx
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+
+3ff5
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>mcp-server-webcrawl | MCP server for web crawlers</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="description" content="AI search and retrieval for web crawlers" />
+        <link rel="shortcut icon" href="/media/static/images/mcp-server-webcrawl/favicon.png?202505251919"/>
+        <link type="text/css" rel="stylesheet" href="/media/static/styles/css/mcp.min.css?202505251919" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="og:image" content="https://pragmar.com/media/static/images/mcp-server-webcrawl/og-mcp-server-webcrawl.png?202505251919" />
+        <meta name="og:description" content="AI search and retrieval for web crawlers" />
+        <meta name="og:title" content="mcp-server-webcrawl | MCP server for web crawlers" />
+        <meta name="twitter:card" content="summary" />
+    </head>
+    <body>
+
+<header>
+    <div>
+        <div class="constrain header__wrap">
+            <nav class="links">
+                <a href="/">Home</a>                    
+                <a href="/mcp-server-webcrawl/help/">Help</a>                            
+                <a href="https://github.com/pragmar/mcp-server-webcrawl">Github</a>
+            </nav>     
+            <h1 class="header__main">
+                <a href="/mcp-server-webcrawl/">
+                    <span class="accessible">mcp-server-webcrawl</span>
+                    <img src="/media/static/images/mcp-server-webcrawl/mcpswc.svg?202505251919" alt="mcp-server-webcrawl logo and visual metaphors alluding to DC adapter interchange"/>
+                </a>
+            </h1>
+        </div>
+
+        
+    </div>
+</header>
+
+<main>
+    <div class="constrain">
+        <h2>AI Search and Retrieval for Web Crawlers</h2>
+        <div class="summary">
+            <div>
+                <p>
+                    Bridge the gap between your web crawl and AI language models using
+                    Model Context Protocol (MCP). With <strong>mcp-server-webcrawl</strong>,
+                    your AI client filters and analyzes web content under your direction or autonomously, extracting insights
+                    from your web content.
+                </p>
+                <p>
+                    Support for
+                    <a href="https://en.wikipedia.org/wiki/WARC_(file_format)">WARC</a>,
+                    <a href="https://en.wikipedia.org/wiki/Wget">wget</a>,
+                    <a href="https://interro.bot">InterroBot</a>,
+                    <a href="https://github.com/projectdiscovery/katana">Katana</a>, and
+                    <a href="https://crawler.siteone.io">SiteOne</a> crawlers
+                    is available out of the gate. The server includes a full-text search interface
+                    with boolean support, resource filtering by type,
+                    HTTP status, and more. <strong>mcp-server-webcrawl</strong> provides the LLM a complete menu
+                    with which to search your web content.
+                </p>
+                <p>
+                    <strong>mcp-server-webcrawl is free</strong> and <a href="https://github.com/pragmar/mcp-server-webcrawl">open
+                        source</a>, and requires <a href="https://claude.ai/download">Claude Desktop</a> and
+                    <a href="https://www.python.org/downloads/">Python</a> (>=3.10). It is installed on the
+                    command line, via pip install:
+                </p>
+                <pre class="summary__pip">pip install mcp-server-webcrawl</pre>
+            </div>
+            <div class="video__wrap">
+                <video src="/media/static/images/mcp-server-webcrawl/mcpdemo.mp4"
+                    poster="/media/static/images/mcp-server-webcrawl/mcpdemo.png"
+                    autoplay loop muted playsinline
+                    aria-label="MCP demo video (autoplay, no audio) showcasing MCP setup using mcp-server-webcrawl">Your browser does not support the video tag.</video>
+            </div>
+        </div>
+
+        <h2>Main Features</h2>
+        <div class="features">
+            <div class="features__list">
+                <ul>
+                    <li>Claude Desktop ready</li>
+                    <li>Multi-crawler compatible</li>
+                    <li>Filter by type, status, and more</li>
+                </ul>
+            </div>
+            <div class="features__list">
+                <ul>
+                    <li>Boolean search support</li>
+                    <li>Support for Markdown and snippets</li>
+                    <li>Roll your own website knowledgebase</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>Getting Started</h2>
+        <div class="summary alternate">
+            <div class="tabbed__selection">
+                <p>
+                    Setup videos are available for each supported crawler, showing how
+                    to connect your crawl data to your LLM.
+                </p>
+                <p>
+                    <!--
+                    In addition to your preferred web crawler,
+                    <strong>mcp-server-webcrawl</strong> requires
+                    <a href="https://python.org">Python</a> and
+                    <a href="https://python.org">Claude Desktop</a> (or other
+                    MCP-supporting client).
+                -->
+
+                    If you prefer text-only as opposed to video, step action guides are available within the
+                    <strong>mcp-server-webcrawl</strong>
+                    <a href="https://pragmar.github.io/mcp-server-webcrawl/guides.html">documentation</a>.
+                </p>
+            </div>
+            <div class="tabbed">
+
+    <input type="radio" name="videos" id="radioVideosWget" class="tabbed__radio" checked>
+    <label for="radioVideosWget" class="tabbed__label">wget</label>
+    
+    <input type="radio" name="videos" id="radioVideosWarc" class="tabbed__radio">
+    <label for="radioVideosWarc" class="tabbed__label">WARC</label>
+    
+    <input type="radio" name="videos" id="radioVideosInterrobot" class="tabbed__radio">
+    <label for="radioVideosInterrobot" class="tabbed__label">InterroBot</label>
+    
+    <input type="radio" name="videos" id="radioVideosKatana" class="tabbed__radio">
+    <label for="radioVideosKatana" class="tabbed__label">Katana</label>
+    
+    <input type="radio" name="videos" id="radioVideosSiteone" class="tabbed__radio">
+    <label for="radioVideosSiteone" class="tabbed__label">SiteOne</label>
+    
+    <div class="tabbed__content">
+    
+        <div id="videosWget">
+            <iframe loading="lazy" width="100%" height="100%" src="https://www.youtube.com/embed/uqEEqVsofhc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+        
+        <div id="videosWarc">
+            <iframe loading="lazy" width="100%" height="100%" src="https://www.youtube.com/embed/fx-4WZu-UT8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>     
+        </div>
+        
+        <div id="videosInterrobot">
+            <iframe loading="lazy" width="100%" height="100%" src="https://www.youtube.com/embed/55y8oKWXJLs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+        
+        <div id="videosKatana">
+            <iframe loading="lazy" width="100%" height="100%" src="https://www.youtube.com/embed/sOMaojm0R0Y" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+        
+        <div id="videosSiteone">
+            <iframe loading="lazy" width="100%" height="100%" src="https://www.youtube.com/embed/JOGRYbo6WwI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+    </div>
+</div>
+        </div>
+
+        <h2>MCP Configuration</h2>
+        <div class="summary">
+            <div class="tabbed">
+
+<input type="radio" name="crawler" id="radioConfWget" class="tabbed__radio" checked>
+<label for="radioConfWget" class="tabbed__label">wget</label>
+
+<input type="radio" name="crawler" id="radioConfWarc" class="tabbed__radio">
+<label for="radioConfWarc" class="tabbed__label">WARC</label>
+
+<input type="radio" name="crawler" id="radioConfInterrobot" class="tabbed__radio">
+<label for="radioConfInterrobot" class="tabbed__label">InterroBot</label>
+
+<input type="radio" name="crawler" id="radioConfKatana" class="tabbed__radio">
+<label for="radioConfKatana" class="tabbed__label">Katana</label>
+
+<input type="radio" name="crawler" id="radioConfSiteone" class="tabbed__radio">
+<label for="radioConfSiteone" class="tabbed__label">SiteOne</label>
+
+<div class="tabbed__content">
+
+<div id="confWget">
+<pre><span class="comment"># Windows: command set to "mcp-server-webcrawl"</span>
+<span class="comment"># macOS: command set to absolute path, i.e.</span>
+<span class="comment"># the value of $ which mcp-server-webcrawl</span>
+{
+  "mcpServers": {
+    "webcrawl": {
+      "command": "/path/to/mcp-server-webcrawl",
+       "args": ["--crawler", "wget", "--datasrc",
+         "/path/to/wget/archives/"]
+    }
+  }
+}
+
+<span class="comment"># tested configurations (macOS Terminal/Windows WSL)</span>
+<span class="comment"># from /path/to/wget/archives/ as current working direcory</span>
+<span class="comment"># --adjust-extension for file extensions, e.g. *.html</span>
+<span>$ wget --mirror https://example.com</span>
+<span>$ wget --mirror https://example.com --adjust-extension</span></pre>
+</div>
+
+<div id="confWarc">
+<pre><span class="comment"># Windows: command set to "mcp-server-webcrawl"</span>
+<span class="comment"># macOS: command set to absolute path, i.e.</span>
+<span class="comment"># the value of $ which mcp-server-webcrawl</span>
+{
+  "mcpServers": {
+    "webcrawl": {
+      "command": "/path/to/mcp-server-webcrawl",
+       "args": ["--crawler", "warc", "--datasrc",
+         "/path/to/warc/archives/"]
+    }
+  }
+}
+
+<span class="comment"># tested configurations (macOS Terminal/Windows WSL)</span>
+<span class="comment"># from /path/to/warc/archives/ as current working direcory</span>
+<span>$ wget --warc-file=example --recursive https://example.com</span>
+<span>$ wget --warc-file=example --recursive --page-requisites https://example.com</span></pre>
+</div>
+
+<div id="confInterrobot">
+<pre><span class="comment"># Windows: command set to "mcp-server-webcrawl"</span>
+<span class="comment"># macOS: command set to absolute path, i.e.</span>
+<span class="comment"># the value of $ which mcp-server-webcrawl</span>
+{
+  "mcpServers": {
+    "webcrawl": {
+      "command": "/path/to/mcp-server-webcrawl",
+       "args": ["--crawler", "interrobot", "--datasrc",
+         "[homedir]/Documents/InterroBot/interrobot.v2.db"]
+    }
+  }
+}
+
+<span class="comment"># crawls executed in InterroBot (windowed)</span>
+<span class="comment"># Windows: replace [homedir] with /Users/...</span>
+<span class="comment"># macOS: path provided on InterroBot settings page</span></pre>
+</div>
+
+<div id="confKatana">
+<pre>
+<span class="comment"># Windows: command set to "mcp-server-webcrawl"</span>
+<span class="comment"># macOS: command set to absolute path, i.e.</span>
+<span class="comment"># the value of $ which mcp-server-webcrawl</span>
+{
+  "mcpServers": {
+    "webcrawl": {
+      "command": "/path/to/mcp-server-webcrawl",
+       "args": ["--crawler", "katana", "--datasrc",
+         "/path/to/katana/crawls/"]
+    }
+  }
+}
+
+<span class="comment"># tested configurations (macOS Terminal/Powershell/WSL)</span>
+<span class="comment"># -store-response to save crawl contents</span>
+<span class="comment"># -store-response-dir allows for expansion of hosts</span>
+<span class="comment">#  &nbsp; consistent with default Katana behavior to </span>
+<span class="comment">#  &nbsp;  spread assets across host directories</span>
+<span>$ katana -u https://example.com -store-response -store-response-dir /path/to/katana/crawls/example.com/</span></pre>
+</div>
+
+<div id="confSiteone">
+<pre><span class="comment"># Windows: command set to "mcp-server-webcrawl"</span>
+<span class="comment"># macOS: command set to absolute path, i.e.</span>
+<span class="comment"># the value of $ which mcp-server-webcrawl</span>
+{
+  "mcpServers": {
+    "webcrawl": {
+      "command": "/path/to/mcp-server-webcrawl",
+       "args": ["--crawler", "siteone", "--datasrc",
+         "/path/to/siteone/archives/"]
+    }
+  }
+}
+
+<span class="comment"># crawls executed in SiteOne (windowed)</span>
+<span class="comment"># *Generate offline website* must be checked</span></pre>
+</div>
+</div>
+</div>
+            <div class="configuration__selection">
+                <p>
+                    From Claude's developer settings, find the MCP configuration to include
+                    your crawl. Open in a text editor and
+                    modify the example to reflect your datasrc path.
+                </p>
+                <p>
+                    You can set up more <strong>mcp-server-webcrawl</strong> connections under mcpServers
+                    if you want.
+                </p>
+                <p>
+                    For additional technical information, including crawler feature support, be sure to check out <a href="./help/">help</a>.
+                </p>
+            </div>
+        </div>
+
+
+
+        <div class="tabbed__visualization">
+            <img src="/media/static/images/mcp-server-webcrawl/netwww.svg?202505251919" alt="Abstraction of LLM clients (Claude and OpenAI) communicating with a website archive"/>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <nav class="pragmar">
+        <div class="pragmar__also">Software by <a href="/">Pragmar</a></div>
+        <div class="pragmar__products__wrap">
+            <div class="pragmar__products">
+            
+                
+                    
+                    <a class="pragmar__product interrobot" href="https://interro.bot?utm_source=pragmar.com">
+                        <img src="/media/static/images/home/interrobot.png?202505251919" alt="InterroBot icon"/>
+                        <div><strong>InterroBot</strong>.
+                            Web crawler and analyzer. Free/paid.</div>
+                    </a>
+                    
+                
+                    
+                    <a class="pragmar__product appstat" href="/appstat/">
+                        <img src="/media/static/images/home/appstat.png?202505251919" alt="appstat icon"/>
+                        <div><strong>appstat</strong>.
+                            Windows process monitor. Free.</div>
+                    </a>
+                    
+                
+                    
+                
+                    
+                    <a class="pragmar__product moffitor" href="/moffitor/">
+                        <img src="/media/static/images/home/moffitor.png?202505251919" alt="Moffitor icon"/>
+                        <div><strong>Moffitor</strong>.
+                            One-click monitor sleep. Free.</div>
+                    </a>
+                    
+                
+                    
+                    <a class="pragmar__product qbit" href="/qbit/">
+                        <img src="/media/static/images/home/qbit.png?202505251919" alt="Qbit icon"/>
+                        <div><strong>Qbit</strong>.
+                            Skybox generator for game devs. Free/paid.</div>
+                    </a>
+                    
+                
+            
+            </div>
+        </div>
+    </nav>
+</footer>
+<script src="/media/static/scripts/js/main.min.js?202505251919"></script>
+
+    </body>
+</html>
+0
+
+

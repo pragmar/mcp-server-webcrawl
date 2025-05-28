@@ -11,18 +11,19 @@ Accept-Encoding: gzip
 HTTP/1.1 200 OK
 Transfer-Encoding: chunked
 Connection: keep-alive
-Content-Security-Policy: default-src 'self'; script-src 'self' https://stats.pragmar.com https://*.youtube.com https://*.ytimg.com; img-src 'self' https://*.pragmar.com https://*.youtube.com https://*.ytimg.com; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-src https://*.youtube.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+Content-Security-Policy: default-src 'self'; script-src 'self' https://stats.pragmar.com https://*.youtube.com https://*.ytimg.com; img-src 'self' data: https://*.pragmar.com https://*.youtube.com https://*.ytimg.com; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-src https://*.youtube.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
 Content-Type: text/html; charset=utf-8
 Cross-Origin-Opener-Policy: same-origin
-Date: Sun, 23 Mar 2025 00:54:21 GMT
+Date: Tue, 27 May 2025 17:41:45 GMT
 Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
 Referrer-Policy: same-origin
+Referrer-Policy: origin-when-cross-origin
 Server: nginx
 Vary: Accept-Encoding
 X-Content-Type-Options: nosniff
 X-Frame-Options: DENY
 
-1611
+180f
 
 <!DOCTYPE html>
 <html lang="en" class="noscript flex svg">
@@ -30,10 +31,10 @@ X-Frame-Options: DENY
         <title>Qbit | Release History</title>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <meta name="description" content="Qbit is a tool for game developers—given an image, the application will output six images, one for each face of a skybox. The exported images can be used in any modern 3d game engine." />
-        <link rel="shortcut icon" href="/media/static/images/favicon.png?202503110208""/>
-        <link type="text/css" rel="stylesheet" href="/media/static/styles/css/qbit.min.css?202503110208"" /> 
+        <link rel="shortcut icon" href="/media/static/images/favicon.png?202505251919""/>
+        <link type="text/css" rel="stylesheet" href="/media/static/styles/css/qbit.min.css?202505251919"" /> 
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="og:image" content="https://pragmar.com/media/static/images/qbit/translogo.png?202503110208?202503110208"" />
+        <meta name="og:image" content="https://pragmar.com/media/static/images/qbit/translogo.png?202505251919?202505251919"" />
         <meta name="og:description" content="Qbit is a tool for game developers—given an image, the application will output six images, one for each face of a skybox. The exported images can be used in any modern 3d game engine." />
         <meta name="og:title" content="Qbit | Release History" />
         <meta name="twitter:card" content="summary" />
@@ -99,31 +100,48 @@ X-Frame-Options: DENY
         <div class="pragmar__also">Software by <a href="/">Pragmar</a></div>
         <div class="pragmar__products__wrap">
             <div class="pragmar__products">
-            <a class="pragmar__product interrobot" href="https://interro.bot?utm_source=pragmar.com">
-                <img src="/media/static/images/home/interrobot.png?202503110208" alt="InterroBo icon"/>
-                <div><strong>InterroBot</strong>.
-                      Web crawler and analyzer. Free/paid.</div>
-            </a>
-            <a class="pragmar__product appstat" href="/appstat/">
-                <img src="/media/static/images/home/appstat.png?202503110208" alt="appstat icon"/>
-                <div><strong>appstat</strong>.
-                     Windows process monitor. Freeware.</div>
-            </a>
-            <a class="pragmar__product moffitor" href="/moffitor/">
-                <img src="/media/static/images/home/moffitor.png?202503110208" alt="Moffitor icon"/>
-                <div><strong>Moffitor</strong>.
-                     One-click monitor sleep. Freeware.</div>
-            </a>
-            <a class="pragmar__product qbit" href="/qbit/">
-                <img src="/media/static/images/home/qbit.png?202503110208" alt="qbit icon"/>
-                <div><strong>Qbit</strong>.
-                     Skybox generator for game devs. Freeware.</div>
-            </a>
+            
+                
+                    
+                    <a class="pragmar__product interrobot" href="https://interro.bot?utm_source=pragmar.com">
+                        <img src="/media/static/images/home/interrobot.png?202505251919" alt="InterroBot icon"/>
+                        <div><strong>InterroBot</strong>.
+                            Web crawler and analyzer. Free/paid.</div>
+                    </a>
+                    
+                
+                    
+                    <a class="pragmar__product appstat" href="/appstat/">
+                        <img src="/media/static/images/home/appstat.png?202505251919" alt="appstat icon"/>
+                        <div><strong>appstat</strong>.
+                            Windows process monitor. Free.</div>
+                    </a>
+                    
+                
+                    
+                    <a class="pragmar__product mcp" href="/mcp-server-webcrawl/">
+                        <img src="/media/static/images/home/mcp-server-webcrawl.png?202505251919" alt="mcp-server-webcrawl icon"/>
+                        <div><strong>mcp-server-webcrawl</strong>.
+                            MCP for web archives. Free.</div>
+                    </a>
+                    
+                
+                    
+                    <a class="pragmar__product moffitor" href="/moffitor/">
+                        <img src="/media/static/images/home/moffitor.png?202505251919" alt="Moffitor icon"/>
+                        <div><strong>Moffitor</strong>.
+                            One-click monitor sleep. Free.</div>
+                    </a>
+                    
+                
+                    
+                
+            
             </div>
         </div>
     </nav>
 </footer>
-        <script src="/media/static/scripts/js/main.min.js?202503110208""></script>
+        <script src="/media/static/scripts/js/main.min.js?202505251919""></script>
     </body>
 </html>
 0

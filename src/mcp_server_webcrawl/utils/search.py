@@ -1,3 +1,5 @@
+import re
+
 from ply import lex
 from ply import yacc
 from logging import Logger
@@ -65,6 +67,25 @@ class SearchSubquery:
         self.operator: str | None = operator or None
         self.comparator: str = comparator
 
+    def to_dict(self) -> dict[str, str | int | list[str] | None]:
+        """
+        Convert SearchSubquery to dictionary representation.
+
+        Args:
+            field: Field name to use in the dictionary (overrides self.field)
+
+        Returns:
+            Dictionary containing all SearchSubquery attributes
+        """
+        return {
+            "field": self.field,
+            "value": self.value,
+            "type": self.type,
+            "modifiers": self.modifiers,
+            "operator": self.operator,
+            "comparator": self.comparator
+        }
+
     def get_safe_sql_field(self, field: str) -> str:
         if field in RESOURCES_DEFAULT_FIELD_MAPPING:
             return RESOURCES_DEFAULT_FIELD_MAPPING[field]
@@ -102,14 +123,10 @@ class SearchQueryParser:
 
     valid_fields: list[str] = ["id", "url", "status", "type", "size", "headers", "content", "time"]
     numeric_fields: list[str] = ["id", "status", "size", "time"]
-    operators: dict[str, dict[str, int | str]] = {
-        "AND": {"precedence": 2, "associativity": "left"},
-        "OR": {"precedence": 1, "associativity": "left"},
-        "NOT": {"precedence": 3, "associativity": "right"},
-    }
 
     t_LPAREN = r"\("
     t_RPAREN = r"\)"
+    t_ignore = " \t\n"
 
     def __init__(self) -> None:
         self.lexer: lex.LexToken | None = None
@@ -168,6 +185,8 @@ class SearchQueryParser:
         r"[a-zA-Z0-9_\.\-\/\+]+"
         if token.value == "AND" or token.value == "OR" or token.value == "NOT":
             token.type = token.value
+        elif re.match(r"^[\w]+[\-_][\-_\w]+$", token.value, re.UNICODE):
+            token.type = "QUOTED_STRING"
         return token
 
     def t_COMP_OP(self, token: lex.LexToken) -> lex.LexToken:
@@ -177,8 +196,6 @@ class SearchQueryParser:
     def t_error(self, token: lex.LexToken) -> None:
         logger.error(f"Illegal character '{token.value[0]}'")
         token.lexer.skip(1)
-
-    t_ignore = " \t\n"
 
     def __process_field_value(
         self,
@@ -223,8 +240,7 @@ class SearchQueryParser:
         self,
         value: str | int | float,
         value_type: str,
-        modifiers: list[str] | None = None,
-        for_sql: bool = False
+        modifiers: list[str] | None = None
     ) -> str:
         """
         Format a search term based on its type and modifiers.
@@ -240,25 +256,13 @@ class SearchQueryParser:
         """
         modifiers = modifiers or []
 
-        # Handle NOT modifier
-        prefix = "NOT " if "NOT" in modifiers and not for_sql else ""
-
-        # Format based on type
+        # based on subquery type
         if value_type == "phrase":
-            if for_sql:
-                return f'"{value}"'
-            else:
-                return f'{prefix}"{value}"'
+            return f'"{value.replace("*", " ").strip()}"'
         elif value_type == "wildcard":
-            if for_sql:
-                return f"{value}*"
-            else:
-                return f"{prefix}{value}*"
+            return f'"{value.replace("-", " ")}*"'
         else:  # term
-            if for_sql:
-                return str(value)
-            else:
-                return f"{prefix}{value}"
+            return str(value)
 
     def __validate_comparator_for_field(self, field: str, comparator: str) -> None:
         """
@@ -290,6 +294,15 @@ class SearchQueryParser:
         left = production[1]
         right = production[3]
 
+        # special handling for AND NOT pattern
+        # A AND (NOT B), treat it like A NOT B
+        if (operator == "AND" and isinstance(right, list) and
+                len(right) == 1 and "NOT" in right[0].modifiers):
+            # convert AND (NOT B) to binary NOT
+            # remove NOT modifiers
+            right[0].modifiers = [m for m in right[0].modifiers if m != "NOT"]
+            operator = "NOT"
+
         if operator == "NOT":
             # NOT handled as set difference, left EXCEPT right
             # mark this as a special NOT relationship
@@ -310,6 +323,7 @@ class SearchQueryParser:
                     self._create_subquery(right, None)
                 ]
         else:
+            # handle AND and OR as before
             if isinstance(left, list) and isinstance(right, list):
                 if left:
                     left[-1].operator = operator
@@ -482,120 +496,64 @@ class SearchQueryParser:
             return [result]
         return result
 
-    def __is_pure_fulltext_query(self, parsed_query: list[SearchSubquery]) -> bool:
-        """Check if all subqueries are fulltext (no field searches)"""
-        return all(not subquery.field for subquery in parsed_query)
-
-    def __handle_pure_fulltext_query(
+    def __build_fulltext_expression(
         self,
         parsed_query: list[SearchSubquery],
+        start_index: int,
         swap_values: dict[str, dict[str, str | int]] = {}
-    ) -> tuple[list[str], dict[str, str | int]]:
+    ) -> dict[str, str | int]:
         """
-        Handle queries that are entirely fulltext with complex boolean logic
-        """
-        expression_parts = []
+        Build a single FTS expression from many fulltext queries with their booleans.
 
-        for query_index, subquery in enumerate(parsed_query):
+        Args:
+            parsed_query: List of SearchSubquery objects
+            start_index: Starting position in the list
+            swap_values: Dictionary for value replacement
+
+        Returns:
+            dict with 'expression', 'next_index' keys
+        """
+        terms = []
+        current_index = start_index
+
+        while current_index < len(parsed_query) and not parsed_query[current_index].field:
+            subquery = parsed_query[current_index]
             processed_value = self.__process_field_value(None, subquery.value, swap_values)
             formatted_term = self.__format_search_term(processed_value, subquery.type, subquery.modifiers)
-            expression_parts.append(formatted_term)
+            terms.append(formatted_term)
 
-            if subquery.operator and query_index < len(parsed_query) - 1:
-                expression_parts.append(subquery.operator)
+            # add operator if not the last term and there's a next term
+            if (current_index < len(parsed_query) - 1 and subquery.operator and current_index + 1 <
+                    len(parsed_query) and not parsed_query[current_index + 1].field):
+                terms.append(subquery.operator)
 
-        # create single MATCH
-        safe_sql_fulltext = parsed_query[0].get_safe_sql_field("fulltext")
-        full_expression = ' '.join(expression_parts)
+            current_index += 1
 
-        # check for binary NOT operations that need special handling
-        if " NOT " in full_expression and not full_expression.startswith("NOT "):
-            return self.__handle_binary_not_query(parsed_query, swap_values)
+            # stop if next item is a field search or we've reached the end
+            if current_index >= len(parsed_query) or parsed_query[current_index].field:
+                break
 
-        param_manager = ParameterManager()
-        param_name = param_manager.add_param(full_expression)
-        return [f"{safe_sql_fulltext} MATCH :{param_name}"], param_manager.get_params()
+        return {
+            "expression": " ".join(terms) if terms else "",
+            "next_index": current_index
+        }
 
-    def __handle_binary_not_query(
+    def to_sqlite_fts(
         self,
         parsed_query: list[SearchSubquery],
         swap_values: dict[str, dict[str, str | int]] = {}
     ) -> tuple[list[str], dict[str, str | int]]:
         """
-        Handle binary NOT operations by constructing SQL with subqueries for set difference.
-        For "this NOT that", documents matching "this" EXCEPT documents matching "that"
+        Convert the parsed query to SQLite FTS5 compatible WHERE clause components.
+        Returns a tuple of (query_parts, params) where query_parts is a list of SQL
+        conditions and params is a dictionary of parameter values with named parameters.
         """
-
-        param_manager = ParameterManager()
-        current_group = []
-        groups = []
-        for i, subquery in enumerate(parsed_query):
-            current_group.append(subquery)
-
-            if subquery.operator == "NOT":
-                groups.append(("INCLUDE", current_group[:-1]))  # everything before NOT
-                groups.append(("EXCLUDE", [parsed_query[i + 1]]))  # term after NOT
-                current_group = []
-                break  # handle only first NOT for now
-
-        if current_group:
-            groups.append(("INCLUDE", current_group))
-
-        include_conditions = []
-        exclude_conditions = []
-
-        for group_type, subqueries in groups:
-            if not subqueries:
-                continue
-
-            group_parts = []
-            for subquery in subqueries:
-                processed_value = self.__process_field_value(None, subquery.value, swap_values)
-                formatted_term = self.__format_search_term(processed_value, subquery.type, for_sql=True)
-                param_name = param_manager.add_param(formatted_term)
-                safe_sql_fulltext = subquery.get_safe_sql_field("fulltext")
-                group_parts.append(f"{safe_sql_fulltext} MATCH :{param_name}")
-
-            if group_parts:
-                condition = " AND ".join(group_parts) if len(group_parts) > 1 else group_parts[0]
-                if group_type == "INCLUDE":
-                    include_conditions.append(condition)
-                else:
-                    exclude_conditions.append(condition)
-
-        # final SQL is (include_conditions) AND NOT (exclude_conditions)
-        query_parts = []
-        if include_conditions:
-            if len(include_conditions) == 1:
-                query_parts.append(include_conditions[0])
-            else:
-                query_parts.append(f"({' AND '.join(include_conditions)})")
-        if exclude_conditions:
-            if len(exclude_conditions) == 1:
-                query_parts.append(f"NOT ({exclude_conditions[0]})")
-            else:
-                query_parts.append(f"NOT ({' OR '.join(exclude_conditions)})")
-
-        if not query_parts:
-            return ["1=1"], {}
-
-        return [" AND ".join(query_parts)], param_manager.get_params()
-
-    def __handle_hybrid_query(
-        self,
-        parsed_query: list[SearchSubquery],
-        swap_values: dict[str, dict[str, str | int]] = {}
-    ) -> tuple[list[str], dict[str, str | int]]:
-        """
-        Handle queries with both fulltext and field searches
-        """
-
         query_parts = []
         param_manager = ParameterManager()
         current_index = 0
 
         while current_index < len(parsed_query):
-            subquery = parsed_query[current_index]
+            subquery: SearchSubquery = parsed_query[current_index]
 
             if not subquery.field:  # fulltext section
                 # group consecutive fulltext terms with their operators
@@ -637,7 +595,7 @@ class SearchQueryParser:
                         param_name = param_manager.add_param(processed_value)
                         sql_part += f"{safe_sql_field} = :{param_name}"
                     elif value_type == "phrase":
-                        formatted_term = self.__format_search_term(processed_value, value_type, for_sql=True)
+                        formatted_term = self.__format_search_term(processed_value, value_type)
                         param_name = param_manager.add_param(formatted_term)
                         sql_part += f"{safe_sql_field} MATCH :{param_name}"
                     else:
@@ -660,67 +618,6 @@ class SearchQueryParser:
                 query_parts.append(op)
 
         return query_parts, param_manager.get_params()
-
-    def __build_fulltext_expression(
-        self,
-        parsed_query: list[SearchSubquery],
-        start_index: int,
-        swap_values: dict[str, dict[str, str | int]] = {}
-    ) -> dict[str, str | int]:
-        """
-        Build a single FTS expression from many fulltext queries with their booleans.
-
-        Args:
-            parsed_query: List of SearchSubquery objects
-            start_index: Starting position in the list
-            swap_values: Dictionary for value replacement
-
-        Returns:
-            dict with 'expression', 'next_index' keys
-        """
-        terms = []
-        current_index = start_index
-
-        while current_index < len(parsed_query) and not parsed_query[current_index].field:
-            subquery = parsed_query[current_index]
-            processed_value = self.__process_field_value(None, subquery.value, swap_values)
-            formatted_term = self.__format_search_term(processed_value, subquery.type, subquery.modifiers)
-            terms.append(formatted_term)
-
-            # add operator if not the last term and there's a next term
-            if (current_index < len(parsed_query) - 1 and
-                subquery.operator and
-                current_index + 1 < len(parsed_query) and
-                not parsed_query[current_index + 1].field):
-                terms.append(subquery.operator)
-
-            current_index += 1
-
-            # stop if next item is a field search or we've reached the end
-            if current_index >= len(parsed_query) or parsed_query[current_index].field:
-                break
-
-        return {
-            "expression": " ".join(terms) if terms else "",
-            "next_index": current_index
-        }
-
-    def to_sqlite_fts(
-        self,
-        parsed_query: list[SearchSubquery],
-        swap_values: dict[str, dict[str, str | int]] = {}
-    ) -> tuple[list[str], dict[str, str | int]]:
-        """
-        Convert the parsed query to SQLite FTS5 compatible WHERE clause components.
-        Returns a tuple of (query_parts, params) where query_parts is a list of SQL
-        conditions and params is a dictionary of parameter values with named parameters.
-        """
-        if self.__is_pure_fulltext_query(parsed_query):
-            # pure fulltext - reconstruct as one MATCH
-            return self.__handle_pure_fulltext_query(parsed_query, swap_values)
-        else:
-            # hybrid query - group fulltext sections, handle fields separately
-            return self.__handle_hybrid_query(parsed_query, swap_values)
 
     def get_fulltext_terms(self, query: str) -> list[str]:
         """

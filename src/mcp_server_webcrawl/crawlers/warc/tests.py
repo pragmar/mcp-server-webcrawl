@@ -2,9 +2,12 @@ from mcp_server_webcrawl.crawlers.warc.crawler import WarcCrawler
 from mcp_server_webcrawl.crawlers.warc.adapter import WarcManager
 from mcp_server_webcrawl.crawlers.base.tests import BaseCrawlerTests
 from mcp_server_webcrawl.crawlers import get_fixture_directory
+from mcp_server_webcrawl.utils.logger import get_logger
 
-EXAMPLE_WARC_ID: int = WarcManager.string_to_id("example.com.warc.txt")
-PRAGMAR_WARC_ID: int = WarcManager.string_to_id("pragmar.com.warc.txt")
+EXAMPLE_WARC_ID: int = WarcManager.string_to_id("example.warc.gz")
+PRAGMAR_WARC_ID: int = WarcManager.string_to_id("pragmar.warc.gz")
+
+logger = get_logger()
 
 class WarcTests(BaseCrawlerTests):
     """
@@ -71,3 +74,10 @@ class WarcTests(BaseCrawlerTests):
         """
         crawler = WarcCrawler(self._datasrc)
         self.run_pragmar_content_tests(crawler, PRAGMAR_WARC_ID, True)
+
+    def test_report(self):
+        """
+        Test thumbnail generation functionality (InterroBot-specific).
+        """
+        crawler = WarcCrawler(self._datasrc)
+        logger.info(self.run_pragmar_report(crawler, PRAGMAR_WARC_ID, "WARC"))

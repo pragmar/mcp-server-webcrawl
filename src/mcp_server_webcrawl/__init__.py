@@ -3,15 +3,17 @@ import sys
 import asyncio
 import tracemalloc
 import unittest
+import logging
 
-from collections import OrderedDict
 from pathlib import Path
 from argparse import ArgumentParser
 
 from mcp_server_webcrawl.utils.cli import get_help_short_message, get_help_long_message
-from mcp_server_webcrawl.settings import DEBUG
+from mcp_server_webcrawl.settings import DEBUG, DATA_DIRECTORY
 
-__version__: str = "0.10.2"
+VALID_CRAWLER_CHOICES: list[str] = ["wget",  "warc", "interrobot", "katana", "siteone"]
+
+__version__: str = "0.10.3"
 __name__: str = "mcp-server-webcrawl"
 
 if DEBUG:
@@ -31,7 +33,7 @@ def main() -> None:
         sys.stderr.write(get_help_short_message(__version__) + "\n")
 
     parser: CustomHelpArgumentParser = CustomHelpArgumentParser(description="InterrBot MCP Server")
-    parser.add_argument("-c", "--crawler", type=str, choices=["wget",  "warc", "interrobot", "katana", "siteone"],
+    parser.add_argument("-c", "--crawler", type=str, choices=VALID_CRAWLER_CHOICES,
             help="Specify which crawler to use (default: interrobot)")
     parser.add_argument("--run-tests", action="store_true", help="Run tests instead of server")
     parser.add_argument("-d", "--datasrc", type=str, help="Path to datasrc (required unless testing)")
@@ -40,37 +42,50 @@ def main() -> None:
     if args.run_tests:
         is_development: bool = Path(__file__).parent.parent.parent.name == "mcp-server-webcrawl"
         if not is_development:
-            sys.stderr.write("Unable to run tests, fixtures development directory not found.\n")
+            sys.stderr.write("you must have the full github repo, locally installed, to run tests. \n")
             sys.exit(1)
         else:
+            # testing captures some cross-fixture file information, useful for debug
+            # force=True gets this to write during tests (usually quieted during run)
+            unittest_log: Path = DATA_DIRECTORY / "fixtures-report.log"
+            logging.basicConfig(level=logging.INFO, filename=unittest_log, filemode='w', force=True)
             file_directory = os.path.dirname(os.path.abspath(__file__))
             sys.exit(unittest.main(module=None, argv=["", "discover", "-s", file_directory, "-p", "*test*.py"]))
 
     if not args.datasrc:
         parser.error("the -d/--datasrc argument is required when not in test mode")
 
-    # speed up help and mcp-server-webcrawl w/ no args, delay imports
+    if not args.crawler or args.crawler.lower() not in VALID_CRAWLER_CHOICES:
+        valid_crawlers = ", ".join(VALID_CRAWLER_CHOICES)
+        parser.error(f"the -c/--crawler argument must be one of: {valid_crawlers}")
+
+    # cli interaction prior to loading the server
     from mcp_server_webcrawl.main import main as mcp_main
-    from mcp_server_webcrawl.crawlers.interrobot.crawler import InterroBotCrawler
-    from mcp_server_webcrawl.crawlers.warc.crawler import WarcCrawler
-    from mcp_server_webcrawl.crawlers.wget.crawler import WgetCrawler
-    from mcp_server_webcrawl.crawlers.katana.crawler import KatanaCrawler
-    from mcp_server_webcrawl.crawlers.siteone.crawler import SiteOneCrawler
-    from mcp_server_webcrawl.crawlers.base.crawler import BaseCrawler
+    def get_crawler(crawler_name: str):
+        """
+        lazy load crawler, some classes have additional package dependencies
+        """
+        crawler_name = crawler_name.lower()
+        if crawler_name == "interrobot":
+            from mcp_server_webcrawl.crawlers.interrobot.crawler import InterroBotCrawler
+            return InterroBotCrawler
+        elif crawler_name == "warc":
+            from mcp_server_webcrawl.crawlers.warc.crawler import WarcCrawler
+            return WarcCrawler
+        elif crawler_name == "wget":
+            from mcp_server_webcrawl.crawlers.wget.crawler import WgetCrawler
+            return WgetCrawler
+        elif crawler_name == "katana":
+            from mcp_server_webcrawl.crawlers.katana.crawler import KatanaCrawler
+            return KatanaCrawler
+        elif crawler_name == "siteone":
+            from mcp_server_webcrawl.crawlers.siteone.crawler import SiteOneCrawler
+            return SiteOneCrawler
+        else:
+            valid_choices = ", ".join(VALID_CRAWLER_CHOICES)
+            raise ValueError(f"unsupported crawler '{crawler_name}' ({valid_choices})")
 
-    crawler_map: OrderedDict[str, BaseCrawler] = OrderedDict([
-        ("interrobot", InterroBotCrawler),
-        ("warc", WarcCrawler),
-        ("wget", WgetCrawler),
-        ("katana", KatanaCrawler),
-        ("siteone", SiteOneCrawler),
-    ])
-
-    if not args.crawler or args.crawler.lower() not in crawler_map.keys():
-        valid_choices = ", ".join(crawler_map.keys())
-        parser.error(f"the -c/--crawler argument must be one of: {valid_choices}")
-
-    crawler: BaseCrawler = crawler_map[args.crawler.lower()]
+    crawler = get_crawler(args.crawler)
     asyncio.run(mcp_main(crawler, Path(args.datasrc)))
 
 __all__ = ["main"]

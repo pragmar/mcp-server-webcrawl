@@ -22,7 +22,6 @@ from mcp_server_webcrawl.models.resources import (
     ResourceResult,
     ResourceResultType,
     RESOURCES_DEFAULT_FIELD_MAPPING,
-    RESOURCES_FIELDS_REQUIRED,
 )
 from mcp_server_webcrawl.models.sites import (
     SiteResult,
@@ -217,7 +216,7 @@ class IndexedManager(BaseManager):
                 Type,
                 Headers,
                 Content,
-                tokenize='unicode61 remove_diacritics 0'
+                tokenize="unicode61 remove_diacritics 0 tokenchars '-_'"
             )""")
 
     def _execute_batch_insert(self, connection: sqlite3.Connection, cursor: sqlite3.Cursor,
@@ -315,11 +314,8 @@ class IndexedCrawler(BaseCrawler):
         assert len(default_tools) == 2, "expected exactly 2 Tools: sites and resources"
 
         default_sites_tool, default_resources_tool = default_tools
-        resources_type_options = list(set(self._resource_field_mapping.keys()) - set(RESOURCES_FIELDS_REQUIRED))
         all_sites_display = ", ".join([f"{s.url} (site: {s.id})" for s in all_sites])
-
         drt_props = default_resources_tool.inputSchema["properties"]
-        # drt_props["types"]["items"]["enum"] = resources_type_options
         drt_props["sites"]["description"] = ("Optional "
             "list of project ID to filter search results to a specific site. In 95% "
             "of scenarios, you'd filter to only one site, but many site filtering is offered for "

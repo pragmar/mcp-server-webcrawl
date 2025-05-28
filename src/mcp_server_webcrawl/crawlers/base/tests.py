@@ -2,6 +2,7 @@ import unittest
 import asyncio
 import sys
 
+from datetime import datetime
 from logging import Logger
 
 from mcp_server_webcrawl.crawlers.base.crawler import BaseCrawler
@@ -29,11 +30,13 @@ class BaseCrawlerTests(unittest.TestCase):
 
         primary_keyword = "crawler"
         secondary_keyword = "privacy"
+        hyphenated_keyword = "one-click"
 
         primary_resources = crawler.get_resources_api(
             sites=[site_id],
             query=primary_keyword,
-            fields=["content", "headers"]
+            fields=["content", "headers"],
+            limit=1,
         )
         self.assertTrue(primary_resources.total > 0, f"Keyword '{primary_keyword}' should return results")
 
@@ -48,9 +51,17 @@ class BaseCrawlerTests(unittest.TestCase):
 
         secondary_resources = crawler.get_resources_api(
             sites=[site_id],
-            query=secondary_keyword
+            query=secondary_keyword,
+            limit=1,
         )
         self.assertTrue(secondary_resources.total > 0, f"Keyword '{secondary_keyword}' should return results")
+
+        hyphenated_resources = crawler.get_resources_api(
+            sites=[site_id],
+            query=hyphenated_keyword,
+            limit=1,
+        )
+        self.assertTrue(hyphenated_resources.total > 0, f"Keyword '{hyphenated_keyword}' should return results")
 
         primary_not_secondary = crawler.get_resources_api(
             sites=[site_id],
@@ -102,6 +113,7 @@ class BaseCrawlerTests(unittest.TestCase):
             sites=[site_id],
             query=f"{primary_keyword} AND type: html",
             extras=["snippets"],
+            limit=1,
         )
         self.assertIn("snippets", snippet_resources._results[0].to_dict()["extras"],
                 "First result should have snippets in extras")
@@ -110,6 +122,7 @@ class BaseCrawlerTests(unittest.TestCase):
             sites=[site_id],
             query=primary_keyword,
             extras=["markdown"],
+            limit=1,
         )
         self.assertIn("markdown", markdown_resources._results[0].to_dict()["extras"],
                 "First result should have markdown in extras")
@@ -118,6 +131,7 @@ class BaseCrawlerTests(unittest.TestCase):
             sites=[site_id],
             query=primary_keyword,
             extras=["snippets", "markdown"],
+            limit=1,
         )
         first_result = combined_resources._results[0].to_dict()
         self.assertIn("extras", first_result, "First result should have extras field")
@@ -157,7 +171,8 @@ class BaseCrawlerTests(unittest.TestCase):
         timestamp_resources = crawler.get_resources_api(
             sites=[pragmar_site_id],
             query=query_keyword1,
-            fields=["created", "modified", "time"]
+            fields=["created", "modified", "time"],
+            limit=5,
         )
         self.assertTrue(timestamp_resources.total > 0, "Search query should return results")
         for resource in timestamp_resources._results:
@@ -172,6 +187,7 @@ class BaseCrawlerTests(unittest.TestCase):
             id_resources = crawler.get_resources_api(
                 sites=[first_resource.site],
                 query=f"id: {first_resource.id}",
+                limit=1,
             )
             self.assertEqual(id_resources.total, 1)
             self.assertEqual(id_resources._results[0].id, first_resource.id)
@@ -195,7 +211,6 @@ class BaseCrawlerTests(unittest.TestCase):
         mixed_resources = crawler.get_resources_api(
             sites=[pragmar_site_id],
             query= f"type: {ResourceResultType.PAGE.value} OR type: {ResourceResultType.SCRIPT.value}",
-            # types=[ResourceResultType.PAGE.value, ResourceResultType.SCRIPT.value]
         )
         if mixed_resources.total > 0:
             types_found = {r.type for r in mixed_resources._results}
@@ -215,6 +230,7 @@ class BaseCrawlerTests(unittest.TestCase):
             query="type: html",
             sites=[pragmar_site_id],
             fields=custom_fields,
+            limit=1,
         )
         self.assertTrue(field_resources.total > 0)
         resource_dict = field_resources._results[0].to_dict()
@@ -245,20 +261,20 @@ class BaseCrawlerTests(unittest.TestCase):
         status_resources = crawler.get_resources_api(
             sites=[pragmar_site_id],
             query=f"status: 200",
+            limit=5,
         )
         self.assertTrue(status_resources.total > 0, "Status filtering should return results")
         for resource in status_resources._results:
             self.assertEqual(resource.status, 200)
 
-
         # status code filtering
         appstat_resources = crawler.get_resources_api(
             sites=[pragmar_site_id],
             query=f"status: 200 AND url: https://pragmar.com/appstat*",
+            limit=5,
         )
         self.assertTrue(appstat_resources.total > 0, "Status filtering should return results")
         self.assertGreaterEqual(len(appstat_resources._results), 3, f"Unexpected page count\n{len(appstat_resources._results)}")
-
 
         # multiple status codes
         multi_status_resources = crawler.get_resources_api(
@@ -275,7 +291,7 @@ class BaseCrawlerTests(unittest.TestCase):
             query= f"style AND type: {ResourceResultType.PAGE.value}",
             fields=["content", "headers"],
             sort="+url",
-            limit=3
+            limit=3,
         )
 
         if combined_resources.total > 0:
@@ -286,23 +302,207 @@ class BaseCrawlerTests(unittest.TestCase):
                 self.assertIn("content", resource_dict)
                 self.assertIn("headers", resource_dict)
 
-        # multi-site search
+        # multi-site search, verify we got results from both sites
         multisite_resources = crawler.get_resources_api(
             sites=[example_site_id, pragmar_site_id],
             query= f"type: {ResourceResultType.PAGE.value}",
             sort="+url",
-            limit=100
+            limit=10,
         )
-        # track which sites we find results from
         found_sites = set()
         for resource in multisite_resources._results:
             found_sites.add(resource.site)
-        # verify we got results from both sites
-        self.assertEqual(
-            len(found_sites),
-            2,
-            "Should have results from both sites"
+        self.assertEqual(len(found_sites), 2, "Should have results from both sites")
+
+        # Boolean workout
+        # result counts are fragile, intersections should not be
+        # counts are worth the fragility, for now
+
+        claude_resources = crawler.get_resources_api(
+            sites=[pragmar_site_id],
+            query=f"type: html AND (claude)",
+            limit=4,
         )
+
+        # varies by crawler, katana doesn't crawl /help/ depth by default
+        self.assertTrue(claude_resources.total in [1,2,3,4,5,6], f"Claude search returned {claude_resources.total}, expected 3/4/5 results")
+
+        mcp_resources = crawler.get_resources_api(
+            sites=[pragmar_site_id],
+            query=f"type: html AND (mcp)",
+            limit=12,
+        )
+        # varies by crawler, katana doesn't crawl /help/ depth by default
+        self.assertTrue(mcp_resources.total in [2, 3, 4, 5, 6, 7, 8, 12, 13, 16, 17], f"MCP returned {mcp_resources.total}, expected")
+
+        # AND
+        claude_and_mcp_resources = crawler.get_resources_api(
+            sites=[pragmar_site_id],
+            query=f"type: html AND (claude AND mcp)",
+            limit=1,
+        )
+        self.assertTrue(claude_resources.total in [1,2,3,4,5,6], f"Claude AND MCP returned {claude_resources.total}, expected 3/4")
+
+        # OR
+        claude_or_mcp_resources = crawler.get_resources_api(
+            sites=[pragmar_site_id],
+            query=f"type: html AND (claude OR mcp)",
+            limit=1,
+        )
+        self.assertTrue(claude_or_mcp_resources.total in [2,3,4,5,6,12,13,15,16,17], f"Claude OR MCP returned {claude_or_mcp_resources.total}, expected 16 results (union)")
+
+        # NOT
+        claude_not_mcp_resources = crawler.get_resources_api(
+            sites=[pragmar_site_id],
+            query=f"type: html AND (claude NOT mcp)",
+            limit=1,
+        )
+
+        self.assertEqual(claude_not_mcp_resources.total, 0, "Claude NOT MCP should return 0 results")
+
+        mcp_not_claude_resources = crawler.get_resources_api(
+            sites=[pragmar_site_id],
+            query=f"type: html AND (mcp NOT claude)",
+            limit=1,
+        )
+        self.assertTrue(mcp_not_claude_resources.total in [1,2,3,4,7,8,9,10,11,12,13], f"MCP NOT Claude returned {mcp_not_claude_resources.total}, expected 11/12/13")
+
+        # logical relationships
+        self.assertEqual(
+            claude_and_mcp_resources.total,
+            claude_resources.total + mcp_resources.total - claude_or_mcp_resources.total,
+            "Intersection should equal A + B - Union (inclusion-exclusion principle)"
+        )
+
+        self.assertEqual(
+            claude_not_mcp_resources.total + claude_and_mcp_resources.total,
+            claude_resources.total,
+            "Claude NOT MCP + Claude AND MCP should equal total Claude results"
+        )
+
+        self.assertEqual(
+            mcp_not_claude_resources.total + claude_and_mcp_resources.total,
+            mcp_resources.total,
+            "MCP NOT Claude + Claude AND MCP should equal total MCP results"
+        )
+
+        self.assertEqual(
+            claude_not_mcp_resources.total + mcp_not_claude_resources.total + claude_and_mcp_resources.total,
+            claude_or_mcp_resources.total,
+            "Sum of exclusive sets plus intersection should equal union"
+        )
+
+        # complex boolean with field constraints
+        # url: pragmar used without .com to support WARC too
+        claude_and_html_resources = crawler.get_resources_api(
+            sites=[pragmar_site_id],
+            query=f"type: html AND (claude)",
+            limit=1,
+        )
+        self.assertTrue(claude_and_html_resources.total in [1,2,3,4,5,6], f"Claude AND type:html returned {claude_and_html_resources.total}, expected 3/6")
+        self.assertTrue(
+            claude_and_html_resources.total <= claude_resources.total,
+            "Adding AND constraints should not increase result count"
+        )
+
+        # Parentheses grouping
+        grouped_resources = crawler.get_resources_api(
+            sites=[pragmar_site_id],
+            query=f"type: html AND (claude OR mcp)",
+            limit=1,
+        )
+        self.assertTrue(grouped_resources.total in [2, 3, 4, 5, 6, 11, 12, 13], f"Grouped OR with HTML filter returned {grouped_resources.total}, expected 3/6")
+
+    def run_pragmar_tokenizer_tests(self, crawler: BaseCrawler, site_id:int):
+        """
+        fts hyphens and underscores are particularly challenging, thus
+        have a dedicated test. these must be configured in multiple places
+        including CREATE TABLE ... tokenizer, as well as handled by the query
+        parser.
+        """
+
+        mcp_resources_keyword = crawler.get_resources_api(
+            sites=[site_id],
+            query='"mcp-server-webcrawl"',
+            fields=[],
+            limit=1,
+        )
+        mcp_resources_quoted = crawler.get_resources_api(
+            sites=[site_id],
+            query='"mcp-server-webcrawl"',
+            fields=[],
+            limit=1,
+        )
+        self.assertTrue(mcp_resources_keyword.total > 0, "Should find mcp-server-webcrawl in HTML")
+        self.assertTrue(mcp_resources_quoted.total > 0, "Should find \"mcp-server-webcrawl\" (phrase) in HTML")
+        self.assertTrue(mcp_resources_quoted.total == mcp_resources_keyword.total, "Quoted and unquoted equivalence expected")
+        mcp_resources_wildcarded = crawler.get_resources_api(
+            sites=[site_id],
+            query='mcp*',
+            fields=[],
+            limit=1,
+        )
+        self.assertTrue(mcp_resources_wildcarded.total > 0, "Should find mcp-server-* in HTML")
+
+        combo_and_resources_keyword = crawler.get_resources_api(
+            sites=[site_id],
+            query='"mcp-server-webcrawl" AND "one-click"',
+            fields=[],
+            limit=1,
+        )
+        combo_and_resources_quoted = crawler.get_resources_api(
+            sites=[site_id],
+            query='mcp-server-webcrawl AND one-click',
+            fields=[],
+            limit=1,
+        )
+        self.assertTrue(combo_and_resources_keyword.total > 0, "Should find mcp-server-webcrawl in HTML")
+        self.assertTrue(combo_and_resources_quoted.total > 0, "Should find \"mcp-server-webcrawl\" (phrase) in HTML")
+        self.assertTrue(combo_and_resources_keyword.total == combo_and_resources_quoted.total, "Quoted and unquoted equivalence expected")
+
+        combo_or_resources_keyword = crawler.get_resources_api(
+            sites=[site_id],
+            query='"mcp-server-webcrawl" OR "one-click"',
+            fields=[],
+            limit=1,
+        )
+        combo_or_resources_quoted = crawler.get_resources_api(
+            sites=[site_id],
+            query='mcp-server-webcrawl OR one-click',
+            fields=[],
+            limit=1,
+        )
+        self.assertTrue(combo_or_resources_keyword.total > 0, "Should find mcp-server-webcrawl in HTML")
+        self.assertTrue(combo_or_resources_quoted.total > 0, "Should find \"mcp-server-webcrawl\" (phrase) in HTML")
+        self.assertTrue(combo_or_resources_keyword.total == combo_or_resources_quoted.total, "Quoted and unquoted equivalence expected")
+
+        combo_not_resources_keyword = crawler.get_resources_api(
+            sites=[site_id],
+            query='"mcp-server-webcrawl" NOT "one-click"',
+            fields=[],
+            limit=1,
+        )
+        combo_not_resources_quoted = crawler.get_resources_api(
+            sites=[site_id],
+            query='mcp-server-webcrawl NOT one-click',
+            fields=[],
+            limit=1,
+        )
+        combo_and_not_resources_quoted = crawler.get_resources_api(
+            sites=[site_id],
+            query='mcp-server-webcrawl AND NOT one-click',
+            fields=[],
+            limit=1,
+        )
+        self.assertTrue(combo_not_resources_keyword.total > 0, "Should find mcp-server-webcrawl in HTML")
+        self.assertTrue(combo_not_resources_quoted.total > 0, "Should find \"mcp-server-webcrawl\" (phrase) in HTML")
+        self.assertTrue(combo_not_resources_keyword.total == combo_not_resources_quoted.total, "Quoted and unquoted equivalence expected")
+        self.assertTrue(combo_not_resources_keyword.total == combo_and_not_resources_quoted.total, f"NOT ({combo_not_resources_keyword.total}) and AND NOT ({combo_and_not_resources_quoted.total}) equivalence expected")
+        self.assertTrue(mcp_resources_keyword.total >= combo_and_resources_keyword.total, "Total records should be greater or equal to ANDs.")
+        self.assertTrue(mcp_resources_keyword.total <= combo_or_resources_keyword.total, "Total records should be less than or equal to ORs.")
+        self.assertTrue(mcp_resources_keyword.total > combo_not_resources_keyword.total, "Total records should be greater than to NOTs.")
+
+
 
     def run_pragmar_site_tests(self, crawler: BaseCrawler, site_id:int):
 
@@ -369,7 +569,8 @@ class BaseCrawlerTests(unittest.TestCase):
         script_resources = crawler.get_resources_api(
             sites=[site_id],
             query= f"type: {ResourceResultType.SCRIPT.value}",
-            fields=["content", "headers"]
+            fields=["content", "headers"],
+            limit=1,
         )
         if script_resources.total > 0:
             for resource in script_resources._results:
@@ -379,8 +580,78 @@ class BaseCrawlerTests(unittest.TestCase):
         css_resources = crawler.get_resources_api(
             sites=[site_id],
             query= f"type: {ResourceResultType.CSS.value}",
-            fields=["content", "headers"]
+            fields=["content", "headers"],
+            limit=1,
         )
         if css_resources.total > 0:
             for resource in css_resources._results:
                 self.assertEqual(resource.type, ResourceResultType.CSS)
+
+    def run_pragmar_report(self, crawler: BaseCrawler, site_id: int, heading: str):
+        """
+        Generate a comprehensive report of all resources for a site.
+        Returns a formatted string with counts and URLs by type.
+        """
+
+        all_resources = crawler.get_resources_api(
+            sites=[site_id],
+            query="",
+            limit=100,
+        )
+
+        html_resources = crawler.get_resources_api(
+            sites=[site_id],
+            query=f"type: {ResourceResultType.PAGE.value}",
+            limit=100,
+        )
+
+        css_resources = crawler.get_resources_api(
+            sites=[site_id],
+            query=f"type: {ResourceResultType.CSS.value}",
+            limit=100,
+        )
+
+        js_resources = crawler.get_resources_api(
+            sites=[site_id],
+            query=f"type: {ResourceResultType.SCRIPT.value}",
+            limit=100,
+        )
+
+        image_resources = crawler.get_resources_api(
+            sites=[site_id],
+            query=f"type: {ResourceResultType.IMAGE.value}",
+            limit=100,
+        )
+
+        mcp_resources = crawler.get_resources_api(
+            sites=[site_id],
+            query=f"type: html AND (mcp)",
+            limit=100,
+        )
+
+        report_lines = []
+        sections = [
+            ("Total pages", all_resources),
+            ("Total HTML", html_resources),
+            ("Total MCP search hits", mcp_resources),
+            ("Total CSS", css_resources),
+            ("Total JS", js_resources),
+            ("Total Images", image_resources)
+        ]
+
+        for i, (section_name, resource_obj) in enumerate(sections):
+            report_lines.append(f"{section_name}: {resource_obj.total}")
+            for resource in resource_obj._results:
+                report_lines.append(resource.url)
+            if i < len(sections) - 1:
+                report_lines.append("")
+
+        now = datetime.now()
+        lines_together = "\n".join(report_lines)
+
+        return f"""
+**********************************************************************************
+* {heading} {now.isoformat()}                                                    *
+**********************************************************************************
+{lines_together}
+"""

@@ -2,6 +2,9 @@ from mcp_server_webcrawl.crawlers.siteone.crawler import SiteOneCrawler
 from mcp_server_webcrawl.crawlers.base.tests import BaseCrawlerTests
 from mcp_server_webcrawl.crawlers import get_fixture_directory
 from mcp_server_webcrawl.crawlers.siteone.adapter import SiteOneManager
+from mcp_server_webcrawl.utils.logger import get_logger
+
+logger = get_logger()
 
 # calculate using same hash function as adapter
 EXAMPLE_SITE_ID = SiteOneManager.string_to_id("example.com")
@@ -88,11 +91,11 @@ class SiteOneTests(BaseCrawlerTests):
         # redirect status codes
         status_resources_redirect = crawler.get_resources_api(
             sites=[PRAGMAR_SITE_ID],
-            query="status: 302"
+            query="status: 301"
         )
-        self.assertTrue(status_resources_redirect.total > 0, "302 status filtering should return results")
+        self.assertTrue(status_resources_redirect.total > 0, "301 status filtering should return results")
         for resource in status_resources_redirect._results:
-            self.assertEqual(resource.status, 302)
+            self.assertEqual(resource.status, 301)
 
         # 404 with size validation
         status_resources_not_found = crawler.get_resources_api(
@@ -119,3 +122,10 @@ class SiteOneTests(BaseCrawlerTests):
         resource_dict = field_resources._results[0].to_forcefield_dict(custom_fields)
         for field in custom_fields:
             self.assertIn(field, resource_dict, f"Field '{field}' should be in forcefield response")
+
+    def test_report(self):
+        """
+        Test thumbnail generation functionality (InterroBot-specific).
+        """
+        crawler = SiteOneCrawler(self._datasrc)
+        logger.info(self.run_pragmar_report(crawler, PRAGMAR_SITE_ID, "SiteOne"))

@@ -2,16 +2,13 @@ import re
 import sqlite3
 import traceback
 from contextlib import closing
-from datetime import datetime
 from logging import Logger
 from pathlib import Path
 from typing import Final
 
 from mcp_server_webcrawl.crawlers.base.adapter import IndexState, IndexStatus, BaseManager, SitesGroup
-from mcp_server_webcrawl.crawlers.base.indexed import IndexedManager
 from mcp_server_webcrawl.models.resources import (
     ResourceResult,
-    ResourceResultType,
     RESOURCES_LIMIT_DEFAULT,
 )
 
@@ -45,19 +42,7 @@ INTERROBOT_SITE_FIELD_MAPPING: Final[dict[str, str]] = {
     "robots": "Project.RobotsText",
 }
 
-# maybe dedupe with near match INDEXED version
-# INTERROBOT_SORT_MAPPING: Final[dict[str, tuple[str, str]]] = {
-#     "+id": ("ResourcesFullText.Id", "ASC"),
-#     "-id": ("ResourcesFullText.Id", "DESC"),
-#     "+url": ("ResourcesFullText.Url", "ASC"),
-#     "-url": ("ResourcesFullText.Url", "DESC"),
-#     "+status": ("ResourcesFullText.Status", "ASC"),
-#     "-status": ("ResourcesFullText.Status", "DESC"),
-#     "?": ("ResourcesFullText.Id", "?"),
-# }
-
 logger: Logger = get_logger()
-
 
 class InterroBotManager(BaseManager):
     """
