@@ -77,6 +77,15 @@
 <span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">Logger</span>
+
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.crawler</span> <span class="kn">import</span> <span class="n">BaseCrawler</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">ResourceResultType</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
+
 <div class="viewcode-block" id="BaseCrawlerTests">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests">[docs]</a>
 <span class="k">class</span> <span class="nc">BaseCrawlerTests</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
@@ -87,6 +96,668 @@
         <span class="c1"># quiet asyncio error on tests, occurring after sucessful completion</span>
         <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s2">&quot;win32&quot;</span><span class="p">:</span>
             <span class="n">asyncio</span><span class="o">.</span><span class="n">set_event_loop_policy</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">WindowsSelectorEventLoopPolicy</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="BaseCrawlerTests.run_pragmar_search_tests">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_search_tests">[docs]</a>
+    <span class="k">def</span> <span class="nf">run_pragmar_search_tests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crawler</span><span class="p">:</span> <span class="n">BaseCrawler</span><span class="p">,</span> <span class="n">site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run a battery of database checks on the crawler and Boolean validation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">resources_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">resources_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Should have some resources in database&quot;</span><span class="p">)</span>
+
+        <span class="n">site_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">site_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Pragmar site should have resources&quot;</span><span class="p">)</span>
+
+        <span class="n">primary_keyword</span> <span class="o">=</span> <span class="s2">&quot;crawler&quot;</span>
+        <span class="n">secondary_keyword</span> <span class="o">=</span> <span class="s2">&quot;privacy&quot;</span>
+        <span class="n">hyphenated_keyword</span> <span class="o">=</span> <span class="s2">&quot;one-click&quot;</span>
+
+        <span class="n">primary_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="n">primary_keyword</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">primary_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Keyword &#39;</span><span class="si">{</span><span class="n">primary_keyword</span><span class="si">}</span><span class="s2">&#39; should return results&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">primary_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+            <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+            <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">resource_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">primary_keyword</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                    <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">found</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Primary keyword not found in any field of resource </span><span class="si">{</span><span class="n">resource</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">secondary_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="n">secondary_keyword</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">secondary_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Keyword &#39;</span><span class="si">{</span><span class="n">secondary_keyword</span><span class="si">}</span><span class="s2">&#39; should return results&quot;</span><span class="p">)</span>
+
+        <span class="n">hyphenated_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="n">hyphenated_keyword</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">hyphenated_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Keyword &#39;</span><span class="si">{</span><span class="n">hyphenated_keyword</span><span class="si">}</span><span class="s2">&#39; should return results&quot;</span><span class="p">)</span>
+
+        <span class="n">primary_not_secondary</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">primary_keyword</span><span class="si">}</span><span class="s2"> NOT </span><span class="si">{</span><span class="n">secondary_keyword</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">secondary_not_primary</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">secondary_keyword</span><span class="si">}</span><span class="s2"> NOT </span><span class="si">{</span><span class="n">primary_keyword</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">primary_or_secondary</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">primary_keyword</span><span class="si">}</span><span class="s2"> OR </span><span class="si">{</span><span class="n">secondary_keyword</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">primary_not_secondary</span><span class="o">.</span><span class="n">total</span> <span class="o">&lt;=</span> <span class="n">primary_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+                <span class="s2">&quot;&#39;crawler NOT privacy&#39; should be subset of &#39;crawler&#39;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">secondary_not_primary</span><span class="o">.</span><span class="n">total</span> <span class="o">&lt;=</span> <span class="n">secondary_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+                <span class="s2">&quot;&#39;privacy NOT crawler&#39; should be subset of &#39;privacy&#39;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">primary_or_secondary</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;=</span> <span class="n">primary_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+                <span class="s2">&quot;OR should include all primary term results&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">primary_or_secondary</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;=</span> <span class="n">secondary_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+                <span class="s2">&quot;OR should include all secondary term results&quot;</span><span class="p">)</span>
+
+        <span class="n">calculated_overlap</span> <span class="o">=</span> <span class="n">primary_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">+</span> <span class="n">secondary_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">-</span> <span class="n">primary_or_secondary</span><span class="o">.</span><span class="n">total</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">calculated_overlap</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Overlap cannot be negative&quot;</span><span class="p">)</span>
+
+        <span class="n">reconstructed_total</span> <span class="o">=</span> <span class="n">primary_not_secondary</span><span class="o">.</span><span class="n">total</span> <span class="o">+</span> <span class="n">secondary_not_primary</span><span class="o">.</span><span class="n">total</span> <span class="o">+</span> <span class="n">calculated_overlap</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">reconstructed_total</span><span class="p">,</span> <span class="n">primary_or_secondary</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+                <span class="s2">&quot;Sum of exclusive sets plus overlap should equal OR total&quot;</span><span class="p">)</span>
+
+        <span class="n">complex_and</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">primary_keyword</span><span class="si">}</span><span class="s2"> AND type:html AND status:200&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">complex_and</span><span class="o">.</span><span class="n">total</span> <span class="o">&lt;=</span> <span class="n">primary_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+                <span class="s2">&quot;Adding AND conditions should not increase results&quot;</span><span class="p">)</span>
+
+        <span class="n">grouped_or</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">primary_keyword</span><span class="si">}</span><span class="s2"> OR </span><span class="si">{</span><span class="n">secondary_keyword</span><span class="si">}</span><span class="s2">) AND type:html AND status:200&quot;</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">grouped_or</span><span class="o">.</span><span class="n">total</span> <span class="o">&lt;=</span> <span class="n">primary_or_secondary</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+                <span class="s2">&quot;Adding AND conditions to OR should not increase results&quot;</span><span class="p">)</span>
+
+        <span class="n">snippet_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">primary_keyword</span><span class="si">}</span><span class="s2"> AND type: html&quot;</span><span class="p">,</span>
+            <span class="n">extras</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;snippets&quot;</span><span class="p">],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;snippets&quot;</span><span class="p">,</span> <span class="n">snippet_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()[</span><span class="s2">&quot;extras&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;First result should have snippets in extras&quot;</span><span class="p">)</span>
+
+        <span class="n">markdown_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="n">primary_keyword</span><span class="p">,</span>
+            <span class="n">extras</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;markdown&quot;</span><span class="p">],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;markdown&quot;</span><span class="p">,</span> <span class="n">markdown_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()[</span><span class="s2">&quot;extras&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;First result should have markdown in extras&quot;</span><span class="p">)</span>
+
+        <span class="n">combined_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="n">primary_keyword</span><span class="p">,</span>
+            <span class="n">extras</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;snippets&quot;</span><span class="p">,</span> <span class="s2">&quot;markdown&quot;</span><span class="p">],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">first_result</span> <span class="o">=</span> <span class="n">combined_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;extras&quot;</span><span class="p">,</span> <span class="n">first_result</span><span class="p">,</span> <span class="s2">&quot;First result should have extras field&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;snippets&quot;</span><span class="p">,</span> <span class="n">first_result</span><span class="p">[</span><span class="s2">&quot;extras&quot;</span><span class="p">],</span> <span class="s2">&quot;First result should have snippets in extras&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;markdown&quot;</span><span class="p">,</span> <span class="n">first_result</span><span class="p">[</span><span class="s2">&quot;extras&quot;</span><span class="p">],</span> <span class="s2">&quot;First result should have markdown in extras&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">primary_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&lt;=</span> <span class="n">site_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+                <span class="s2">&quot;Search should return less than or equivalent results to site total&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">secondary_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&lt;=</span> <span class="n">site_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+                <span class="s2">&quot;Search should return less than or equivalent results to site total&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseCrawlerTests.run_pragmar_image_tests">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_image_tests">[docs]</a>
+    <span class="k">def</span> <span class="nf">run_pragmar_image_tests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crawler</span><span class="p">:</span> <span class="n">BaseCrawler</span><span class="p">,</span> <span class="n">pragmar_site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test InterroBot-specific image handling and thumbnails.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">img_results</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span> <span class="n">query</span><span class="o">=</span><span class="s2">&quot;type: img&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">img_results</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Image type filter should return results&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span>
+            <span class="nb">all</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s2">&quot;img&quot;</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">img_results</span><span class="o">.</span><span class="n">_results</span><span class="p">),</span>
+            <span class="s2">&quot;All filtered resources should have type &#39;img&#39;&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseCrawlerTests.run_sites_resources_tests">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_sites_resources_tests">[docs]</a>
+    <span class="k">def</span> <span class="nf">run_sites_resources_tests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crawler</span><span class="p">:</span> <span class="n">BaseCrawler</span><span class="p">,</span> <span class="n">pragmar_site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">example_site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+
+        <span class="n">resources_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">resources_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Should have some resources in database&quot;</span><span class="p">)</span>
+
+        <span class="n">site_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">site_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Pragmar site should have resources&quot;</span><span class="p">)</span>
+
+        <span class="c1"># basic resource retrieval</span>
+        <span class="n">resources_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">resources_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># fulltext keyword search</span>
+        <span class="n">query_keyword1</span> <span class="o">=</span> <span class="s2">&quot;privacy&quot;</span>
+
+        <span class="n">timestamp_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="n">query_keyword1</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="s2">&quot;modified&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">timestamp_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Search query should return results&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">timestamp_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+            <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">resource_dict</span><span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">],</span> <span class="s2">&quot;Created timestamp should not be None&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">resource_dict</span><span class="p">[</span><span class="s2">&quot;modified&quot;</span><span class="p">],</span> <span class="s2">&quot;Modified timestamp should not be None&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">resource_dict</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="s2">&quot;Modified timestamp should not be None&quot;</span><span class="p">)</span>
+
+        <span class="c1"># resource ID filtering</span>
+        <span class="k">if</span> <span class="n">resources_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">first_resource</span> <span class="o">=</span> <span class="n">resources_json</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">id_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+                <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">first_resource</span><span class="o">.</span><span class="n">site</span><span class="p">],</span>
+                <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;id: </span><span class="si">{</span><span class="n">first_resource</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">id_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">id_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">first_resource</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+        <span class="c1"># site filtering</span>
+        <span class="n">site_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">site_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Site filtering should return results&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">site_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">site</span><span class="p">,</span> <span class="n">pragmar_site_id</span><span class="p">)</span>
+
+        <span class="c1"># type filtering for HTML pages</span>
+        <span class="n">html_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">html_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;HTML filtering should return results&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">html_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">)</span>
+
+        <span class="c1"># type filtering for multiple resource types</span>
+        <span class="n">mixed_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> OR type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">mixed_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">types_found</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">type</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">mixed_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">types_found</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="s2">&quot;Should find at least one of the requested resource types&quot;</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">resource_type</span> <span class="ow">in</span> <span class="n">types_found</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span>
+                    <span class="n">resource_type</span><span class="p">,</span>
+                    <span class="p">[</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="p">]</span>
+                <span class="p">)</span>
+
+        <span class="c1"># custom fields in response</span>
+        <span class="n">custom_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">]</span>
+        <span class="n">field_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">query</span><span class="o">=</span><span class="s2">&quot;type: html&quot;</span><span class="p">,</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span>
+            <span class="n">fields</span><span class="o">=</span><span class="n">custom_fields</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">field_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">field_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">custom_fields</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">resource_dict</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Field &#39;</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">&#39; should be in response&quot;</span><span class="p">)</span>
+
+        <span class="n">asc_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span> <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;+url&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">asc_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">asc_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">url</span> <span class="o">&lt;=</span> <span class="n">asc_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+
+        <span class="n">desc_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span> <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;-url&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">desc_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">desc_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">url</span> <span class="o">&gt;=</span> <span class="n">desc_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+
+        <span class="n">limit_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span> <span class="n">limit</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">limit_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">)</span>
+
+        <span class="n">offset_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span> <span class="n">offset</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">offset_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resources_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span>
+                <span class="n">resources_json</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                <span class="n">offset_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                <span class="s2">&quot;Offset results should differ from first page&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># status code filtering</span>
+        <span class="n">status_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;status: 200&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">status_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Status filtering should return results&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">status_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+
+        <span class="c1"># status code filtering</span>
+        <span class="n">appstat_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;status: 200 AND url: https://pragmar.com/appstat*&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">appstat_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Status filtering should return results&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertGreaterEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">appstat_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">),</span> <span class="mi">3</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Unexpected page count</span><span class="se">\n</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">appstat_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># multiple status codes</span>
+        <span class="n">multi_status_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;status: 200 OR status: 404&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">multi_status_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">found_statuses</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">status</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">multi_status_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">status</span> <span class="ow">in</span> <span class="n">found_statuses</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="p">[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">404</span><span class="p">])</span>
+
+        <span class="c1"># combined filtering</span>
+        <span class="n">combined_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;style AND type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">],</span>
+            <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;+url&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">combined_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">combined_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">site</span><span class="p">,</span> <span class="n">pragmar_site_id</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">)</span>
+                <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="n">resource_dict</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;headers&quot;</span><span class="p">,</span> <span class="n">resource_dict</span><span class="p">)</span>
+
+        <span class="c1"># multi-site search, verify we got results from both sites</span>
+        <span class="n">multisite_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">example_site_id</span><span class="p">,</span> <span class="n">pragmar_site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;+url&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">found_sites</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">multisite_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+            <span class="n">found_sites</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">site</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">found_sites</span><span class="p">),</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;Should have results from both sites&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Boolean workout</span>
+        <span class="c1"># result counts are fragile, intersections should not be</span>
+        <span class="c1"># counts are worth the fragility, for now</span>
+
+        <span class="n">claude_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: html AND (claude)&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># varies by crawler, katana doesn&#39;t crawl /help/ depth by default</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">claude_resources</span><span class="o">.</span><span class="n">total</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;Claude search returned </span><span class="si">{</span><span class="n">claude_resources</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2">, expected 3/4/5 results&quot;</span><span class="p">)</span>
+
+        <span class="n">mcp_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: html AND (mcp)&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># varies by crawler, katana doesn&#39;t crawl /help/ depth by default</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">mcp_resources</span><span class="o">.</span><span class="n">total</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">17</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;MCP returned </span><span class="si">{</span><span class="n">mcp_resources</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2">, expected&quot;</span><span class="p">)</span>
+
+        <span class="c1"># AND</span>
+        <span class="n">claude_and_mcp_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: html AND (claude AND mcp)&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">claude_resources</span><span class="o">.</span><span class="n">total</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;Claude AND MCP returned </span><span class="si">{</span><span class="n">claude_resources</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2">, expected 3/4&quot;</span><span class="p">)</span>
+
+        <span class="c1"># OR</span>
+        <span class="n">claude_or_mcp_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: html AND (claude OR mcp)&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">claude_or_mcp_resources</span><span class="o">.</span><span class="n">total</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">12</span><span class="p">,</span><span class="mi">13</span><span class="p">,</span><span class="mi">15</span><span class="p">,</span><span class="mi">16</span><span class="p">,</span><span class="mi">17</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;Claude OR MCP returned </span><span class="si">{</span><span class="n">claude_or_mcp_resources</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2">, expected 16 results (union)&quot;</span><span class="p">)</span>
+
+        <span class="c1"># NOT</span>
+        <span class="n">claude_not_mcp_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: html AND (claude NOT mcp)&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">claude_not_mcp_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Claude NOT MCP should return 0 results&quot;</span><span class="p">)</span>
+
+        <span class="n">mcp_not_claude_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: html AND (mcp NOT claude)&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">mcp_not_claude_resources</span><span class="o">.</span><span class="n">total</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">11</span><span class="p">,</span><span class="mi">12</span><span class="p">,</span><span class="mi">13</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;MCP NOT Claude returned </span><span class="si">{</span><span class="n">mcp_not_claude_resources</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2">, expected 11/12/13&quot;</span><span class="p">)</span>
+
+        <span class="c1"># logical relationships</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span>
+            <span class="n">claude_and_mcp_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+            <span class="n">claude_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">+</span> <span class="n">mcp_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">-</span> <span class="n">claude_or_mcp_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+            <span class="s2">&quot;Intersection should equal A + B - Union (inclusion-exclusion principle)&quot;</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span>
+            <span class="n">claude_not_mcp_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">+</span> <span class="n">claude_and_mcp_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+            <span class="n">claude_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+            <span class="s2">&quot;Claude NOT MCP + Claude AND MCP should equal total Claude results&quot;</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span>
+            <span class="n">mcp_not_claude_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">+</span> <span class="n">claude_and_mcp_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+            <span class="n">mcp_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+            <span class="s2">&quot;MCP NOT Claude + Claude AND MCP should equal total MCP results&quot;</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span>
+            <span class="n">claude_not_mcp_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">+</span> <span class="n">mcp_not_claude_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">+</span> <span class="n">claude_and_mcp_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+            <span class="n">claude_or_mcp_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+            <span class="s2">&quot;Sum of exclusive sets plus intersection should equal union&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># complex boolean with field constraints</span>
+        <span class="c1"># url: pragmar used without .com to support WARC too</span>
+        <span class="n">claude_and_html_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: html AND (claude)&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">claude_and_html_resources</span><span class="o">.</span><span class="n">total</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;Claude AND type:html returned </span><span class="si">{</span><span class="n">claude_and_html_resources</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2">, expected 3/6&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span>
+            <span class="n">claude_and_html_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&lt;=</span> <span class="n">claude_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+            <span class="s2">&quot;Adding AND constraints should not increase result count&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Parentheses grouping</span>
+        <span class="n">grouped_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">pragmar_site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: html AND (claude OR mcp)&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">grouped_resources</span><span class="o">.</span><span class="n">total</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;Grouped OR with HTML filter returned </span><span class="si">{</span><span class="n">grouped_resources</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2">, expected 3/6&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseCrawlerTests.run_pragmar_tokenizer_tests">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_tokenizer_tests">[docs]</a>
+    <span class="k">def</span> <span class="nf">run_pragmar_tokenizer_tests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crawler</span><span class="p">:</span> <span class="n">BaseCrawler</span><span class="p">,</span> <span class="n">site_id</span><span class="p">:</span><span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        fts hyphens and underscores are particularly challenging, thus</span>
+<span class="sd">        have a dedicated test. these must be configured in multiple places</span>
+<span class="sd">        including CREATE TABLE ... tokenizer, as well as handled by the query</span>
+<span class="sd">        parser.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">mcp_resources_keyword</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s1">&#39;&quot;mcp-server-webcrawl&quot;&#39;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">mcp_resources_quoted</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s1">&#39;&quot;mcp-server-webcrawl&quot;&#39;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">mcp_resources_keyword</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Should find mcp-server-webcrawl in HTML&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">mcp_resources_quoted</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Should find </span><span class="se">\&quot;</span><span class="s2">mcp-server-webcrawl</span><span class="se">\&quot;</span><span class="s2"> (phrase) in HTML&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">mcp_resources_quoted</span><span class="o">.</span><span class="n">total</span> <span class="o">==</span> <span class="n">mcp_resources_keyword</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="s2">&quot;Quoted and unquoted equivalence expected&quot;</span><span class="p">)</span>
+        <span class="n">mcp_resources_wildcarded</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s1">&#39;mcp*&#39;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">mcp_resources_wildcarded</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Should find mcp-server-* in HTML&quot;</span><span class="p">)</span>
+
+        <span class="n">combo_and_resources_keyword</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s1">&#39;&quot;mcp-server-webcrawl&quot; AND &quot;one-click&quot;&#39;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">combo_and_resources_quoted</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s1">&#39;mcp-server-webcrawl AND one-click&#39;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">combo_and_resources_keyword</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Should find mcp-server-webcrawl in HTML&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">combo_and_resources_quoted</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Should find </span><span class="se">\&quot;</span><span class="s2">mcp-server-webcrawl</span><span class="se">\&quot;</span><span class="s2"> (phrase) in HTML&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">combo_and_resources_keyword</span><span class="o">.</span><span class="n">total</span> <span class="o">==</span> <span class="n">combo_and_resources_quoted</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="s2">&quot;Quoted and unquoted equivalence expected&quot;</span><span class="p">)</span>
+
+        <span class="n">combo_or_resources_keyword</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s1">&#39;&quot;mcp-server-webcrawl&quot; OR &quot;one-click&quot;&#39;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">combo_or_resources_quoted</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s1">&#39;mcp-server-webcrawl OR one-click&#39;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">combo_or_resources_keyword</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Should find mcp-server-webcrawl in HTML&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">combo_or_resources_quoted</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Should find </span><span class="se">\&quot;</span><span class="s2">mcp-server-webcrawl</span><span class="se">\&quot;</span><span class="s2"> (phrase) in HTML&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">combo_or_resources_keyword</span><span class="o">.</span><span class="n">total</span> <span class="o">==</span> <span class="n">combo_or_resources_quoted</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="s2">&quot;Quoted and unquoted equivalence expected&quot;</span><span class="p">)</span>
+
+        <span class="n">combo_not_resources_keyword</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s1">&#39;&quot;mcp-server-webcrawl&quot; NOT &quot;one-click&quot;&#39;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">combo_not_resources_quoted</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s1">&#39;mcp-server-webcrawl NOT one-click&#39;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">combo_and_not_resources_quoted</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s1">&#39;mcp-server-webcrawl AND NOT one-click&#39;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">combo_not_resources_keyword</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Should find mcp-server-webcrawl in HTML&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">combo_not_resources_quoted</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Should find </span><span class="se">\&quot;</span><span class="s2">mcp-server-webcrawl</span><span class="se">\&quot;</span><span class="s2"> (phrase) in HTML&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">combo_not_resources_keyword</span><span class="o">.</span><span class="n">total</span> <span class="o">==</span> <span class="n">combo_not_resources_quoted</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="s2">&quot;Quoted and unquoted equivalence expected&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">combo_not_resources_keyword</span><span class="o">.</span><span class="n">total</span> <span class="o">==</span> <span class="n">combo_and_not_resources_quoted</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;NOT (</span><span class="si">{</span><span class="n">combo_not_resources_keyword</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2">) and AND NOT (</span><span class="si">{</span><span class="n">combo_and_not_resources_quoted</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2">) equivalence expected&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">mcp_resources_keyword</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;=</span> <span class="n">combo_and_resources_keyword</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="s2">&quot;Total records should be greater or equal to ANDs.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">mcp_resources_keyword</span><span class="o">.</span><span class="n">total</span> <span class="o">&lt;=</span> <span class="n">combo_or_resources_keyword</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="s2">&quot;Total records should be less than or equal to ORs.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">mcp_resources_keyword</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="n">combo_not_resources_keyword</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="s2">&quot;Total records should be greater than to NOTs.&quot;</span><span class="p">)</span></div>
+
+
+
+
+<div class="viewcode-block" id="BaseCrawlerTests.run_pragmar_site_tests">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_site_tests">[docs]</a>
+    <span class="k">def</span> <span class="nf">run_pragmar_site_tests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crawler</span><span class="p">:</span> <span class="n">BaseCrawler</span><span class="p">,</span> <span class="n">site_id</span><span class="p">:</span><span class="nb">int</span><span class="p">):</span>
+
+        <span class="c1"># all sites</span>
+        <span class="n">sites_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">sites_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># single site</span>
+        <span class="n">site_one_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">site_one_json</span><span class="o">.</span><span class="n">total</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># site with fields</span>
+        <span class="n">site_field_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span> <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="s2">&quot;modified&quot;</span><span class="p">])</span>
+        <span class="n">site_field_result</span> <span class="o">=</span> <span class="n">site_field_json</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="s2">&quot;created&quot;</span> <span class="ow">in</span> <span class="n">site_field_result</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="s2">&quot;modified&quot;</span> <span class="ow">in</span> <span class="n">site_field_result</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseCrawlerTests.run_pragmar_sort_tests">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_sort_tests">[docs]</a>
+    <span class="k">def</span> <span class="nf">run_pragmar_sort_tests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crawler</span><span class="p">:</span> <span class="n">BaseCrawler</span><span class="p">,</span> <span class="n">site_id</span><span class="p">:</span><span class="nb">int</span><span class="p">):</span>
+
+        <span class="n">random1_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span> <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;?&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">random1_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Database should contain resources&quot;</span><span class="p">)</span>
+        <span class="n">random1_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">random1_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">]</span>
+        <span class="n">random2_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span> <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;?&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">random2_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Random sort should return results&quot;</span><span class="p">)</span>
+        <span class="n">random2_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">random2_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">random2_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;=</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span>
+                <span class="n">random1_ids</span><span class="p">,</span>
+                <span class="n">random2_ids</span><span class="p">,</span>
+                <span class="s2">&quot;Random sort should produce different order than standard sort.</span><span class="se">\n</span><span class="s2">Standard: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">random1_ids</span><span class="si">}</span><span class="se">\n</span><span class="s2">Random: </span><span class="si">{</span><span class="n">random2_ids</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skip randomness verification: Not enough resources (</span><span class="si">{</span><span class="n">random2_resources</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseCrawlerTests.run_pragmar_content_tests">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_content_tests">[docs]</a>
+    <span class="k">def</span> <span class="nf">run_pragmar_content_tests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crawler</span><span class="p">:</span> <span class="n">BaseCrawler</span><span class="p">,</span> <span class="n">site_id</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span> <span class="n">html_leniency</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+
+        <span class="n">html_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">html_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Should find HTML resources&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">html_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+            <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+            <span class="k">if</span> <span class="s2">&quot;content&quot;</span> <span class="ow">in</span> <span class="n">resource_dict</span><span class="p">:</span>
+                <span class="n">content</span> <span class="o">=</span>  <span class="n">resource_dict</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span>
+                    <span class="s2">&quot;&lt;!DOCTYPE html&gt;&quot;</span> <span class="ow">in</span> <span class="n">content</span> <span class="ow">or</span>
+                    <span class="s2">&quot;&lt;html&quot;</span> <span class="ow">in</span> <span class="n">content</span> <span class="ow">or</span>
+                    <span class="s2">&quot;&lt;meta&quot;</span> <span class="ow">in</span> <span class="n">content</span> <span class="ow">or</span>
+                    <span class="n">html_leniency</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;HTML content should contain HTML markup: </span><span class="si">{</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="se">\n\n</span><span class="si">{</span><span class="n">resource</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="s2">&quot;headers&quot;</span> <span class="ow">in</span> <span class="n">resource_dict</span> <span class="ow">and</span> <span class="n">resource_dict</span><span class="p">[</span><span class="s2">&quot;headers&quot;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span>
+                    <span class="s2">&quot;Content-Type:&quot;</span> <span class="ow">in</span> <span class="n">resource_dict</span><span class="p">[</span><span class="s2">&quot;headers&quot;</span><span class="p">],</span>
+                    <span class="sa">f</span><span class="s2">&quot;Headers should contain Content-Type: </span><span class="si">{</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+        <span class="c1"># script content detection</span>
+        <span class="n">script_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">script_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">script_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="p">)</span>
+
+        <span class="c1"># css content detection</span>
+        <span class="n">css_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">],</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">css_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">css_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseCrawlerTests.run_pragmar_report">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_report">[docs]</a>
+    <span class="k">def</span> <span class="nf">run_pragmar_report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crawler</span><span class="p">:</span> <span class="n">BaseCrawler</span><span class="p">,</span> <span class="n">site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">heading</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate a comprehensive report of all resources for a site.</span>
+<span class="sd">        Returns a formatted string with counts and URLs by type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">all_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">html_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">css_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">js_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">image_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">mcp_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: html AND (mcp)&quot;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">report_lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">sections</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s2">&quot;Total pages&quot;</span><span class="p">,</span> <span class="n">all_resources</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;Total HTML&quot;</span><span class="p">,</span> <span class="n">html_resources</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;Total MCP search hits&quot;</span><span class="p">,</span> <span class="n">mcp_resources</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;Total CSS&quot;</span><span class="p">,</span> <span class="n">css_resources</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;Total JS&quot;</span><span class="p">,</span> <span class="n">js_resources</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;Total Images&quot;</span><span class="p">,</span> <span class="n">image_resources</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">section_name</span><span class="p">,</span> <span class="n">resource_obj</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sections</span><span class="p">):</span>
+            <span class="n">report_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">section_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">resource_obj</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">resource_obj</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+                <span class="n">report_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">sections</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">report_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="n">lines_together</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">report_lines</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">**********************************************************************************</span>
+<span class="s2">* </span><span class="si">{</span><span class="n">heading</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">now</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span><span class="si">}</span><span class="s2">                                                    *</span>
+<span class="s2">**********************************************************************************</span>
+<span class="si">{</span><span class="n">lines_together</span><span class="si">}</span>
+<span class="s2">&quot;&quot;&quot;</span></div>
 </div>
 
 </pre></div>

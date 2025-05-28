@@ -201,7 +201,8 @@ SiteOne captures organized as subdirectories</p>
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SiteOneTests</span></span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/siteone/tests.html#SiteOneTests"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests" title="mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseCrawlerTests</span></code></a></p>
-<p>Test suite for the SiteOne crawler implementation.</p>
+<p>Test suite for the SiteOne crawler implementation.
+Uses all wrapped test methods from BaseCrawlerTests plus SiteOne-specific features.</p>
 <p>Create an instance of the class that will use the named test
 method when executed. Raises a ValueError if the instance does
 not have a method with the specified name.</p>
@@ -224,15 +225,45 @@ not have a method with the specified name.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_siteone_search">
+<span class="sig-name descname"><span class="pre">test_siteone_search</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/siteone/tests.html#SiteOneTests.test_siteone_search"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_siteone_search" title="Link to this definition"></a></dt>
+<dd><p>Test boolean search functionality</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_siteone_resources">
 <span class="sig-name descname"><span class="pre">test_siteone_resources</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/siteone/tests.html#SiteOneTests.test_siteone_resources"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_siteone_resources" title="Link to this definition"></a></dt>
 <dd><p>Test resource retrieval API functionality with various parameters.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_interrobot_images">
+<span class="sig-name descname"><span class="pre">test_interrobot_images</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/siteone/tests.html#SiteOneTests.test_interrobot_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_interrobot_images" title="Link to this definition"></a></dt>
+<dd><p>Test InterroBot-specific image handling and thumbnails.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_siteone_random_sort">
 <span class="sig-name descname"><span class="pre">test_siteone_random_sort</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/siteone/tests.html#SiteOneTests.test_siteone_random_sort"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_siteone_random_sort" title="Link to this definition"></a></dt>
-<dd><p>Test the random sort functionality using the ‘?’ sort parameter.</p>
+<dd><p>Test random sort functionality using the ‘?’ sort parameter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_siteone_content_parsing">
+<span class="sig-name descname"><span class="pre">test_siteone_content_parsing</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/siteone/tests.html#SiteOneTests.test_siteone_content_parsing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_siteone_content_parsing" title="Link to this definition"></a></dt>
+<dd><p>Test content type detection and parsing.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_siteone_advanced_features">
+<span class="sig-name descname"><span class="pre">test_siteone_advanced_features</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/siteone/tests.html#SiteOneTests.test_siteone_advanced_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_siteone_advanced_features" title="Link to this definition"></a></dt>
+<dd><p>Test SiteOne-specific advanced features not covered by base tests.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_report">
+<span class="sig-name descname"><span class="pre">test_report</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/siteone/tests.html#SiteOneTests.test_report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.siteone.tests.SiteOneTests.test_report" title="Link to this definition"></a></dt>
+<dd><p>Test thumbnail generation functionality (InterroBot-specific).</p>
 </dd></dl>
 
 </dd></dl>

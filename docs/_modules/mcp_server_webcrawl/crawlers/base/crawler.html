@@ -190,8 +190,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            The MCP server over stdio</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># awaiting on caller end as well, but if not awaiting here</span>
-        <span class="c1"># RuntimeWarning: coroutine &#39;Server.run&#39; was never awaited (serial)</span>
         <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">stdin</span><span class="p">,</span> <span class="n">stdout</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_initialization_options</span><span class="p">())</span></div>
 
 

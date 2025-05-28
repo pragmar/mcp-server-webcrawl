@@ -80,9 +80,9 @@
 <span class="kn">import</span> <span class="nn">mcp_server_webcrawl.settings</span> <span class="k">as</span> <span class="nn">settings</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.settings</span> <span class="kn">import</span> <span class="n">DEBUG</span><span class="p">,</span> <span class="n">DATA_DIRECTORY</span>
 
-<span class="n">DEFAULT_LOG_KEY</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;mcp_server_webcrawler&quot;</span>
-<span class="n">DEFAULT_LOG_PATH</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">DATA_DIRECTORY</span> <span class="o">/</span> <span class="s2">&quot;mcp_server_log.txt&quot;</span>
-<span class="n">DEFAULT_LOG_LEVEL</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">NOTSET</span>
+<span class="n">DEFAULT_LOG_KEY</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;mcp-server-webcrawl&quot;</span>
+<span class="n">DEFAULT_LOG_PATH</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">DATA_DIRECTORY</span> <span class="o">/</span> <span class="s2">&quot;mcp-server-webcrawl.log&quot;</span>
+<span class="n">DEFAULT_LOG_LEVEL</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span>
 
 <div class="viewcode-block" id="get_logger_configuration">
 <a class="viewcode-back" href="../../../mcp_server_webcrawl.utils.html#mcp_server_webcrawl.utils.logger.get_logger_configuration">[docs]</a>
@@ -99,7 +99,6 @@
 
     <span class="n">log_level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span> <span class="k">if</span> <span class="n">DEBUG</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="s2">&quot;LOG_LEVEL&quot;</span><span class="p">,</span> <span class="n">DEFAULT_LOG_LEVEL</span><span class="p">)</span>
     <span class="n">log_path</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="s2">&quot;LOG_PATH&quot;</span><span class="p">,</span> <span class="n">DEFAULT_LOG_PATH</span><span class="p">)</span>
-
     <span class="k">return</span> <span class="p">(</span><span class="n">DEFAULT_LOG_KEY</span><span class="p">,</span> <span class="n">log_path</span><span class="p">,</span> <span class="n">log_level</span><span class="p">)</span></div>
 
 

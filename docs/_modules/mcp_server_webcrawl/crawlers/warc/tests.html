@@ -75,18 +75,21 @@
   <h1>Source code for mcp_server_webcrawl.crawlers.warc.tests</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.warc.crawler</span> <span class="kn">import</span> <span class="n">WarcCrawler</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.warc.adapter</span> <span class="kn">import</span> <span class="n">WarcManager</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">ResourceResultType</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.tests</span> <span class="kn">import</span> <span class="n">BaseCrawlerTests</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers</span> <span class="kn">import</span> <span class="n">get_fixture_directory</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
 
-<span class="n">EXAMPLE_WARC_ID</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">WarcManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="s2">&quot;example.com.warc.txt&quot;</span><span class="p">)</span>
-<span class="n">PRAGMAR_WARC_ID</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span>  <span class="n">WarcManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="s2">&quot;pragmar.com.warc.txt&quot;</span><span class="p">)</span> <span class="c1"># 50126081961606</span>
+<span class="n">EXAMPLE_WARC_ID</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">WarcManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="s2">&quot;example.warc.gz&quot;</span><span class="p">)</span>
+<span class="n">PRAGMAR_WARC_ID</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">WarcManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="s2">&quot;pragmar.warc.gz&quot;</span><span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
 
 <div class="viewcode-block" id="WarcTests">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.tests.WarcTests">[docs]</a>
 <span class="k">class</span> <span class="nc">WarcTests</span><span class="p">(</span><span class="n">BaseCrawlerTests</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test suite for the WARC crawler implementation.</span>
+<span class="sd">    Uses all wrapped test methods from BaseCrawlerTests.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="WarcTests.setUp">
@@ -106,7 +109,8 @@
 <span class="sd">        Test basic crawler initialization.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">crawler</span> <span class="o">=</span> <span class="n">WarcCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">crawler</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">crawler</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="o">.</span><span class="n">is_dir</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="WarcTests.test_warc_sites">
@@ -116,15 +120,17 @@
 <span class="sd">        Test site retrieval API functionality.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">crawler</span> <span class="o">=</span> <span class="n">WarcCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
-        <span class="n">sites_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">sites_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="n">site_one_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="n">EXAMPLE_WARC_ID</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">site_one_json</span><span class="o">.</span><span class="n">total</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_pragmar_site_tests</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">PRAGMAR_WARC_ID</span><span class="p">)</span></div>
 
-        <span class="n">pragmar_field_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_WARC_ID</span><span class="p">],</span> <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="s2">&quot;modified&quot;</span><span class="p">])</span>
-        <span class="n">pragmar_field_result</span> <span class="o">=</span> <span class="n">pragmar_field_json</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="s2">&quot;created&quot;</span> <span class="ow">in</span> <span class="n">pragmar_field_result</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="s2">&quot;modified&quot;</span> <span class="ow">in</span> <span class="n">pragmar_field_result</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WarcTests.test_warc_search">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_warc_search">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_warc_search</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test boolean search functionality</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">crawler</span> <span class="o">=</span> <span class="n">WarcCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_pragmar_search_tests</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">PRAGMAR_WARC_ID</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="WarcTests.test_warc_resources">
@@ -134,136 +140,47 @@
 <span class="sd">        Test resource retrieval API functionality with various parameters.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">crawler</span> <span class="o">=</span> <span class="n">WarcCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_sites_resources_tests</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">PRAGMAR_WARC_ID</span><span class="p">,</span> <span class="n">EXAMPLE_WARC_ID</span><span class="p">)</span></div>
 
-        <span class="c1"># basic resource retrieval with default parameters</span>
-        <span class="n">resources_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">resources_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
 
-        <span class="c1"># query parameter (search for specific content)</span>
-        <span class="n">query_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_WARC_ID</span><span class="p">],</span> <span class="n">query</span><span class="o">=</span><span class="s2">&quot;appstat&quot;</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">query_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Search query should return results&quot;</span><span class="p">)</span>
+    <span class="c1"># pragmar WARC fixture legit contains no images</span>
+    <span class="c1"># may be default behavior of wget WARC gen, not sure</span>
+    <span class="c1"># this is a blind spot</span>
+    <span class="c1"># def test_interrobot_images(self):</span>
+    <span class="c1">#     &quot;&quot;&quot;</span>
+    <span class="c1">#     Test InterroBot-specific image handling and thumbnails.</span>
+    <span class="c1">#     &quot;&quot;&quot;</span>
+    <span class="c1">#     crawler = WarcCrawler(self._datasrc)</span>
+    <span class="c1">#     self.run_pragmar_image_tests(crawler, PRAGMAR_WARC_ID)</span>
 
-        <span class="c1"># ensure the term exists somewhere in the resource data - could be URL, content, headers, etc.</span>
-        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">query_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
-            <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-            <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
-            <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">resource_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;appstat&quot;</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
-                    <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
-                    <span class="k">break</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">found</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Search term not found in any field of resource </span><span class="si">{</span><span class="n">resource</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="WarcTests.test_warc_random_sort">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_warc_random_sort">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_warc_random_sort</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test random sort functionality using the &#39;?&#39; sort parameter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">crawler</span> <span class="o">=</span> <span class="n">WarcCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_pragmar_sort_tests</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">PRAGMAR_WARC_ID</span><span class="p">)</span></div>
 
-        <span class="c1"># retrieving resources by specific ids</span>
-        <span class="k">if</span> <span class="n">resources_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">first_id</span> <span class="o">=</span> <span class="n">resources_json</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
-            <span class="n">id_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
-                <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_WARC_ID</span><span class="p">],</span>
-                <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;id: </span><span class="si">{</span><span class="n">first_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">id_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">id_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">first_id</span><span class="p">)</span>
 
-        <span class="c1"># site filtering</span>
-        <span class="n">site_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_WARC_ID</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">site_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Site filtering should return results&quot;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">site_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">site</span><span class="p">,</span> <span class="n">PRAGMAR_WARC_ID</span><span class="p">)</span>
+<div class="viewcode-block" id="WarcTests.test_warc_content_parsing">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_warc_content_parsing">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_warc_content_parsing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test content type detection and parsing for WARC files.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">crawler</span> <span class="o">=</span> <span class="n">WarcCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_pragmar_content_tests</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">PRAGMAR_WARC_ID</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span></div>
 
-        <span class="c1"># type filtering for HTML pages</span>
-        <span class="n">html_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
-            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_WARC_ID</span><span class="p">],</span>
-            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">html_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;HTML filtering should return results&quot;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">html_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">)</span>
 
-        <span class="c1"># custom fields in response</span>
-        <span class="n">custom_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">]</span>
-        <span class="n">field_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_WARC_ID</span><span class="p">],</span> <span class="n">fields</span><span class="o">=</span><span class="n">custom_fields</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">field_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">field_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">custom_fields</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">resource_dict</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Field &#39;</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">&#39; should be in response&quot;</span><span class="p">)</span>
-
-        <span class="c1"># sorting (ascending and descending)</span>
-        <span class="n">asc_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_WARC_ID</span><span class="p">],</span> <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;+url&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">asc_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">asc_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">url</span> <span class="o">&lt;=</span> <span class="n">asc_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
-
-        <span class="n">desc_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_WARC_ID</span><span class="p">],</span> <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;-url&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">desc_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">desc_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">url</span> <span class="o">&gt;=</span> <span class="n">desc_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
-
-        <span class="n">limit_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_WARC_ID</span><span class="p">],</span> <span class="n">limit</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">limit_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">)</span>
-
-        <span class="n">offset_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_WARC_ID</span><span class="p">],</span> <span class="n">offset</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">offset_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">resources_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">4</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span>
-                <span class="n">resources_json</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-                <span class="n">offset_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-                <span class="s2">&quot;Offset results should differ from first page&quot;</span>
-            <span class="p">)</span>
-
-        <span class="c1"># single field filtering</span>
-        <span class="n">status_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
-            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_WARC_ID</span><span class="p">],</span>
-            <span class="n">query</span><span class="o">=</span><span class="s2">&quot;status: 200&quot;</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">status_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Status filtering should return results&quot;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">status_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
-
-        <span class="c1"># combined filtering</span>
-        <span class="n">combined_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
-            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_WARC_ID</span><span class="p">],</span>
-            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;privacy AND type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">],</span>
-            <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;+url&quot;</span><span class="p">,</span>
-            <span class="n">limit</span><span class="o">=</span><span class="mi">3</span>
-        <span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">combined_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">combined_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">site</span><span class="p">,</span> <span class="n">PRAGMAR_WARC_ID</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">)</span>
-                <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="n">resource_dict</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;headers&quot;</span><span class="p">,</span> <span class="n">resource_dict</span><span class="p">)</span>
-
-        <span class="c1"># multisite</span>
-        <span class="n">multisite_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
-            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">EXAMPLE_WARC_ID</span><span class="p">,</span> <span class="n">PRAGMAR_WARC_ID</span><span class="p">],</span>
-            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;+url&quot;</span><span class="p">,</span>
-            <span class="n">limit</span><span class="o">=</span><span class="mi">100</span>
-        <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">multisite_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Multi-site search should return results&quot;</span><span class="p">)</span>
-
-        <span class="c1"># track which sites we find results from</span>
-        <span class="n">found_sites</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">multisite_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
-            <span class="n">found_sites</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">site</span><span class="p">)</span>
-
-        <span class="c1"># verify we got results from both sites</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">found_sites</span><span class="p">),</span>
-            <span class="mi">2</span><span class="p">,</span>
-            <span class="s2">&quot;Should have results from both sites&quot;</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span>
-            <span class="n">EXAMPLE_WARC_ID</span><span class="p">,</span>
-            <span class="n">found_sites</span><span class="p">,</span>
-            <span class="s2">&quot;Should have results from example.com&quot;</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span>
-            <span class="n">PRAGMAR_WARC_ID</span><span class="p">,</span>
-            <span class="n">found_sites</span><span class="p">,</span>
-            <span class="s2">&quot;Should have results from pragmar.com&quot;</span>
-        <span class="p">)</span></div>
+<div class="viewcode-block" id="WarcTests.test_report">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_report">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test thumbnail generation functionality (InterroBot-specific).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">crawler</span> <span class="o">=</span> <span class="n">WarcCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_pragmar_report</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">PRAGMAR_WARC_ID</span><span class="p">,</span> <span class="s2">&quot;WARC&quot;</span><span class="p">))</span></div>
 </div>
 
 </pre></div>

@@ -369,7 +369,8 @@ suitable for a database primary key.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.adapter.BaseManager.decruft_path">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">decruft_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/adapter.html#BaseManager.decruft_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.adapter.BaseManager.decruft_path" title="Link to this definition"></a></dt>
-<dd><p>Very light touch cleanup of wget file naming, these tmps are creating noise</p>
+<dd><p>Very light touch cleanup of file naming, these tmps are creating noise
+and extensions are useful in classifying resources</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p>
@@ -950,6 +951,121 @@ not have a method with the specified name.</p>
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.setUp">
 <span class="sig-name descname"><span class="pre">setUp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/tests.html#BaseCrawlerTests.setUp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.setUp" title="Link to this definition"></a></dt>
 <dd><p>Hook method for setting up the test fixture before exercising it.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_search_tests">
+<span class="sig-name descname"><span class="pre">run_pragmar_search_tests</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crawler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/tests.html#BaseCrawlerTests.run_pragmar_search_tests"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_search_tests" title="Link to this definition"></a></dt>
+<dd><p>Run a battery of database checks on the crawler and Boolean validation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>crawler</strong> (<a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler" title="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler"><em>BaseCrawler</em></a>) – </p></li>
+<li><p><strong>site_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_image_tests">
+<span class="sig-name descname"><span class="pre">run_pragmar_image_tests</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crawler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pragmar_site_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/tests.html#BaseCrawlerTests.run_pragmar_image_tests"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_image_tests" title="Link to this definition"></a></dt>
+<dd><p>Test InterroBot-specific image handling and thumbnails.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>crawler</strong> (<a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler" title="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler"><em>BaseCrawler</em></a>) – </p></li>
+<li><p><strong>pragmar_site_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_sites_resources_tests">
+<span class="sig-name descname"><span class="pre">run_sites_resources_tests</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crawler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pragmar_site_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_site_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/tests.html#BaseCrawlerTests.run_sites_resources_tests"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_sites_resources_tests" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>crawler</strong> (<a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler" title="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler"><em>BaseCrawler</em></a>) – </p></li>
+<li><p><strong>pragmar_site_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+<li><p><strong>example_site_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_tokenizer_tests">
+<span class="sig-name descname"><span class="pre">run_pragmar_tokenizer_tests</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crawler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/tests.html#BaseCrawlerTests.run_pragmar_tokenizer_tests"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_tokenizer_tests" title="Link to this definition"></a></dt>
+<dd><p>fts hyphens and underscores are particularly challenging, thus
+have a dedicated test. these must be configured in multiple places
+including CREATE TABLE … tokenizer, as well as handled by the query
+parser.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>crawler</strong> (<a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler" title="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler"><em>BaseCrawler</em></a>) – </p></li>
+<li><p><strong>site_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_site_tests">
+<span class="sig-name descname"><span class="pre">run_pragmar_site_tests</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crawler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/tests.html#BaseCrawlerTests.run_pragmar_site_tests"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_site_tests" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>crawler</strong> (<a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler" title="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler"><em>BaseCrawler</em></a>) – </p></li>
+<li><p><strong>site_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_sort_tests">
+<span class="sig-name descname"><span class="pre">run_pragmar_sort_tests</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crawler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/tests.html#BaseCrawlerTests.run_pragmar_sort_tests"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_sort_tests" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>crawler</strong> (<a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler" title="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler"><em>BaseCrawler</em></a>) – </p></li>
+<li><p><strong>site_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_content_tests">
+<span class="sig-name descname"><span class="pre">run_pragmar_content_tests</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crawler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">html_leniency</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/tests.html#BaseCrawlerTests.run_pragmar_content_tests"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_content_tests" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>crawler</strong> (<a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler" title="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler"><em>BaseCrawler</em></a>) – </p></li>
+<li><p><strong>site_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+<li><p><strong>html_leniency</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_report">
+<span class="sig-name descname"><span class="pre">run_pragmar_report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crawler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heading</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/base/tests.html#BaseCrawlerTests.run_pragmar_report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests.run_pragmar_report" title="Link to this definition"></a></dt>
+<dd><p>Generate a comprehensive report of all resources for a site.
+Returns a formatted string with counts and URLs by type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>crawler</strong> (<a class="reference internal" href="#mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler" title="mcp_server_webcrawl.crawlers.base.crawler.BaseCrawler"><em>BaseCrawler</em></a>) – </p></li>
+<li><p><strong>site_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+<li><p><strong>heading</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>

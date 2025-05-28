@@ -368,11 +368,13 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">__read_files_contents</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read content from text files with better error handling and encoding detection.&quot;&quot;&quot;</span>
-        <span class="c1">#if resource_type not in [ResourceResultType.PAGE, ResourceResultType.TEXT,</span>
-        <span class="c1">#            ResourceResultType.CSS, ResourceResultType.SCRIPT, ResourceResultType.OTHER]:</span>
-        <span class="c1">#    return None</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read content from text files with better error handling and encoding detection.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
+        <span class="c1"># a null result just means we&#39;re not dealing with the content</span>
+        <span class="c1"># which has been determined to be binary or of unknown format</span>
+        <span class="c1"># we can still maintain a record the URL/headers/whatever as Resource</span>
         <span class="n">null_result</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_path</span><span class="p">,</span> <span class="kc">None</span>
 
         <span class="n">extension</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">file_path</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
@@ -387,7 +389,11 @@
 
         <span class="n">content</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="c1"># errors=&quot;ignore&quot; or &quot;replace&quot; required to read Katana txt files with</span>
+            <span class="c1"># data payloads and still capture url, headers, etc. replace supposedly</span>
+            <span class="c1"># softer touch generally, but not any better for Katana specifically</span>
+            <span class="c1"># as payload will not be stored</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
                 <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
         <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not decode file as UTF-8: </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -435,11 +441,18 @@
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">decruft_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Very light touch cleanup of wget file naming, these tmps are creating noise</span>
+<span class="sd">        Very light touch cleanup of file naming, these tmps are creating noise</span>
+<span class="sd">        and extensions are useful in classifying resources</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># clean path/file from wget modifications we don&#39;t want</span>
         <span class="n">decruftified</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="n">decruftified</span> <span class="o">=</span> <span class="n">decruftified</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="n">decruftified</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[\u00b7·]?\d+\.tmp|\d</span><span class="si">{12}</span><span class="s2">|\.tmp&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">decruftified</span><span class="p">)</span>
+
+        <span class="c1"># clean extension from non alpha</span>
+        <span class="c1"># S1/wget can generate some weird extensions with URL args</span>
+        <span class="c1"># filenames such as main.min.js202505251919</span>
+        <span class="n">decruftified</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\.(\w+)[^\w]*$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;.\1&#39;</span><span class="p">,</span> <span class="n">decruftified</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">decruftified</span></div>
 
 
@@ -535,6 +548,7 @@
         <span class="n">selected_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">RESOURCES_FIELDS_REQUIRED</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">fields</span><span class="p">:</span>
             <span class="n">selected_fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">RESOURCES_DEFAULT_FIELD_MAPPING</span><span class="p">)</span>
+
         <span class="n">safe_sql_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">RESOURCES_DEFAULT_FIELD_MAPPING</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">selected_fields</span><span class="p">]</span>
         <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^[A-Za-z\.]+$&#39;</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">safe_sql_fields</span><span class="p">),</span> <span class="s2">&quot;Unknown or unsafe field requested&quot;</span>
         <span class="n">safe_sql_fields_joined</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">safe_sql_fields</span><span class="p">)</span>
@@ -671,17 +685,22 @@
 
     <span class="k">def</span> <span class="nf">_is_text_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Check if content type represents text.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            content_type: HTTP Content-Type header value</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            True if the content is textual, False otherwise</span>
+<span class="sd">        Check if content should be stored as text. Filter out deadweight content in fts index.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">t</span> <span class="ow">in</span> <span class="n">content_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">[</span>
-            <span class="s2">&quot;text/&quot;</span><span class="p">,</span> <span class="s2">&quot;javascript&quot;</span><span class="p">,</span> <span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="s2">&quot;xml&quot;</span><span class="p">,</span> <span class="s2">&quot;html&quot;</span><span class="p">,</span> <span class="s2">&quot;css&quot;</span>
-        <span class="p">])</span></div>
+        <span class="n">content_type_lower</span> <span class="o">=</span> <span class="n">content_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">content_type_lower</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;text/&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="n">content_type_lower</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">&quot;font/&quot;</span><span class="p">,</span> <span class="s2">&quot;image/&quot;</span><span class="p">,</span> <span class="s2">&quot;audio/&quot;</span><span class="p">,</span> <span class="s2">&quot;video/&quot;</span><span class="p">,</span> <span class="s2">&quot;application/octet-stream&quot;</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">elif</span> <span class="n">content_type_lower</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;application/&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">content_type_lower</span> <span class="ow">in</span> <span class="p">{</span>
+                <span class="s2">&quot;application/atom+xml&quot;</span><span class="p">,</span> <span class="s2">&quot;application/ld+json&quot;</span><span class="p">,</span> <span class="s2">&quot;application/rss+xml&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;application/x-www-form-urlencoded&quot;</span><span class="p">,</span> <span class="s2">&quot;application/xml&quot;</span><span class="p">,</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;application/javascript&quot;</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span></div>
+
 
 </pre></div>
 

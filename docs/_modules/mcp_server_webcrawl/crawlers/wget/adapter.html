@@ -204,7 +204,6 @@
             <span class="n">file_size</span> <span class="o">=</span> <span class="n">file_stat</span><span class="o">.</span><span class="n">st_size</span>
             <span class="n">file_created</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">file_stat</span><span class="o">.</span><span class="n">st_ctime</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
             <span class="n">file_modified</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">file_stat</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
-            <span class="c1"># print(f&quot;{file_path} {file_created} {file_modified}&quot;)</span>
 
             <span class="c1"># use pre-loaded content if available, otherwise rely on read_file_contents</span>
             <span class="n">file_content</span> <span class="o">=</span> <span class="n">content</span>

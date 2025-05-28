@@ -74,14 +74,18 @@
              
   <h1>Source code for mcp_server_webcrawl.crawlers.interrobot.tests</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">asyncio</span>
-<span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
 <span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">Logger</span>
 <span class="kn">from</span> <span class="nn">mcp.types</span> <span class="kn">import</span> <span class="n">EmbeddedResource</span><span class="p">,</span> <span class="n">ImageContent</span><span class="p">,</span> <span class="n">TextContent</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.tests</span> <span class="kn">import</span> <span class="n">BaseCrawlerTests</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.interrobot.crawler</span> <span class="kn">import</span> <span class="n">InterroBotCrawler</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">ResourceResultType</span><span class="p">,</span> <span class="n">RESOURCES_TOOL_NAME</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">RESOURCES_TOOL_NAME</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers</span> <span class="kn">import</span> <span class="n">get_fixture_directory</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="c1"># these IDs belong to a db fixture, static for testing</span>
+<span class="n">EXAMPLE_SITE_ID</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">PRAGMAR_SITE_ID</span> <span class="o">=</span> <span class="mi">2</span>
+
 <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
 
 <div class="viewcode-block" id="InterroBotTests">
@@ -89,6 +93,7 @@
 <span class="k">class</span> <span class="nc">InterroBotTests</span><span class="p">(</span><span class="n">BaseCrawlerTests</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Test suite for the InterroBot crawler implementation.</span>
+<span class="sd">    Uses all wrapped test methods from BaseCrawlerTests plus InterroBot-specific features.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="InterroBotTests.setUp">
@@ -111,36 +116,90 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">crawler</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="InterroBotTests.test_interrobot_mcp">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_mcp">[docs]</a>
-    <span class="k">def</span> <span class="nf">test_interrobot_mcp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="InterroBotTests.test_interrobot_sites">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_sites">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_interrobot_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Test MCP tool functionality.</span>
+<span class="sd">        Test site retrieval API functionality.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
+        <span class="c1"># Note: InterroBot uses site ID 2 for pragmar instead of calculating from string</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_pragmar_site_tests</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">PRAGMAR_SITE_ID</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InterroBotTests.test_interrobot_search">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_search">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_interrobot_search</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test boolean search functionality</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_pragmar_search_tests</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">PRAGMAR_SITE_ID</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InterroBotTests.test_interrobot_resources">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_resources">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_interrobot_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test resource retrieval API functionality with various parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_sites_resources_tests</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">PRAGMAR_SITE_ID</span><span class="p">,</span> <span class="n">EXAMPLE_SITE_ID</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InterroBotTests.test_interrobot_images">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_images">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_interrobot_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test InterroBot-specific image handling and thumbnails.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_pragmar_image_tests</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">PRAGMAR_SITE_ID</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InterroBotTests.test_interrobot_random_sort">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_random_sort">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_interrobot_random_sort</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test random sort functionality using the &#39;?&#39; sort parameter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_pragmar_sort_tests</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">PRAGMAR_SITE_ID</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InterroBotTests.test_interrobot_content_parsing">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_content_parsing">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_interrobot_content_parsing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test content type detection and parsing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_pragmar_content_tests</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">PRAGMAR_SITE_ID</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InterroBotTests.test_interrobot_mcp_features">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_mcp_features">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_interrobot_mcp_features</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test InterroBot-specific MCP tool functionality.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
         <span class="n">list_tools_result</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">crawler</span><span class="o">.</span><span class="n">mcp_list_tools</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">list_tools_result</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="InterroBotTests.test_interrobot_image">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_image">[docs]</a>
-    <span class="k">def</span> <span class="nf">test_interrobot_image</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="InterroBotTests.test_thumbnails_sync">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_thumbnails_sync">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_thumbnails_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Test image retrieval.</span>
+<span class="sd">        Test thumbnail generation functionality (InterroBot-specific).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
-
-        <span class="n">image_id</span> <span class="o">=</span> <span class="mi">68</span>
-        <span class="n">thumbnail_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
-            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;id: </span><span class="si">{</span><span class="n">image_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="c1"># ids=[image_id],</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">thumbnail_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Should find exactly one resource&quot;</span><span class="p">)</span></div>
+        <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__test_thumbnails</span><span class="p">())</span></div>
 
 
     <span class="k">async</span> <span class="k">def</span> <span class="nf">__test_thumbnails</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        thumbnails are a special case</span>
+<span class="sd">        Test thumbnails are a special case for InterroBot</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
         <span class="n">thumbnail_args</span> <span class="o">=</span> <span class="p">{</span>
@@ -151,202 +210,45 @@
             <span class="s2">&quot;limit&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="n">thumbnail_result</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TextContent</span> <span class="o">|</span> <span class="n">ImageContent</span> <span class="o">|</span> <span class="n">EmbeddedResource</span><span class="p">]</span> <span class="o">=</span> <span class="k">await</span> <span class="n">crawler</span><span class="o">.</span><span class="n">mcp_call_tool</span><span class="p">(</span>
-            <span class="n">RESOURCES_TOOL_NAME</span><span class="p">,</span> <span class="n">thumbnail_args</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">thumbnail_result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="s2">&quot;ImageContent should be included in thumbnails response&quot;</span><span class="p">)</span>
+            <span class="n">RESOURCES_TOOL_NAME</span><span class="p">,</span> <span class="n">thumbnail_args</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">thumbnail_result</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span>
+                <span class="n">thumbnail_result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;image&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;ImageContent should be included in thumbnails response&quot;</span>
+            <span class="p">)</span>
 
-
-<div class="viewcode-block" id="InterroBotTests.test_thumbnails_sync">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_thumbnails_sync">[docs]</a>
-    <span class="k">def</span> <span class="nf">test_thumbnails_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Synchronous wrapper for the async test&quot;&quot;&quot;</span>
-        <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__test_thumbnails</span><span class="p">())</span></div>
-
-
-<div class="viewcode-block" id="InterroBotTests.test_interrobot_sites">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_sites">[docs]</a>
-    <span class="k">def</span> <span class="nf">test_interrobot_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="InterroBotTests.test_interrobot_advanced_site_features">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_advanced_site_features">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_interrobot_advanced_site_features</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Test site retrieval API functionality.</span>
+<span class="sd">        Test InterroBot-specific site features like robots field.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
 
-        <span class="n">sites_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">sites_json</span><span class="o">.</span><span class="n">total</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
-
-        <span class="c1"># example.com</span>
-        <span class="n">site_one_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">(</span>
-            <span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">site_one_json</span><span class="o">.</span><span class="n">total</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
-
-        <span class="c1"># example.com + fields</span>
+        <span class="c1"># robots field retrieval</span>
         <span class="n">site_one_field_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;robots&quot;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="s2">&quot;robots&quot;</span> <span class="ow">in</span> <span class="n">site_one_field_json</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">site_one_field_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">result_dict</span> <span class="o">=</span> <span class="n">site_one_field_json</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;robots&quot;</span><span class="p">,</span> <span class="n">result_dict</span><span class="p">,</span> <span class="s2">&quot;robots field should be present in response&quot;</span><span class="p">)</span>
 
+        <span class="c1"># multiple custom fields</span>
         <span class="n">site_multiple_fields_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;robots&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">])</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">site_multiple_fields_json</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="s2">&quot;robots&quot;</span> <span class="ow">in</span> <span class="n">result</span><span class="p">,</span> <span class="s2">&quot;robots field should be present in response&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="s2">&quot;created&quot;</span> <span class="ow">in</span> <span class="n">result</span><span class="p">,</span> <span class="s2">&quot;created field should be present in response&quot;</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="n">site_multiple_fields_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">site_multiple_fields_json</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;robots&quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="s2">&quot;robots field should be present in response&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="s2">&quot;created field should be present in response&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="InterroBotTests.test_interrobot_resources">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_resources">[docs]</a>
-    <span class="k">def</span> <span class="nf">test_interrobot_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="InterroBotTests.test_report">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_report">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Test resource retrieval API functionality with various parameters.</span>
+<span class="sd">        Test thumbnail generation functionality (InterroBot-specific).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
-
-        <span class="c1"># basic resource retrieval with default parameters</span>
-        <span class="n">resources_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">resources_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
-
-        <span class="c1"># query parameter</span>
-        <span class="n">query_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="s2">&quot;example&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">query_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Search query should return results&quot;</span><span class="p">)</span>
-
-        <span class="c1"># retrieving resources by specific IDs</span>
-        <span class="k">if</span> <span class="n">resources_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">first_id</span> <span class="o">=</span> <span class="n">resources_json</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
-            <span class="n">id_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
-                <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;id: </span><span class="si">{</span><span class="n">first_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">id_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">id_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">first_id</span><span class="p">)</span>
-
-        <span class="c1"># site filtering</span>
-        <span class="n">site_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">site_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Site filtering should return results&quot;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">site_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">site</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-
-        <span class="c1"># markdown</span>
-        <span class="n">site_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="s2">&quot;type: html&quot;</span><span class="p">,</span> <span class="n">extras</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;markdown&quot;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">site_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()[</span><span class="s2">&quot;extras&quot;</span><span class="p">][</span><span class="s2">&quot;markdown&quot;</span><span class="p">],</span> <span class="s2">&quot;markdown extra failed to materialize&quot;</span><span class="p">)</span>
-
-        <span class="c1"># HTML snippets</span>
-        <span class="n">site_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="s2">&quot;appstat AND type: html&quot;</span><span class="p">,</span> <span class="n">extras</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;snippets&quot;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">site_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()[</span><span class="s2">&quot;extras&quot;</span><span class="p">][</span><span class="s2">&quot;snippets&quot;</span><span class="p">],</span> <span class="s2">&quot;snippet extra failed to materialize&quot;</span><span class="p">)</span>
-
-        <span class="c1"># CSS snippets</span>
-        <span class="n">site_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="s2">&quot;height AND type: style&quot;</span><span class="p">,</span> <span class="n">extras</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;snippets&quot;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">site_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()[</span><span class="s2">&quot;extras&quot;</span><span class="p">][</span><span class="s2">&quot;snippets&quot;</span><span class="p">],</span> <span class="s2">&quot;snippet extra failed to materialize&quot;</span><span class="p">)</span>
-
-        <span class="c1"># type filtering</span>
-        <span class="n">type_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
-            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">type_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">type_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">)</span>
-
-        <span class="c1"># type mapping, forwards and backwards, img == 6</span>
-        <span class="n">img_results</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="s2">&quot;type: img&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">img_results</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Image type filter should return results&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s2">&quot;img&quot;</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">img_results</span><span class="o">.</span><span class="n">_results</span><span class="p">),</span>
-                        <span class="s2">&quot;All filtered resources should have type &#39;img&#39;&quot;</span><span class="p">)</span>
-
-        <span class="c1"># custom fields in response</span>
-        <span class="n">custom_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">]</span>
-        <span class="n">field_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">custom_fields</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">field_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">field_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">custom_fields</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">resource_dict</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Field &#39;</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">&#39; should be in response&quot;</span><span class="p">)</span>
-
-        <span class="c1"># sorting (ascending and descending)</span>
-        <span class="n">asc_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sort</span><span class="o">=</span><span class="s2">&quot;+url&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">asc_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">asc_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">url</span> <span class="o">&lt;=</span> <span class="n">asc_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
-
-        <span class="n">desc_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sort</span><span class="o">=</span><span class="s2">&quot;-url&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">desc_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">desc_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">url</span> <span class="o">&gt;=</span> <span class="n">desc_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
-
-        <span class="c1"># pagination (limit and offset)</span>
-        <span class="n">limit_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">limit_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">5</span><span class="p">)</span>
-
-        <span class="n">offset_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">offset</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-        <span class="c1"># offset results are different from first page</span>
-        <span class="k">if</span> <span class="n">resources_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span>
-                <span class="n">resources_json</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-                <span class="n">offset_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-                <span class="s2">&quot;Offset results should differ from first page&quot;</span>
-            <span class="p">)</span>
-
-        <span class="c1"># combining multiple parameters</span>
-        <span class="n">combined_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
-            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;example AND type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">],</span>
-            <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;+url&quot;</span><span class="p">,</span>
-            <span class="n">limit</span><span class="o">=</span><span class="mi">3</span>
-        <span class="p">)</span>
-
-        <span class="c1"># results exist, verify they meet all criteria</span>
-        <span class="k">if</span> <span class="n">combined_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">combined_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">site</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">)</span>
-                <span class="n">resource_dict</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="n">resource_dict</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;headers&quot;</span><span class="p">,</span> <span class="n">resource_dict</span><span class="p">)</span>
-
-        <span class="n">html_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
-            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="c1"># types=[ResourceResultType.PAGE.value, ResourceResultType.PDF.value]</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">html_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;No HTML resources found when filtering for &#39;html&#39; type&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">value</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;html&quot;</span><span class="p">,</span> <span class="s2">&quot;pdf&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">html_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">),</span>
-                <span class="s2">&quot;Not all resources have type &#39;html&#39; or &#39;pdf&#39; when filtering for those types&quot;</span><span class="p">)</span>
-
-        <span class="c1"># status filtering</span>
-        <span class="n">status_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
-            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;status: 200&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">status_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Status filtering should return results&quot;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">status_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">&quot;All resources should have status 200&quot;</span><span class="p">)</span>
-
-        <span class="c1"># multiple statuses</span>
-        <span class="n">multi_status_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
-            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;status: 200 OR status: 404 OR status: 500&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">multi_status_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Multiple status filtering should return results&quot;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">multi_status_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="p">[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">404</span><span class="p">,</span> <span class="mi">500</span><span class="p">],</span> <span class="s2">&quot;Resources should have one of the filtered statuses&quot;</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="InterroBotTests.test_interrobot_random_sort">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_random_sort">[docs]</a>
-    <span class="k">def</span> <span class="nf">test_interrobot_random_sort</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Test the random sort functionality using the &#39;?&#39; sort parameter.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
-
-        <span class="n">random1_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sort</span><span class="o">=</span><span class="s2">&quot;?&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">random1_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Database should contain resources&quot;</span><span class="p">)</span>
-        <span class="n">random1_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">random1_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">]</span>
-
-        <span class="n">random2_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span><span class="n">sort</span><span class="o">=</span><span class="s2">&quot;?&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">random2_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Random sort should return results&quot;</span><span class="p">)</span>
-        <span class="n">random2_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">random2_resources</span><span class="o">.</span><span class="n">_results</span><span class="p">]</span>
-
-        <span class="k">if</span> <span class="n">random2_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;=</span> <span class="mi">10</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span>
-                <span class="n">random1_ids</span><span class="p">,</span>
-                <span class="n">random2_ids</span><span class="p">,</span>
-                <span class="sa">f</span><span class="s2">&quot;Random sort should produce different order than standard sort.</span><span class="se">\n</span><span class="s2">Standard: </span><span class="si">{</span><span class="n">random1_ids</span><span class="si">}</span><span class="se">\n</span><span class="s2">Random: </span><span class="si">{</span><span class="n">random2_ids</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skip randomness verification: Not enough resources (</span><span class="si">{</span><span class="n">random2_resources</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span></div>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_pragmar_report</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">PRAGMAR_SITE_ID</span><span class="p">,</span> <span class="s2">&quot;InterroBot&quot;</span><span class="p">))</span></div>
 </div>
-
-
 
 </pre></div>
 

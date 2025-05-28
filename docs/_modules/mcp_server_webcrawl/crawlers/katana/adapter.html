@@ -153,6 +153,9 @@
                 <span class="n">batch_file_contents</span> <span class="o">=</span> <span class="n">BaseManager</span><span class="o">.</span><span class="n">read_files</span><span class="p">(</span><span class="n">batch_file_paths</span><span class="p">)</span>
                 <span class="n">batch_insert_resource_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">for</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">content</span> <span class="ow">in</span> <span class="n">batch_file_contents</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="c1"># avoid readme in repo, katana crawl files should be named 9080ef8...</span>
+                    <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;readme.txt&quot;</span><span class="p">):</span>
+                        <span class="k">continue</span>
                     <span class="k">try</span><span class="p">:</span>
                         <span class="n">record</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_katana_record</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
                         <span class="k">if</span> <span class="n">record</span><span class="p">:</span>

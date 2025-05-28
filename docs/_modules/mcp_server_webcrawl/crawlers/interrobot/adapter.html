@@ -77,16 +77,13 @@
 <span class="kn">import</span> <span class="nn">sqlite3</span>
 <span class="kn">import</span> <span class="nn">traceback</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">closing</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">Logger</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
 
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.adapter</span> <span class="kn">import</span> <span class="n">IndexState</span><span class="p">,</span> <span class="n">IndexStatus</span><span class="p">,</span> <span class="n">BaseManager</span><span class="p">,</span> <span class="n">SitesGroup</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.indexed</span> <span class="kn">import</span> <span class="n">IndexedManager</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ResourceResult</span><span class="p">,</span>
-    <span class="n">ResourceResultType</span><span class="p">,</span>
     <span class="n">RESOURCES_LIMIT_DEFAULT</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -120,19 +117,7 @@
     <span class="s2">&quot;robots&quot;</span><span class="p">:</span> <span class="s2">&quot;Project.RobotsText&quot;</span><span class="p">,</span>
 <span class="p">}</span>
 
-<span class="c1"># maybe dedupe with near match INDEXED version</span>
-<span class="c1"># INTERROBOT_SORT_MAPPING: Final[dict[str, tuple[str, str]]] = {</span>
-<span class="c1">#     &quot;+id&quot;: (&quot;ResourcesFullText.Id&quot;, &quot;ASC&quot;),</span>
-<span class="c1">#     &quot;-id&quot;: (&quot;ResourcesFullText.Id&quot;, &quot;DESC&quot;),</span>
-<span class="c1">#     &quot;+url&quot;: (&quot;ResourcesFullText.Url&quot;, &quot;ASC&quot;),</span>
-<span class="c1">#     &quot;-url&quot;: (&quot;ResourcesFullText.Url&quot;, &quot;DESC&quot;),</span>
-<span class="c1">#     &quot;+status&quot;: (&quot;ResourcesFullText.Status&quot;, &quot;ASC&quot;),</span>
-<span class="c1">#     &quot;-status&quot;: (&quot;ResourcesFullText.Status&quot;, &quot;DESC&quot;),</span>
-<span class="c1">#     &quot;?&quot;: (&quot;ResourcesFullText.Id&quot;, &quot;?&quot;),</span>
-<span class="c1"># }</span>
-
 <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
-
 
 <div class="viewcode-block" id="InterroBotManager">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.adapter.InterroBotManager">[docs]</a>

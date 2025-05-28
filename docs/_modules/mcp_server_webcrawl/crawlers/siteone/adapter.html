@@ -247,7 +247,7 @@
                     <span class="k">try</span><span class="p">:</span>
                         <span class="n">result</span><span class="p">:</span> <span class="n">ResourceResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_siteone_record</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span>
                                 <span class="n">site_id</span><span class="p">,</span> <span class="n">directory</span><span class="p">,</span> <span class="n">log_data</span><span class="p">,</span> <span class="n">file_contents</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">file_path</span><span class="p">))</span>
-                        <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">result</span> <span class="ow">and</span> <span class="n">result</span><span class="o">.</span><span class="n">url</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">processed_urls</span><span class="p">:</span>
                             <span class="n">batch_insert_crawled</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
                             <span class="n">processed_urls</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
                             <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -326,11 +326,11 @@
             <span class="c1"># look up metadata from log if available, otherwise use defaults</span>
             <span class="n">metadata</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="n">wget_aliases</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span>
-                <span class="n">url</span><span class="p">,</span>
-                <span class="n">url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;index.html&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-                <span class="n">url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.html&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">),</span>
-                <span class="n">url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.html&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-                <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">wget_static_pattern</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+                <span class="n">url</span><span class="p">,</span>                                   <span class="c1"># exact match first</span>
+                <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">wget_static_pattern</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">),</span> <span class="c1"># static pattern</span>
+                <span class="n">url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.html&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>              <span class="c1"># file without extension (redirects)</span>
+                <span class="n">url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.html&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">),</span>             <span class="c1"># directory style (targets)</span>
+                <span class="n">url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;index.html&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>         <span class="c1"># index removal</span>
             <span class="p">]))</span>
 
             <span class="k">for</span> <span class="n">wget_alias</span> <span class="ow">in</span> <span class="n">wget_aliases</span><span class="p">:</span>
@@ -338,7 +338,18 @@
                 <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="k">break</span>
 
-            <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># preventing duplicate html pages ./appstat.html and ./appstat/index.html</span>
+                <span class="c1"># prefer index.html (actual content) over redirect stubs</span>
+                <span class="n">canonical_url</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="c1"># Sort aliases to prefer index.html files over redirect stubs</span>
+                <span class="n">sorted_aliases</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">alias</span> <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">wget_aliases</span> <span class="k">if</span> <span class="n">log_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">alias</span><span class="p">)</span> <span class="o">==</span> <span class="n">metadata</span><span class="p">],</span>
+                                    <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;index.html&#39;</span><span class="p">),</span> <span class="n">x</span><span class="p">))</span>
+
+                <span class="k">if</span> <span class="n">sorted_aliases</span><span class="p">:</span>
+                    <span class="n">canonical_url</span> <span class="o">=</span> <span class="n">sorted_aliases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Take the preferred one</span>
+                    <span class="n">url</span> <span class="o">=</span> <span class="n">canonical_url</span>
+            <span class="k">else</span><span class="p">:</span>
                 <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
 
             <span class="n">status_code</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
@@ -346,7 +357,8 @@
             <span class="n">log_type</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
             <span class="k">if</span> <span class="n">log_type</span><span class="p">:</span>
-                <span class="c1"># no type for redirects, but more often than not pages</span>
+                <span class="c1"># no type for redirects, but more often than not</span>
+                <span class="c1"># redirection to another page</span>
                 <span class="n">type_mapping</span> <span class="o">=</span> <span class="p">{</span>
                     <span class="s2">&quot;html&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
                     <span class="s2">&quot;redirect&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
@@ -367,6 +379,10 @@
             <span class="n">file_content</span> <span class="o">=</span> <span class="n">content</span>
             <span class="k">if</span> <span class="n">file_content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">file_content</span> <span class="o">=</span> <span class="n">BaseManager</span><span class="o">.</span><span class="n">read_file_contents</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">resource_type</span><span class="p">)</span>
+
+            <span class="c1"># skip redirect stub files left in SiteOne archive (duplicate, wait for real content)</span>
+            <span class="k">if</span> <span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span> <span class="ow">and</span> <span class="n">file_content</span> <span class="ow">and</span> <span class="s1">&#39;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0&#39;</span> <span class="ow">in</span> <span class="n">file_content</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
 
             <span class="n">record</span> <span class="o">=</span> <span class="n">ResourceResult</span><span class="p">(</span>
                 <span class="nb">id</span><span class="o">=</span><span class="n">BaseManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="n">url</span><span class="p">),</span>
@@ -444,9 +460,6 @@
     <span class="n">site_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">site</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">sites_results</span><span class="p">]</span>
     <span class="n">sites_group</span> <span class="o">=</span> <span class="n">SitesGroup</span><span class="p">(</span><span class="n">datasrc</span><span class="p">,</span> <span class="n">sites</span><span class="p">,</span> <span class="n">site_paths</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">manager</span><span class="o">.</span><span class="n">get_resources_for_sites_group</span><span class="p">(</span><span class="n">sites_group</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">sort</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span></div>
-
-
-
 
 </pre></div>
 

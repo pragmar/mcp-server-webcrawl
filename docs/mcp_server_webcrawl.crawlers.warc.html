@@ -196,7 +196,8 @@ Supported file types: .txt, .warc, and .warc.gz</p>
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.warc.tests.WarcTests">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">WarcTests</span></span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/warc/tests.html#WarcTests"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.warc.tests.WarcTests" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests" title="mcp_server_webcrawl.crawlers.base.tests.BaseCrawlerTests"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseCrawlerTests</span></code></a></p>
-<p>Test suite for the WARC crawler implementation.</p>
+<p>Test suite for the WARC crawler implementation.
+Uses all wrapped test methods from BaseCrawlerTests.</p>
 <p>Create an instance of the class that will use the named test
 method when executed. Raises a ValueError if the instance does
 not have a method with the specified name.</p>
@@ -219,9 +220,33 @@ not have a method with the specified name.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_warc_search">
+<span class="sig-name descname"><span class="pre">test_warc_search</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/warc/tests.html#WarcTests.test_warc_search"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_warc_search" title="Link to this definition"></a></dt>
+<dd><p>Test boolean search functionality</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_warc_resources">
 <span class="sig-name descname"><span class="pre">test_warc_resources</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/warc/tests.html#WarcTests.test_warc_resources"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_warc_resources" title="Link to this definition"></a></dt>
 <dd><p>Test resource retrieval API functionality with various parameters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_warc_random_sort">
+<span class="sig-name descname"><span class="pre">test_warc_random_sort</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/warc/tests.html#WarcTests.test_warc_random_sort"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_warc_random_sort" title="Link to this definition"></a></dt>
+<dd><p>Test random sort functionality using the ‘?’ sort parameter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_warc_content_parsing">
+<span class="sig-name descname"><span class="pre">test_warc_content_parsing</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/warc/tests.html#WarcTests.test_warc_content_parsing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_warc_content_parsing" title="Link to this definition"></a></dt>
+<dd><p>Test content type detection and parsing for WARC files.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_report">
+<span class="sig-name descname"><span class="pre">test_report</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/crawlers/warc/tests.html#WarcTests.test_report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_report" title="Link to this definition"></a></dt>
+<dd><p>Test thumbnail generation functionality (InterroBot-specific).</p>
 </dd></dl>
 
 </dd></dl>
