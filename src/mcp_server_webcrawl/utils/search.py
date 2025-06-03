@@ -243,26 +243,38 @@ class SearchQueryParser:
         modifiers: list[str] | None = None
     ) -> str:
         """
-        Format a search term based on its type and modifiers.
+        Format a fulltext search term based on type and modifiers. This takes some
+        of the sharp edges of the secondary fts5 parser in conversion.
 
         Args:
             value: The search value
             value_type: Type of value ('term', 'phrase', 'wildcard')
             modifiers: List of modifiers (e.g., ['NOT'])
-            for_sql: Whether this is for SQL parameter (affects formatting)
 
         Returns:
             Formatted search term string
         """
         modifiers = modifiers or []
+        value_string = str(value)
 
-        # based on subquery type
         if value_type == "phrase":
-            return f'"{value.replace("*", " ").strip()}"'
+            return f'"{value_string}"'
         elif value_type == "wildcard":
-            return f'"{value.replace("-", " ")}*"'
-        else:  # term
-            return str(value)
+            # for wildcards, only quote if contains problematic chars
+            if "-" in value_string or " " in value_string:
+                return f'"{value_string}"*'
+            else:
+                return f"{value_string}*"
+        else:
+            # for terms like one-click etc.
+            # avoid confusing the secondary fts parser
+            # which gets confused with hyphens in unquoted matches
+            # despite parameterization
+            if '-' in value_string:
+                return f'"{value_string}"'
+            else:
+                return value_string
+
 
     def __validate_comparator_for_field(self, field: str, comparator: str) -> None:
         """
@@ -494,7 +506,28 @@ class SearchQueryParser:
 
         if isinstance(result, SearchSubquery):
             return [result]
+
         return result
+
+    def __normalize_fulltext_operators(self, parsed_query: list[SearchSubquery]) -> list[SearchSubquery]:
+        """
+        Clean up operators on fulltext sequences so they don't leak into interclause SQL
+        Why? There can only be ONE fulltext MATCH, so the boolean fulltexts must be compressed
+        into one MATCH. If the next clause is status: 200, the last fulltext SearchSubquery
+        requires an operator None so as not to use the last fulltext SearchSubquery op. Basically,
+        this firewalls boolean logic for combined fulltext subqueries. The flagship error of not
+        doing this is to have "this OR that OR there" (aka the three OR problem) return unfiltered
+        or 0 results instead of the appropriate number.
+        """
+        for i in range(len(parsed_query) - 1):
+            current = parsed_query[i]
+            next_item = parsed_query[i + 1]
+
+            # transitioning from fulltext to field search, clear the operator
+            if not current.field and next_item.field:
+                current.operator = None
+
+        return parsed_query
 
     def __build_fulltext_expression(
         self,
@@ -503,7 +536,22 @@ class SearchQueryParser:
         swap_values: dict[str, dict[str, str | int]] = {}
     ) -> dict[str, str | int]:
         """
-        Build a single FTS expression from many fulltext queries with their booleans.
+        Build a single FTS5 expression from multiple fulltext queries with their boolean operators.
+
+        This method exists due to a fundamental SQLite FTS5 limitation: each query can contain
+        at most one MATCH operator per FTS table. We cannot execute:
+            SELECT * FROM docs WHERE docs MATCH 'term1' OR docs MATCH 'term2'
+
+        Instead, combine all fulltext search logic into a single MATCH expression:
+            SELECT * FROM docs WHERE docs MATCH 'term1 OR term2'  -- VALID
+
+        A lossy but necessary concession, we parse boolean queries into
+        individual SearchSubquery objects for structure and validation, then reassemble them
+        back into the complex FTS5 syntax that SQLite requires.
+
+        When FTS5's boolean parsing fails us (0/unfiltered results for valid expressions),
+        the problem isn't our parsing or SQL generation - it's the the conversion to fts5
+        syntax.
 
         Args:
             parsed_query: List of SearchSubquery objects
@@ -511,30 +559,34 @@ class SearchQueryParser:
             swap_values: Dictionary for value replacement
 
         Returns:
-            dict with 'expression', 'next_index' keys
+            dict with 'expression' (the combined FTS5 boolean string) and 'next_index' keys
         """
+
         terms = []
         current_index = start_index
 
+        # note: this modifies subqueries in place
+        parsed_query = self.__normalize_fulltext_operators(parsed_query)
+
         while current_index < len(parsed_query) and not parsed_query[current_index].field:
-            subquery = parsed_query[current_index]
-            processed_value = self.__process_field_value(None, subquery.value, swap_values)
-            formatted_term = self.__format_search_term(processed_value, subquery.type, subquery.modifiers)
+            subquery: SearchSubquery = parsed_query[current_index]
+            processed_value: str | int | float = self.__process_field_value(None, subquery.value, swap_values)
+            formatted_term: str = self.__format_search_term(processed_value, subquery.type, subquery.modifiers)
             terms.append(formatted_term)
-
-            # add operator if not the last term and there's a next term
-            if (current_index < len(parsed_query) - 1 and subquery.operator and current_index + 1 <
-                    len(parsed_query) and not parsed_query[current_index + 1].field):
-                terms.append(subquery.operator)
-
             current_index += 1
+            # if there's a next term and we have an operator
+            if (subquery.operator and current_index < len(parsed_query)):
+                if not parsed_query[current_index].field:
+                    # next term is also fulltext, add the operator and continue
+                    terms.append(subquery.operator)
+                else:
+                    # next term is a field search, stop here
+                    # don't add the operator (it will be handled elsewhere)
+                    break
 
-            # stop if next item is a field search or we've reached the end
-            if current_index >= len(parsed_query) or parsed_query[current_index].field:
-                break
-
+        querystring: str = " ".join(terms) if terms else ""
         return {
-            "expression": " ".join(terms) if terms else "",
+            "expression": querystring,
             "next_index": current_index
         }
 
@@ -614,7 +666,7 @@ class SearchQueryParser:
                 if previous_subquery and previous_subquery.operator:
                     op = previous_subquery.operator
                 else:
-                    op = "AND"  # default
+                    op = "AND" # default
                 query_parts.append(op)
 
         return query_parts, param_manager.get_params()

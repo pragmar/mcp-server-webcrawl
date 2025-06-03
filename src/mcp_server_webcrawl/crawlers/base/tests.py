@@ -63,6 +63,21 @@ class BaseCrawlerTests(unittest.TestCase):
         )
         self.assertTrue(hyphenated_resources.total > 0, f"Keyword '{hyphenated_keyword}' should return results")
 
+        # triple OR bug turns out to be a translation issue condensing to one
+        # fulltext MATCH statement.
+        all_resources = crawler.get_resources_api(
+            sites=[site_id],
+            query="",  # empty query returns all resources
+        )
+        triple_or_resources = crawler.get_resources_api(
+            sites=[site_id],
+            query=f"({primary_keyword} OR {secondary_keyword} OR moffitor)"
+        )
+        self.assertGreater(
+            triple_or_resources.total, 0,
+            f"Triple OR query returned 0 resources instead of filtered subset"
+        )
+
         primary_not_secondary = crawler.get_resources_api(
             sites=[site_id],
             query=f"{primary_keyword} NOT {secondary_keyword}"
@@ -501,8 +516,6 @@ class BaseCrawlerTests(unittest.TestCase):
         self.assertTrue(mcp_resources_keyword.total >= combo_and_resources_keyword.total, "Total records should be greater or equal to ANDs.")
         self.assertTrue(mcp_resources_keyword.total <= combo_or_resources_keyword.total, "Total records should be less than or equal to ORs.")
         self.assertTrue(mcp_resources_keyword.total > combo_not_resources_keyword.total, "Total records should be greater than to NOTs.")
-
-
 
     def run_pragmar_site_tests(self, crawler: BaseCrawler, site_id:int):
 
