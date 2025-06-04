@@ -167,7 +167,7 @@ specific attributes or patterns within crawl data.
 
 ## Content Types
 
-Crawls contain a multitude of resource types beyond HTML pages. The `type:` field search
+Crawls contain resource types beyond HTML pages. The `type:` field search
 allows filtering by broad content type groups, particularly useful when filtering images without complex extension queries.
 For example, you might search for `type: html NOT content: login`
 to find pages without "login," or `type: img` to analyze image resources. The table below lists all
