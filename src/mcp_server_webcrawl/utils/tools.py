@@ -112,7 +112,7 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                         },
                         "description": ("List of additional fields to include in the response beyond the defaults "
                             f"({', '.join(resources_field_options)}). Empty list means default fields only. "
-                            "The content field can lead to large results and should be used judiously with LIMIT.")
+                            "The content field can lead to large results and should be used judiciously with LIMIT.")
                     },
                     "sort": {
                         "type": "string",

@@ -218,3 +218,7 @@ Website speed and optimization analysis. Real talk.
 📁 **File Type Audit** ([`auditfiles.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditfiles.md))
 
 File organization and asset analysis. Discover the composition of your website.
+
+🌐 **Gopher Service** ([`gopher.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/gopher.md))
+
+An old-fashioned search interface inspired by the Gopher clients of yesteryear.
