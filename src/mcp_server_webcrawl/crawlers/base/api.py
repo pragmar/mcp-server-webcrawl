@@ -153,4 +153,4 @@ class BaseJsonApi:
         Returns:
             JSON string representation of the API response
         """
-        return json.dumps(self.to_dict(), indent=2, cls=BaseJsonApiEncoder)
+        return json.dumps(self.to_dict(), indent=1, cls=BaseJsonApiEncoder)

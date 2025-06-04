@@ -63,19 +63,35 @@ class BaseCrawlerTests(unittest.TestCase):
         )
         self.assertTrue(hyphenated_resources.total > 0, f"Keyword '{hyphenated_keyword}' should return results")
 
-        # triple OR bug turns out to be a translation issue condensing to one
-        # fulltext MATCH statement.
+        # 2 ORs, three terms bug turns out to be a translation issue condensing fulltext MATCH statement
         all_resources = crawler.get_resources_api(
             sites=[site_id],
             query="",  # empty query returns all resources
         )
-        triple_or_resources = crawler.get_resources_api(
+        double_or_resources = crawler.get_resources_api(
             sites=[site_id],
             query=f"({primary_keyword} OR {secondary_keyword} OR moffitor)"
         )
         self.assertGreater(
-            triple_or_resources.total, 0,
-            f"Triple OR query returned 0 resources instead of filtered subset"
+            double_or_resources.total, 0,
+            f"OR query should return some results"
+        )
+        self.assertLess(
+            double_or_resources.total, all_resources.total,
+            f"OR query should be less than all results"
+        )
+
+        wide_type_resources = crawler.get_resources_api(
+            sites=[site_id],
+            query=f"type: script OR type: style OR type: iframe OR type: font OR type: text OR type: rss OR type: other"
+        )
+        self.assertLess(
+            wide_type_resources.total, all_resources.total,
+            f"A long chained OR should not return all results"
+        )
+        self.assertGreater(
+            wide_type_resources.total, 0,
+            f"A long chained OR should return some results"
         )
 
         primary_not_secondary = crawler.get_resources_api(

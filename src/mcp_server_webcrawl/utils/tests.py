@@ -166,6 +166,7 @@ class TestSearchQueryParser(unittest.TestCase):
         self.assertEqual(result[0].value, "hello")
         self.assertEqual(result[0].operator, "AND")
         self.assertEqual(result[1].value, "world")
+        self.assertEqual(result[1].operator, None)
 
     def test_complex_parentheses(self):
         """
@@ -179,6 +180,7 @@ class TestSearchQueryParser(unittest.TestCase):
         self.assertEqual(result[1].value, "world")
         self.assertEqual(result[1].operator, "OR")
         self.assertEqual(result[2].value, "planet")
+        self.assertEqual(result[2].operator, None)
 
     def test_mixed_operators(self):
         """
@@ -192,6 +194,7 @@ class TestSearchQueryParser(unittest.TestCase):
         self.assertEqual(result[1].value, "world")
         self.assertEqual(result[1].operator, "OR")
         self.assertEqual(result[2].value, "planet")
+        self.assertEqual(result[2].operator, None)
 
     def test_mixed_with_parentheses(self):
         """
@@ -205,6 +208,7 @@ class TestSearchQueryParser(unittest.TestCase):
         self.assertEqual(result[1].value, "world")
         self.assertEqual(result[1].operator, "OR")
         self.assertEqual(result[2].value, "planet")
+        self.assertEqual(result[2].operator, None)
 
     def test_complex_nested_query(self):
         """
@@ -224,6 +228,7 @@ class TestSearchQueryParser(unittest.TestCase):
         self.assertEqual(result[2].operator, "NOT")
         self.assertEqual(result[3].field, "url")
         self.assertEqual(result[3].value, "example.com")
+        self.assertEqual(result[3].operator, None)
 
     def test_all_features_combined(self):
         """
@@ -232,31 +237,21 @@ class TestSearchQueryParser(unittest.TestCase):
         query = 'content:"critical error" AND (status:500 OR type:html) AND NOT url:example* AND size:1024'
         result: SearchSubquery= self.parser.parse(query)
         self.assertEqual(len(result), 5)
-
-        # subquery (content:"critical error")
         self.assertEqual(result[0].field, "content")
         self.assertEqual(result[0].value, "critical error")
         self.assertEqual(result[0].type, "phrase")
         self.assertEqual(result[0].operator, "AND")
-
-        # subquery (status:500)
         self.assertEqual(result[1].field, "status")
         self.assertEqual(result[1].value, 500)
         self.assertEqual(result[1].operator, "OR")
-
-        # subquery (type:html)
         self.assertEqual(result[2].field, "type")
         self.assertEqual(result[2].value, "html")
         self.assertEqual(result[2].operator, "AND")
-
-        # subquery (NOT url:example*)
         self.assertEqual(result[3].field, "url")
         self.assertEqual(result[3].value, "example")
         self.assertEqual(result[3].type, "wildcard")
         self.assertTrue('NOT' in result[3].modifiers)
         self.assertEqual(result[3].operator, "AND")
-
-        # subquery (size:1024)
         self.assertEqual(result[4].field, "size")
         self.assertEqual(result[4].value, 1024)
         self.assertEqual(result[4].operator, None)
@@ -278,3 +273,25 @@ class TestSearchQueryParser(unittest.TestCase):
         self.assertEqual(len(params), 2)
         self.assertEqual(params["query0"], '"error"')
         self.assertEqual(params["query1"], 404)
+
+    def test_operator_assignment_bug(self):
+        """
+        Test that exposes the double operator assignment bug.
+        Query: "term1 AND term2 OR term3" should create:
+        [term1(op=AND), term2(op=OR), term3(op=None)]
+
+        Were the bug present, term3 would incorrectly get operator == OR
+        """
+        from mcp_server_webcrawl.utils.parser import SearchLexer, SearchParser
+
+        lexer = SearchLexer()
+        parser = SearchParser(lexer)
+        query = "term1 AND term2 OR term3"
+        result = parser.parser.parse(query, lexer=lexer.lexer)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0].value, "term1")
+        self.assertEqual(result[0].operator, "AND")
+        self.assertEqual(result[1].value, "term2")
+        self.assertEqual(result[1].operator, "OR")
+        self.assertEqual(result[2].value, "term3")
+        self.assertEqual(result[2].operator, None)

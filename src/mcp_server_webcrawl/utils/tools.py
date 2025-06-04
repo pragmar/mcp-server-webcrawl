@@ -67,7 +67,7 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                 "retrieves specified fields. "
                 "Supports boolean queries and field searching, along with site filtering to "
                 "filter with fine control. "
-                "To find a site homepage or index of a site, query type: html with sort='+modified' and a limit of 1. "
+                "To find a site homepage or index of a site, query type: html AND url: [site domain] with sort='+url' and a limit of 1. "
                 "Most sites indexed by this tool will be small to moderately sized websites. "
                 "Don't assume most keywords will generate results; start broader on first search (until you have a feel for results). "
                 "A vital aspect of this API is field control; you can open up the limit wide when dealing with lightweight "
