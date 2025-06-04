@@ -12,7 +12,7 @@ Technical search engine optimization analysis. Covers the basics, with options t
 
 ### 🔗 404 Audit ([`audit404.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/audit404.md))
 
-Systematic broken link detection and pattern analysis. Not only finds issues but suggests fixes.
+Systematic broken link detection and pattern analysis. Not only finds issues, but suggests fixes.
 
 ### ⚡ Performance Audit ([`auditperf.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditperf.md))
 
