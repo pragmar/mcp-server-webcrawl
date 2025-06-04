@@ -198,3 +198,23 @@ The `extras` parameter provides additional processing options, transforming resu
 | thumbnails | Generates base64 encoded images to be viewed and analyzed by AI models. Enables image description, content analysis, and visual understanding while keeping token output minimal. Works with images, which can be filtered using `type: img` in queries. SVG is not supported. |
 | markdown | Provides the HTML content field as concise markdown, reducing token usage and improving readability for LLMs. Works with HTML, which can be filtered using `type: html` in queries. |
 | snippets | Matches fulltext queries to contextual keyword usage within the content. When used without requesting the content field (or markdown extra), it can provide an efficient means of refining a search without pulling down the complete page contents. Also great for rendering old school hit-highlighted results as a list, like Google search in 1999. Works with HTML, CSS, JS, or any text-based, crawled file. |
+
+## Specialty Prompts
+
+A collection of prompts for site analysis using mcp-server-webcrawl. The prompts are cut and paste, used as raw markdown. If you want to shorcut the site selection (one less query), paste the prompt, adding "Can you audit [site name or URL]?"
+
+🔍 SEO Audit ([`auditseo.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditseo.md))
+
+Technical search engine optimization analysis. Covers the basics, with options to go deeper.
+
+🔗 404 Audit ([`audit404.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/audit404.md))
+
+Systematic broken link detection and pattern analysis. Not only finds issues but suggests fixes.
+
+⚡ Performance Audit ([`auditperf.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditperf.md))
+
+Website speed and optimization analysis. Real talk.
+
+📁 File Type Audit ([`auditfiles.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditfiles.md))
+
+File organization and asset analysis. Discover the composition of your website.
