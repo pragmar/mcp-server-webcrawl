@@ -205,7 +205,7 @@ A collection of prompts for site analysis using mcp-server-webcrawl. The prompts
 
 🔍 SEO Audit ([`auditseo.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditseo.md))
 
-Technical search engine optimization analysis. Covers the basics, with options to go deeper.
+Technical search engine optimization analysis. Covers the basics, with options to dive deeper.
 
 🔗 404 Audit ([`audit404.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/audit404.md))
 
