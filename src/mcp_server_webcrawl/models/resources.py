@@ -11,7 +11,6 @@ RESOURCES_LIMIT_MAX: Final[int] = 100
 RESOURCE_EXTRAS_ALLOWED: Final[set[str]] = {"markdown", "snippets", "thumbnails"}
 RESOURCES_FIELDS_REQUIRED: Final[list[str]] = ["id", "url", "site", "type", "status"]
 RESOURCES_FIELDS_DEFAULT: Final[list[str]] = RESOURCES_FIELDS_REQUIRED + ["created", "modified"]
-RESOURCES_SORT_OPTIONS_DEFAULT: Final[list[str]] = ["+id", "-id", "+url", "-url", "+status", "-status", "?"]
 RESOURCES_DEFAULT_FIELD_MAPPING: Final[dict[str, str]] = {
     "id": "ResourcesFullText.Id",
     "site": "ResourcesFullText.Project",
@@ -33,6 +32,8 @@ RESOURCES_DEFAULT_SORT_MAPPING: Final[dict[str, tuple[str, str]]] = {
     "-url": ("ResourcesFullText.Url", "DESC"),
     "+status": ("Resources.Status", "ASC"),
     "-status": ("Resources.Status", "DESC"),
+    "+size": ("Resources.Size", "ASC"),
+    "-size": ("Resources.Size", "DESC"),
     "?": ("Resources.Id", "RANDOM")
 }
 

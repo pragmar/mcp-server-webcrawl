@@ -23,7 +23,8 @@ class SearchSubquery:
         type: str,
         modifiers: list[str] | None,
         operator: str | None,
-        comparator: str = "="
+        comparator: str = "=",
+        group: int | None = None,
     ):
         """
         Initialize a SearchSubquery instance.
@@ -42,6 +43,7 @@ class SearchSubquery:
         self.modifiers: list[str] = modifiers or []
         self.operator: str | None = operator or None
         self.comparator: str = comparator
+        self.group: int | None = group
 
     def get_safe_sql_field(self, field: str) -> str:
         if field in RESOURCES_DEFAULT_FIELD_MAPPING:
@@ -66,7 +68,8 @@ class SearchSubquery:
             "type": self.type,
             "modifiers": self.modifiers,
             "operator": self.operator,
-            "comparator": self.comparator
+            "comparator": self.comparator,
+            "group": self.group,
         }
 
 class SearchLexer:
@@ -254,7 +257,18 @@ class SearchParser:
         """
         expression : LPAREN expression RPAREN
         """
-        production[0] = production[2]
+        # production[0] = production[2]
+        expr = production[2]
+        group_id = id(production)  # Unique ID for this parentheses group
+
+        # Mark all subqueries in this expression with the group
+        if isinstance(expr, list):
+            for subquery in expr:
+                subquery.group = group_id
+        else:
+            expr.group = group_id
+
+        production[0] = expr
 
     def p_expression_url_field(self, production: yacc.YaccProduction) -> None:
         """
@@ -360,7 +374,8 @@ class SearchParser:
             type=term.type,
             modifiers=term.modifiers.copy(),
             operator=operator,
-            comparator=term.comparator
+            comparator=term.comparator,
+            group=term.group,
         )
 
     def __process_field_value(

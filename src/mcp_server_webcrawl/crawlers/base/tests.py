@@ -80,6 +80,27 @@ class BaseCrawlerTests(unittest.TestCase):
             double_or_resources.total, all_resources.total,
             f"OR query should be less than all results"
         )
+        parens_or_and_resources = crawler.get_resources_api(
+            sites=[site_id],
+            query=f"({primary_keyword} OR {secondary_keyword}) AND collaborations "
+        )
+        # respect the AND, there should be only one result
+        # (A OR B) AND C vs. A OR B AND C
+        self.assertEqual(
+            parens_or_and_resources.total, 1,
+            f"(A OR B) AND C should be 1 result (AND collaborations, unless fixture changed)"
+        )
+
+        parens_or_and_resources_reverse = crawler.get_resources_api(
+            sites=[site_id],
+            query=f"collaborations AND ({primary_keyword} OR {secondary_keyword}) "
+        )
+        # respect the AND, there should be only one result
+        # (A OR B) AND C vs. A OR B AND C
+        self.assertEqual(
+            parens_or_and_resources_reverse.total, 1,
+            f"A AND (B OR C) should be 1 result (collaborations AND, unless fixture changed)"
+        )
 
         wide_type_resources = crawler.get_resources_api(
             sites=[site_id],

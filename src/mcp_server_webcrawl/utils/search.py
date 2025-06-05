@@ -87,7 +87,7 @@ class SearchQueryParser:
         while current_index < len(parsed_query):
             subquery: SearchSubquery = parsed_query[current_index]
 
-            if not subquery.field or subquery.field in FTS5_MATCH_FIELDS:  # fulltext section
+            if not subquery.field or subquery.field in FTS5_MATCH_FIELDS:
                 # group consecutive fulltext terms with their operators
                 fts_field_query = self.__build_fts_field_subquery(parsed_query, subquery.field, current_index, swap_values)
                 if fts_field_query["querystring"]:
@@ -123,16 +123,16 @@ class SearchQueryParser:
                         unwildcarded_value = str(processed_value).strip("*")
                         param_name = param_manager.add_param(f"%{unwildcarded_value}%")
                         sql_part += param_name
-                    elif field == "type":
-                        # type needs exact match
-                        param_name = param_manager.add_param(processed_value)
-                        sql_part += f"{safe_sql_field} = :{param_name}"
+                    # type currently handled FTS5_MATCH_FIELDS handler
+                    # elif field == "type":
+                    #     param_name = param_manager.add_param(processed_value)
+                    #     sql_part += f"{safe_sql_field} = :{param_name}"
                     elif value_type == "phrase":
                         formatted_term = self.__format_search_term(processed_value, value_type)
                         param_name = param_manager.add_param(formatted_term)
                         sql_part += f"{safe_sql_field} MATCH :{param_name}"
                     else:
-                        # standard fts query
+                        # default fts query
                         param_name = param_manager.add_param(processed_value)
                         safe_sql_field = subquery.get_safe_sql_field("fulltext")
                         sql_part += f"{safe_sql_field} MATCH :{param_name}"
@@ -155,39 +155,17 @@ class SearchQueryParser:
     def __build_fts_field_subquery(
         self,
         parsed_query: list[SearchSubquery],
-        field: str | None, # None is fulltext search, or specific FTS field
+        field: str | None,
         start_index: int,
         swap_values: dict[str, dict[str, str | int]] = {}
     ) -> dict[str, str | int]:
         """
-        Build a single FTS5 expression from multiple queries with their boolean operators.
-
-        This method exists due to a SQLite FTS5 behavior: each query can contain
-        at most one MATCH operator per query. We cannot execute:
-            SELECT * FROM docs WHERE docs MATCH 'term1' OR docs MATCH 'term2'
-
-        Instead, combine all search logic into a single MATCH expression:
-            SELECT * FROM docs WHERE docs MATCH 'term1 OR term2'  -- VALID
-
-        A lossy but necessary translation, we parse boolean queries into
-        individual SearchSubquery objects for structure and validation, then reassemble them
-        back into the complex FTS5 syntax that SQLite requires.
-
-        When FTS5's boolean parsing fails us (0/unfiltered results for valid queries),
-        the problem isn't our parsing or SQL generation - it's usually the conversion to
-        fts5 syntax.
-
-        Args:
-            parsed_query: List of SearchSubquery objects
-            field: Field to group (None for fulltext, or specific FTS field name)
-            start_index: Starting position in the list
-            swap_values: Dictionary for value replacement
-
-        Returns:
-            dict with 'expression' (the combined FTS5 boolean string) and 'next_index' keys
+        The rule is one MATCH per column for fts5, so multiple pure booleans are compressed
+        into thier own little querystring, attempting to preserve the Boolean intent of the
+        original SearchSubquery substructure. There are complexity limits here. Group IDs
+        preserve the parenthetical home of each SearchSubquery, None if not in parens.
         """
 
-        terms = []
         current_index = start_index
 
         # this modifies subqueries in place, prevents fts conversion leaking
@@ -197,22 +175,55 @@ class SearchQueryParser:
         def continue_sequencing(subquery_field: str | None) -> bool:
             return subquery_field is None if field is None else subquery_field == field
 
+        # group consecutive, group is None unless parenthetical (A OR B)
+        groups = []
+        current_group = []
+        current_group_id = None
+
         while current_index < len(parsed_query) and continue_sequencing(parsed_query[current_index].field):
             subquery: SearchSubquery = parsed_query[current_index]
-            processed_value: str | int | float = self.__process_field_value(field, subquery.value, swap_values)
-            formatted_term: str = self.__format_search_term(processed_value, subquery.type, subquery.modifiers)
-            terms.append(formatted_term)
-            current_index += 1
-            # if there's a next term and we have an operator
-            if (subquery.operator and current_index < len(parsed_query)):
-                if continue_sequencing(parsed_query[current_index].field):
-                    # next term is also the same field type, add the operator and continue
-                    terms.append(subquery.operator)
-                else:
-                    # next term is a different field, don't add the operator
-                    break
 
-        querystring: str = " ".join(terms) if terms else ""
+            # new group
+            if subquery.group != current_group_id:
+                if current_group:
+                    groups.append((current_group_id, current_group))
+                current_group = []
+                current_group_id = subquery.group
+
+            processed_value = self.__process_field_value(field, subquery.value, swap_values)
+            formatted_term = self.__format_search_term(processed_value, subquery.type, subquery.modifiers)
+            current_group.append((formatted_term, subquery.operator))
+            current_index += 1
+
+        # last group
+        if current_group:
+            groups.append((current_group_id, current_group))
+
+        # build query string with parentheses for grouped terms
+        query_parts = []
+        for group_id, group_terms in groups:
+            if group_id is not None and len(group_terms) > 1:
+                # multiple terms in a group, add parentheses
+                group_str = ""
+                for i, (term, operator) in enumerate(group_terms):
+                    group_str += term
+                    if operator and i < len(group_terms) - 1:
+                        group_str += f" {operator} "
+                query_parts.append(f"({group_str})")
+            else:
+                # single term or ungrouped, no parentheses
+                for i, (term, operator) in enumerate(group_terms):
+                    query_parts.append(term)
+                    if operator and i < len(group_terms) - 1:
+                        query_parts.append(operator)
+
+            # add inter-group operator (from last term in previous group)
+            if groups.index((group_id, group_terms)) < len(groups) - 1:
+                last_term = group_terms[-1]
+                if last_term[1]:  # operator exists
+                    query_parts.append(last_term[1])
+
+        querystring = " ".join(query_parts)
         return {
             "querystring": querystring,
             "next_index": current_index

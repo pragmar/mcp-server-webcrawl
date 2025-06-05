@@ -66,7 +66,6 @@ class InterroBotCrawler(BaseCrawler):
         dst_props["fields"]["items"]["enum"] = sites_field_options
 
         resources_field_options: list[str] = list(set(RESOURCES_FIELDS_DEFAULT) - set(RESOURCES_FIELDS_REQUIRED))
-        resources_type_options: list[str] = list(set(INTERROBOT_RESOURCE_FIELD_MAPPING.keys()) - set(RESOURCES_FIELDS_REQUIRED))
         resources_sort_options: list[str] = list(RESOURCES_DEFAULT_SORT_MAPPING.keys())
         all_sites_display: str = ", ".join([f"{s.url} (site: {s.id})" for s in all_sites])
 

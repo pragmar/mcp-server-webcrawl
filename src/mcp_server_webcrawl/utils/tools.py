@@ -4,7 +4,7 @@ from mcp_server_webcrawl.models.resources import (
     ResourceResultType,
     RESOURCES_FIELDS_DEFAULT,
     RESOURCES_FIELDS_REQUIRED,
-    RESOURCES_SORT_OPTIONS_DEFAULT,
+    RESOURCES_DEFAULT_SORT_MAPPING,
     RESOURCES_TOOL_NAME,
 )
 from mcp_server_webcrawl.models.sites import (
@@ -32,7 +32,7 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
     sites_field_options = list(set(SITES_FIELDS_DEFAULT) - set(SITES_FIELDS_REQUIRED))
     resources_field_options = list(set(RESOURCES_FIELDS_DEFAULT) - set(RESOURCES_FIELDS_REQUIRED))
     resources_type_options = list(ResourceResultType.values())
-    resources_sort_options = RESOURCES_SORT_OPTIONS_DEFAULT
+    resources_sort_options = list(RESOURCES_DEFAULT_SORT_MAPPING.keys())
     sites_display = ", ".join([f"{s.url} (site: {s.id})" for s in sites]) if sites is not None else ""
 
     tools = [

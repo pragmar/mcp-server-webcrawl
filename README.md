@@ -18,17 +18,21 @@ and more.
 **mcp-server-webcrawl** provides the LLM a complete menu with which to search your web content, and works with
 a variety of web crawlers:
 
-* [WARC](https://en.wikipedia.org/wiki/WARC_(file_format))
-* [wget](https://en.wikipedia.org/wiki/Wget)
-* [InterroBot](https://interro.bot)
-* [Katana](https://github.com/projectdiscovery/katana)
-* [SiteOne](https://crawler.siteone.io)
+| Crawler/Format | Description | Setup Guide |
+|----------------|-------------|-------------|
+| [WARC](https://en.wikipedia.org/wiki/WARC_(file_format)) | Standard web archive format | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/warc.html) |
+| [wget](https://en.wikipedia.org/wiki/Wget) | Command-line site mirroring tool | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/wget.html) |
+| [InterroBot](https://interro.bot) | Website analysis and SEO crawler | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/interrobot.html) |
+| [Katana](https://github.com/projectdiscovery/katana) | Security-focused reconnaissance crawler | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/katana.html) |
+| [SiteOne](https://crawler.siteone.io) | GUI crawler with offline sites | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/siteone.html) |
 
 **mcp-server-webcrawl** is free and open source, and requires Claude Desktop and Python (>=3.10). It is installed on the command line, via pip install:
 
 ```bash
 pip install mcp-server-webcrawl
 ```
+
+For step-by-step MCP server setup, refer to the [Setup Guides](https://pragmar.github.io/mcp-server-webcrawl/guides.html).
 
 ## Features
 
@@ -38,86 +42,6 @@ pip install mcp-server-webcrawl
 * Boolean search support
 * Support for Markdown and snippets
 * Roll your own website knowledgebase
-
-## MCP Configuration
-
-From the Claude Desktop menu, navigate to File > Settings > Developer. Click Edit Config to locate the configuration file, open in the editor of your choice and modify the example to reflect your datasrc path.
-
-You can set up more mcp-server-webcrawl connections under mcpServers as needed.
-
-```json
-{
-  "mcpServers": {
-    "webcrawl": {
-      "command": [varies by OS/env, see below],
-       "args": [varies by crawler, see below]
-    }
-  }
-}
-```
-
-For step-by-step setup, refer to the [Setup Guides](https://pragmar.github.io/mcp-server-webcrawl/guides.html).
-
-### Windows vs. macOS
-
-Windows: command set to "mcp-server-webcrawl"
-
-macOS: command set to absolute path, i.e. the value of $ which mcp-server-webcrawl
-
-For example:
-
-```json
-"command": "/Users/yourusername/.local/bin/mcp-server-webcrawl",
-```
-
-To find the absolute path of the `mcp-server-webcrawl` executable on your system:
-
-1. Open Terminal
-2. Run `which mcp-server-webcrawl`
-3. Copy the full path returned and use it in your config file
-
-### wget (using --mirror)
-
-The datasrc argument should be set to the parent directory of the mirrors.
-
-```
-"args": ["--crawler", "wget", "--datasrc", "/path/to/wget/archives/"]
-```
-
-### WARC
-
-The datasrc argument should be set to the parent directory of the WARC files.
-
-```
-"args": ["--crawler", "warc", "--datasrc", "/path/to/warc/archives/"]
-```
-
-### InterroBot
-
-The datasrc argument should be set to the direct path to the database.
-
-```
-"args": ["--crawler", "interrobot", "--datasrc", "/path/to/Documents/InterroBot/interrobot.v2.db"]
-```
-
-### Katana
-
-The datasrc argument should be set to the directory of root hosts. Katana separates pages and
-media by hosts, ./archives/example.com/example.com is expected, and appropriate. More
-complicated sites expand the crawl data into origin host directories.
-
-```
-"args": ["--crawler", "katana", "--datasrc", "/path/to/katana/archives/"]
-```
-
-### SiteOne (using *Generate offline website*)
-
-The datasrc argument should be set to the parent directory of the archives, archiving
-must be enabled.
-
-```
-"args": ["--crawler", "siteone", "--datasrc", "/path/to/SiteOne/archives/"]
-```
 
 ## Boolean Search Syntax
 
@@ -222,3 +146,7 @@ File organization and asset analysis. Discover the composition of your website.
 🌐 **Gopher Service** ([`gopher.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/gopher.md))
 
 An old-fashioned search interface inspired by the Gopher clients of yesteryear.
+
+🌐 **Boolean Search Self-Test** ([`testsearch.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/testsearch.md))
+
+A battery of tests to check for Boolean logical inconsistencies in the search query parser and subsequent fts5 conversion.

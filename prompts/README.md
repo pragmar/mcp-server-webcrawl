@@ -4,7 +4,7 @@ A collection of prompts for site analysis using mcp-server-webcrawl. The prompts
 
 If you want to shorcut the site selection (one less query), paste the prompt, adding "Can you audit [site name or URL]?" I don't know if these belong in the MCP layer or not. I think it may be more important to have the ability to adapt them easily. For now, at least, they're cut and paste.
 
-## Available Audits
+## Available Website Audits
 
 ### 🔍 SEO Audit ([`auditseo.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditseo.md))
 
@@ -22,6 +22,14 @@ Website speed and optimization analysis. Real talk.
 
 File organization and asset analysis. Discover the composition of your website.
 
+## Available Interactive Modes
+
 ### 🌐 Gopher Service ([`gopher.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/gopher.md))
 
 An old-fashioned search interface inspired by the Gopher clients of yesteryear.
+
+## Available Tests
+
+🌐 **Boolean Search Self-Test** ([`testsearch.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/testsearch.md))
+
+A battery of tests to check for Boolean logical inconsistencies in the search query parser and subsequent fts5 conversion.
