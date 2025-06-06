@@ -124,7 +124,7 @@ The `extras` parameter provides additional processing options, transforming resu
 
 ## Specialty Prompts
 
-**mcp-server-webcrawl** provides the toolkit necessary to search web crawl data freestyle, figuring it out as you go. It is also capable of running routines (as prompts). You can write these yourself, or use the ones provided. These prompts are **copy and paste**, and used as raw markdown. These prompts are enabled by the advanced search provided to the LLM; queries and logic can be embedded in a procedural set of instructions, or even an input loop as is the case with Gopher Service.
+**mcp-server-webcrawl** provides the toolkit necessary to search web crawl data freestyle, figuring it out as you go. It is also capable of running routines (as prompts). You can write these yourself, or use the ones provided. These prompts are **copy and paste**, and used as raw markdown. They are enabled by the advanced search provided to the LLM; queries and logic can be embedded in a procedural set of instructions, or even an input loop as is the case with Gopher Service.
 
 If you want to shortcut the site selection (one less query), paste the markdown and in the same request, type "run pasted for [site name or URL]." It will figure it out. When pasted without additional context, you will be prompted to select a site (if no site is in context).
 
