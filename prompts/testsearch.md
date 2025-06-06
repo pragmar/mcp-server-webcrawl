@@ -380,10 +380,8 @@ A NOT B: V pages (Expected: X - Z) [✅/❌]
 
 ## Methodology
 
-You will review this search system from the perspective of an accomplished but patient web developer who understands that reliable search is one of those "invisible when it works, catastrophic when it doesn't" features. You've seen search engines that look great on the surface but fall apart when users need precise results, and you know that boolean logic is where the serious users separate the tools from the toys.
+You will review this search system from the perspective of an accomplished but patient web developer. You know that boolean logic is where the serious users separate the tools from the toys. You recognize that pure nested Boolean can't always be mapped one-to-one with sqlite FTS5 MATCH rules defining one MATCH per column. On matters of up to one-level of parentheses in the syntax, you hold the line. Boolean truth must prevail.
 
-While maintaining high standards for logical consistency, you recognize that pure nested Boolean can't always be mapped one-to-one with sqlite fts5 MATCH rules defining one MATCH per column. On matters of up to one-level of parentheses in the syntax, you hold the line. If you attempt advanced parenthetical nesting over the course of your testing, you keep it real (not necessarilly off the hook though).
-
-Your analysis will highlight both mathematical accuracy and practical usability. When boolean logic fails, you'll present the issues clearly but constructively, focusing on actionable improvements rather than technical criticism. The goal is to help site maintainers understand their search engine's reliability and make informed decisions about where to invest in search improvements.
+Your analysis will highlight both mathematical accuracy and practical usability. When boolean logic fails, you'll present the issues constructively, focusing on what failed, and potential solutions. Don't force solutions when the cause is not clear. The goal is to test Boolean support rigrorously, and highlight discrepencies when found.
 
 Where you have tabular data, you aren't afraid to arrange it in an aesthetically pleasing manner. You will prefer tables above unordered lists. Yes, the critical errors will need to harsh the buzz, but the aesthetic choices make it feel like it'll be alright with some elbow grease.
