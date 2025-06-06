@@ -11,7 +11,7 @@
 
 # mcp-server-webcrawl
 
-Advanced search and retrieval for web crawler data. With **mcp-server-webcrawl**, your AI client filters and analyzes web content under your direction or autonomously. The server includes a full-text search interface with boolean support, resource filtering by type, HTTP status, and more.
+Advanced search and retrieval for web crawler data. With **mcp-server-webcrawl**, your AI client filters and analyzes web content under your direction or autonomously. The server includes a full-text search interface with boolean support, and resource filtering by type, HTTP status, and more.
 
 **mcp-server-webcrawl** provides the LLM a complete menu with which to search your web content, and works with
 a variety of web crawlers:
@@ -42,7 +42,7 @@ For step-by-step MCP server setup, refer to the [Setup Guides](https://pragmar.g
 * Support for Markdown and snippets
 * Roll your own website knowledgebase
 
-## Specialty Prompts
+## Prompt Routines
 
 **mcp-server-webcrawl** provides the toolkit necessary to search web crawl data freestyle, figuring it out as you go, reacting to each query. This is what it was designed for.
 
@@ -50,30 +50,14 @@ It is also capable of running routines (as prompts). You can write these yoursel
 
 If you want to shortcut the site selection (one less query), paste the markdown and in the same request, type "run pasted for [site name or URL]." It will figure it out. When pasted without additional context, you will be prompted to select a site (if no site is in context).
 
-🔍 **SEO Audit** ([`auditseo.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditseo.md))
-
-Technical SEO (search engine optimization) analysis. Covers the basics, with options to dive deeper.
-
-🔗 **404 Audit** ([`audit404.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/audit404.md))
-
-Broken link detection and pattern analysis. Not only finds issues, but suggests fixes.
-
-⚡ **Performance Audit** ([`auditperf.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditperf.md))
-
-Website speed and optimization analysis. Real talk.
-
-📁 **File Type Audit** ([`auditfiles.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditfiles.md))
-
-File organization and asset analysis. Discover the composition of your website.
-
-🌐 **Gopher Service** ([`gopher.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/gopher.md))
-
-An old-fashioned search interface inspired by the Gopher clients of yesteryear.
-
-⚙️ **Boolean Search Self-Test** ([`testsearch.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/testsearch.md))
-
-A battery of tests to check for Boolean logical inconsistencies in the search query parser and subsequent FTS5 conversion.
-
+| Prompt | Download | Category | Description |
+|--------|----------|----------|-------------|
+|🔍 **SEO Audit** | [`auditseo.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditseo.md) | audit | Technical SEO (search engine optimization) analysis. Covers the basics, with options to dive deeper. |
+|🔗 **404 Audit** | [`audit404.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/audit404.md) | audit | Broken link detection and pattern analysis. Not only finds issues, but suggests fixes. |
+|⚡&nbsp;**Performance&nbsp;Audit** | [`auditperf.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditperf.md) | audit | Website speed and optimization analysis. Real talk. |
+|📁 **File Audit** | [`auditfiles.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditfiles.md) | audit | File organization and asset analysis. Discover the composition of your website. |
+|🌐 **Gopher Interface** | [`gopher.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/gopher.md) | interface | An old-fashioned search interface inspired by the Gopher clients of yesteryear. |
+|⚙️ **Search Test** | [`testsearch.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/testsearch.md) | self-test | A battery of tests to check for Boolean logical inconsistencies in the search query parser and subsequent FTS5 conversion. |
 ## Boolean Search Syntax
 
 The query engine supports field-specific (`field: value`) searches and complex boolean
