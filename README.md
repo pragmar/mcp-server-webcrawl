@@ -46,9 +46,9 @@ For step-by-step MCP server setup, refer to the [Setup Guides](https://pragmar.g
 
 **mcp-server-webcrawl** provides the toolkit necessary to search web crawl data freestyle, figuring it out as you go, reacting to each query. This is what it was designed for.
 
-It is also capable of running routines (as prompts). You can write these yourself, or use the ones provided. These prompts are **copy and paste**, and used as raw markdown. They are enabled by the advanced search provided to the LLM; queries and logic can be embedded in a procedural set of instructions, or even an input loop as is the case with Gopher Service.
+It is also capable of running routines (as prompts). You can write these yourself, or use the ones provided. These prompts are **copy and paste**, and used as raw Markdown. They are enabled by the advanced search provided to the LLM; queries and logic can be embedded in a procedural set of instructions, or even an input loop as is the case with Gopher Service.
 
-If you want to shortcut the site selection (one less query), paste the markdown and in the same request, type "run pasted for [site name or URL]." It will figure it out. When pasted without additional context, you will be prompted to select a site (if no site is in context).
+If you want to shortcut the site selection (one less query), paste the markdown and in the same request, type "run pasted for [site name or URL]." It will figure it out. When pasted without additional context, you will be prompted to select a site.
 
 | Prompt | Download | Category | Description |
 |--------|----------|----------|-------------|
@@ -135,7 +135,7 @@ The `extras` parameter provides additional processing options, transforming resu
 | Extra | Description |
 |-------|-------------|
 | thumbnails | Generates base64 encoded images to be viewed and analyzed by AI models. Enables image description, content analysis, and visual understanding while keeping token output minimal. Works with images, which can be filtered using `type: img` in queries. SVG is not supported. |
-| markdown | Provides the HTML content field as concise markdown, reducing token usage and improving readability for LLMs. Works with HTML, which can be filtered using `type: html` in queries. |
+| markdown | Provides the HTML content field as concise Markdown, reducing token usage and improving readability for LLMs. Works with HTML, which can be filtered using `type: html` in queries. |
 | snippets | Matches fulltext queries to contextual keyword usage within the content. When used without requesting the content field (or markdown extra), it can provide an efficient means of refining a search without pulling down the complete page contents. Also great for rendering old school hit-highlighted results as a list, like Google search in 1999. Works with HTML, CSS, JS, or any text-based, crawled file. |
 
 

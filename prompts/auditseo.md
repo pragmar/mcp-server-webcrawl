@@ -28,6 +28,7 @@ Use the arguments collected thus far to query content of representative pages. T
 query: type: html AND url: [target_site_domain]
 limit: 100
 sites: [target_site_id]
+fields: []
 sort: +id
 ```
 
@@ -41,6 +42,8 @@ From the 100 results, put the homepage ID aside, then identify:
 - **URL patterns:** `/`, `/blog/`, `/blog/post/1/`, `/products/product/`, `/feature/title`, etc.
 - **Content types:** articles, directories, categories, profiles, press releases, tools
 - **Homepage identification:** Look for root domain URLs or shortest paths
+
+If you feel the 100 results are not representative of the website (e.g. 1 homepage and 99 product pages), you can use the same query with RANDOM sort (?) LIMIT 100 to see a sampled page set. Since RANDOM sort leads to nonrepeatable behaviors in the audit, it should be used sparingly, and only when necessary to get a more diverse set of page templates.
 
 ### 4. Select Representative Sample
 
@@ -60,7 +63,7 @@ If you see the first result page size is manageable, you can try 2 at a time. Bu
 ```
 query: id: [page1_id] OR id: [page2_id]
 fields: ["content"]
-limit: 1
+limit: 2
 sites: [target_site_id]
 ```
 
@@ -88,6 +91,7 @@ After completing the main audit report, offer the user two additional options:
 ## SEO Elements Analysis Framework
 
 ### Title Tag Analysis
+
 **Extract:** `<title>` content
 **Check for:**
 - **Length:** 30-60 characters optimal (Google displays ~60)
@@ -98,6 +102,7 @@ After completing the main audit report, offer the user two additional options:
 - **Keyword stuffing:** Excessive keyword repetition
 
 ### Meta Description Analysis
+
 **Extract:** `<meta name="description" content="...">`
 **Check for:**
 - **Length:** 120-158 characters optimal
@@ -108,7 +113,9 @@ After completing the main audit report, offer the user two additional options:
 - **Missing descriptions:** Pages without meta descriptions
 
 ### Header Structure Analysis
+
 **Extract:** `<h1>`, `<h2>`, `<h3>`, `<h4>`, `<h5>`, `<h6>` tags
+
 **Check for:**
 - **H1 uniqueness:** Single H1 per page (SEO best practice)
 - **H1 relevance:** Matches title tag intent
@@ -118,6 +125,7 @@ After completing the main audit report, offer the user two additional options:
 - **Missing H1:** Pages without primary headers
 
 ### Content Quality Indicators
+
 **Analyze for:**
 - **Keyword density:** 1-3% for primary keywords (not stuffing)
 - **Content length:** Sufficient depth for topic coverage
@@ -127,6 +135,7 @@ After completing the main audit report, offer the user two additional options:
 - **Duplicate content:** Similar content across multiple pages
 
 ### Technical SEO Elements
+
 **Extract and verify:**
 - **Canonical URLs:** `<link rel="canonical">`
 - **Open Graph tags:** og:title, og:description, og:image
@@ -137,6 +146,7 @@ After completing the main audit report, offer the user two additional options:
 ## Common SEO Issues to Identify
 
 ### High Priority Issues
+
 1. **Missing H1 tags** or multiple H1s per page
 2. **Duplicate title tags** across different pages
 3. **Missing meta descriptions** (search engines generate snippets)
@@ -144,6 +154,7 @@ After completing the main audit report, offer the user two additional options:
 5. **Broken header hierarchy** (H3 before H2, etc.)
 
 ### Medium Priority Issues
+
 1. **Generic titles** ("Page Title" or "Untitled")
 2. **Keyword stuffing** in titles, descriptions, or headers
 3. **Inconsistent brand suffixes** (some pages missing "- NASA")
@@ -151,6 +162,7 @@ After completing the main audit report, offer the user two additional options:
 5. **Missing alt text** on images
 
 ### Low Priority Issues
+
 1. **Suboptimal keyword placement** in headers
 2. **Minor length optimizations** for titles/descriptions
 3. **Header structure improvements** (adding H2s for better organization)
@@ -158,28 +170,34 @@ After completing the main audit report, offer the user two additional options:
 ## Page Type Categorization
 
 ### Homepage/Landing Pages
+
 - **Expectation:** Strong H1, compelling meta description, comprehensive title
 - **Common issues:** Generic titles, keyword stuffing attempts
 
 ### Mission/Technical Pages
+
 - **Expectation:** Technical accuracy, proper header hierarchy for complex content
 - **Common issues:** Missing H1s, overly technical meta descriptions
 
 ### Blog/News Articles
+
 - **Expectation:** Date relevance, engaging headlines as H1s
 - **Common issues:** Duplicate meta descriptions, poor header structure
 
 ### Gallery/Media Pages
+
 - **Expectation:** Descriptive titles, image-focused meta descriptions
 - **Common issues:** Generic titles like "Image Gallery", missing alt text
 
 ### Documentation Pages
+
 - **Expectation:** Clear navigation headers, searchable content
 - **Common issues:** Poor hierarchy, missing descriptions
 
 ## Reporting Template
 
 ### Executive Summary
+
 - **Total pages analyzed:** X pages across Y page types
 - **Overall SEO health:** [A-F grade] based on critical issues and optimization opportunities
 - **Critical issues requiring immediate attention:** X issues
@@ -188,6 +206,7 @@ After completing the main audit report, offer the user two additional options:
 ### Detailed Findings by Element
 
 #### Title Tag Issues
+
 - **Pages with optimal titles (30-60 chars):** X% (Y pages)
 - **Pages with missing titles:** X pages
 - **Pages with duplicate titles:** X pages
@@ -198,6 +217,7 @@ After completing the main audit report, offer the user two additional options:
   - Duplicate: `[Same title found on 3 pages]`
 
 #### Meta Description Issues
+
 - **Pages with optimal descriptions (120-158 chars):** X% (Y pages)
 - **Pages missing descriptions:** X pages
 - **Pages with duplicate descriptions:** X pages
@@ -207,6 +227,7 @@ After completing the main audit report, offer the user two additional options:
   - Duplicate: `[Same description on X pages]`
 
 #### Header Structure Issues
+
 - **Pages with proper H1:** X% (Y pages)
 - **Pages with multiple H1s:** X pages
 - **Pages with broken hierarchy:** X pages
@@ -227,6 +248,7 @@ After completing the main audit report, offer the user two additional options:
 | Documentation | 1 | 0 | 0 | 1 | B |
 
 ### Quick Wins for Immediate Impact
+
 - **Template updates:** Fix recurring issues at template level (affects multiple pages instantly)
 - **Missing meta descriptions:** Add descriptions to pages without them (immediate SERP improvement)
 - **Duplicate title resolution:** Update identical titles to be unique and descriptive
@@ -238,8 +260,8 @@ You've got a solid foundation with some clear optimization opportunities ahead. 
 
 **Ready to dive deeper?** I can help you:
 - **Focus on specific fixes** - Whether it's duplicate content, missing descriptions, or technical SEO gaps, let's tackle your highest-impact items with detailed implementation steps
-- **Expand the audit** - Analyze more pages, dive into advanced technical elements, or explore content optimization opportunities
-- **Research tools** - Find specific solutions for ongoing SEO monitoring, automated auditing, or content optimization workflows
+- **Expand the audit** - Analyze more pages, a single page, or dive into advanced technical elements
+- **Research tools** - Find specific solutions for ongoing SEO concerns or content optimization workflows
 
 **What would be most helpful for your next steps?**
 

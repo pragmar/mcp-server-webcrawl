@@ -35,6 +35,7 @@ sort: +url
 query: type: style AND url: [target_site_domain]
 limit: 100
 sites: [target_site_id]
+fields: []
 sort: +id
 ```
 
@@ -43,6 +44,7 @@ sort: +id
 query: type: style
 limit: 100
 sites: [target_site_id]
+fields: []
 sort: +id
 ```
 
@@ -79,6 +81,7 @@ sort: +id
 query: type: script AND url: [target_site_domain]
 limit: 100
 sites: [target_site_id]
+fields: []
 sort: +id
 ```
 
@@ -87,6 +90,7 @@ sort: +id
 query: type: script AND url: [discovered_asset_domain]
 limit: 100
 sites: [target_site_id]
+fields: []
 sort: +id
 ```
 
@@ -95,6 +99,7 @@ sort: +id
 query: type: script
 limit: 100
 sites: [target_site_id]
+fields: []
 sort: +id
 ```
 
@@ -114,6 +119,8 @@ sort: +id
 query: type: html AND (content: "<link rel=\"stylesheet\"" OR content: "<script src=") AND url: [target_site_domain]
 limit: 50
 sites: [target_site_id]
+fields: []
+sort: +id
 ```
 
 **Map critical rendering path dependencies**
@@ -129,6 +136,7 @@ After completing the main audit report, offer the user two additional options:
 ### CSS Performance Issues
 
 #### Critical Render-Blocking Patterns
+
 - **@import usage:** Delays CSS parsing
 - **Excessive !important:** Indicates poor CSS architecture
 - **Large CSS files:** >100KB uncompressed
@@ -136,6 +144,7 @@ After completing the main audit report, offer the user two additional options:
 - **CSS-in-JS:** React/Vue component styles
 
 #### Specificity & Maintainability Issues
+
 - **ID selectors overuse:** High specificity conflicts
 - **Deep nesting:** >4 levels indicates complexity
 - **Vendor prefix bloat:** Outdated browser support
@@ -144,12 +153,14 @@ After completing the main audit report, offer the user two additional options:
 ### JavaScript Performance Issues
 
 #### DOM Manipulation Anti-Patterns
+
 - **document.getElementById in loops:** Performance killer
 - **jQuery chaining abuse:** Memory leaks potential
 - **No event delegation:** Too many event listeners
 - **Synchronous AJAX:** Blocking user interaction
 
 #### Loading & Execution Issues
+
 - **Blocking scripts in `<head>`:** Delays page rendering
 - **Large library imports:** jQuery, Lodash entire libraries
 - **Polyfill overuse:** Unnecessary for modern browsers
@@ -160,29 +171,34 @@ After completing the main audit report, offer the user two additional options:
 ### Asset Domain Classification
 
 #### Main Domain Assets
+
 **Scope:** `[target_site_domain]` - same domain as website
 - Self-hosted assets on primary domain
 - Often includes basic CSS/JS for small sites
 
 #### Asset Domain Assets
+
 **Scope:** `static.[domain]`, `cdn.[domain]`, `assets.[domain]`, etc.
 - Dedicated asset subdomains for performance
 - Usually contains bulk of CSS/JS files
 - Better caching and CDN optimization
 
 #### Third-Party Assets
+
 **Scope:** External CDNs and services
 - `cdnjs.cloudflare.com`, `jsdelivr.net`, `unpkg.com`
 - Google Fonts, jQuery CDN, Bootstrap CDN
 - Analytics, tracking, and widget scripts
 
 #### Asset Discovery Strategy
+
 1. **Primary search:** Target main domain first
 2. **Asset domain discovery:** If 0 results, scan all domains for asset patterns
 3. **Domain scoring:** Rank by likelihood of hosting assets
 4. **Fallback analysis:** Use highest-scoring asset domain
 
 ### Homepage-Specific Assets
+
 **Scope:** Assets only loaded on homepage
 - **Inline styles:** `<style>` blocks in homepage HTML
 - **Inline scripts:** `<script>` blocks in homepage HTML
@@ -195,6 +211,7 @@ After completing the main audit report, offer the user two additional options:
 - Homepage-specific performance bottlenecks
 
 ### Site-Global Assets
+
 **Scope:** Assets loaded across multiple pages (any domain)
 - **Global stylesheets:** Referenced by >1 page
 - **Framework CSS:** Bootstrap, Foundation, custom frameworks
@@ -207,6 +224,7 @@ After completing the main audit report, offer the user two additional options:
 - Progressive loading strategies
 
 ### Page-Type Specific Assets
+
 **Scope:** Assets for specific page categories
 - **Blog-specific:** Article styling, commenting systems
 - **Gallery-specific:** Image viewers, slideshow libraries
@@ -215,6 +233,7 @@ After completing the main audit report, offer the user two additional options:
 ## Common Performance Issues
 
 ### High Priority Issues
+
 1. **Render-blocking CSS/JS:** Assets that delay initial page rendering
 2. **@import usage:** CSS imports that create dependency chains
 3. **Synchronous JavaScript:** Blocking scripts that prevent HTML parsing
@@ -222,6 +241,7 @@ After completing the main audit report, offer the user two additional options:
 5. **Missing async/defer:** JavaScript without proper loading attributes
 
 ### Medium Priority Issues
+
 1. **jQuery dependency:** Legacy library usage for simple DOM operations
 2. **Unused CSS/JS:** Large files with low utilization rates
 3. **Vendor prefix bloat:** Outdated browser support adding file size
@@ -229,6 +249,7 @@ After completing the main audit report, offer the user two additional options:
 5. **Missing CDN usage:** Large assets served from main domain
 
 ### Low Priority Issues
+
 1. **CSS specificity wars:** Excessive !important usage indicating architectural issues
 2. **Minor bundle optimization:** Small files that could be combined
 3. **Cache optimization opportunities:** Suboptimal asset caching strategies
