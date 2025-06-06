@@ -11,20 +11,18 @@
 
 # mcp-server-webcrawl
 
-Bridge the gap between your web crawl and AI language models using Model Context Protocol (MCP).
-With **mcp-server-webcrawl**, your AI client filters and analyzes web content under your direction or autonomously. The server includes a full-text search interface with boolean support, resource filtering by type, HTTP status,
-and more.
+Advanced search and retrieval for web crawler data. With **mcp-server-webcrawl**, your AI client filters and analyzes web content under your direction or autonomously. The server includes a full-text search interface with boolean support, resource filtering by type, HTTP status, and more.
 
 **mcp-server-webcrawl** provides the LLM a complete menu with which to search your web content, and works with
 a variety of web crawlers:
 
 | Crawler/Format | Description | Platforms | Setup Guide |
 |----------------|-------------|-----------|-------------|
-| [WARC](https://en.wikipedia.org/wiki/WARC_(file_format)) | Standard web archive format          | N/A                 | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/warc.html) |
-| [wget](https://en.wikipedia.org/wiki/Wget)               | Command-line website mirroring tool  | macOS/Linux         | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/wget.html) |
-| [InterroBot](https://interro.bot)                        | GUI crawler and analyzer             | macOS/Windows       | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/interrobot.html) |
-| [Katana](https://github.com/projectdiscovery/katana)     | Security-focused crawler             | macOS/Windows/Linux | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/katana.html) |
-| [SiteOne](https://crawler.siteone.io)                    | GUI crawler and analyzer             | macOS/Windows/Linux | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/siteone.html) |
+| [**WARC**](https://en.wikipedia.org/wiki/WARC_(file_format)) | Standard web archive format          | N/A                 | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/warc.html) |
+| [**wget**](https://en.wikipedia.org/wiki/Wget)               | Command-line website mirroring tool  | macOS/Linux         | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/wget.html) |
+| [**InterroBot**](https://interro.bot)                        | GUI crawler and analyzer             | macOS/Windows       | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/interrobot.html) |
+| [**Katana**](https://github.com/projectdiscovery/katana)     | Security-focused crawler             | macOS/Windows/Linux | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/katana.html) |
+| [**SiteOne**](https://crawler.siteone.io)                    | GUI crawler and analyzer             | macOS/Windows/Linux | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/siteone.html) |
 
 
 **mcp-server-webcrawl** is free and open source, and requires Claude Desktop and Python (>=3.10). It is installed on the command line, via pip install:
