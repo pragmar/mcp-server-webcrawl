@@ -18,13 +18,14 @@ and more.
 **mcp-server-webcrawl** provides the LLM a complete menu with which to search your web content, and works with
 a variety of web crawlers:
 
-| Crawler/Format | Description | Setup Guide |
-|----------------|-------------|-------------|
-| [WARC](https://en.wikipedia.org/wiki/WARC_(file_format)) | Standard web archive format | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/warc.html) |
-| [wget](https://en.wikipedia.org/wiki/Wget) | Command-line site mirroring tool | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/wget.html) |
-| [InterroBot](https://interro.bot) | Website analysis and SEO crawler | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/interrobot.html) |
-| [Katana](https://github.com/projectdiscovery/katana) | Security-focused reconnaissance crawler | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/katana.html) |
-| [SiteOne](https://crawler.siteone.io) | GUI crawler with offline sites | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/siteone.html) |
+| Crawler/Format | Description | Platforms | Setup Guide |
+|----------------|-------------|-----------|-------------|
+| [WARC](https://en.wikipedia.org/wiki/WARC_(file_format)) | Standard web archive format          | N/A                 | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/warc.html) |
+| [wget](https://en.wikipedia.org/wiki/Wget)               | Command-line website mirroring tool  | macOS/Linux         | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/wget.html) |
+| [InterroBot](https://interro.bot)                        | GUI crawler and analyzer             | macOS/Windows       | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/interrobot.html) |
+| [Katana](https://github.com/projectdiscovery/katana)     | Security-focused crawler             | macOS/Windows/Linux | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/katana.html) |
+| [SiteOne](https://crawler.siteone.io)                    | GUI crawler and analyzer             | macOS/Windows/Linux | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/siteone.html) |
+
 
 **mcp-server-webcrawl** is free and open source, and requires Claude Desktop and Python (>=3.10). It is installed on the command line, via pip install:
 
@@ -147,6 +148,6 @@ File organization and asset analysis. Discover the composition of your website.
 
 An old-fashioned search interface inspired by the Gopher clients of yesteryear.
 
-🌐 **Boolean Search Self-Test** ([`testsearch.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/testsearch.md))
+⚙️ **Boolean Search Self-Test** ([`testsearch.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/testsearch.md))
 
-A battery of tests to check for Boolean logical inconsistencies in the search query parser and subsequent fts5 conversion.
+A battery of tests to check for Boolean logical inconsistencies in the search query parser and subsequent FTS5 conversion.

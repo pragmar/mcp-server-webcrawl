@@ -30,6 +30,6 @@ An old-fashioned search interface inspired by the Gopher clients of yesteryear.
 
 ## Available Tests
 
-🌐 **Boolean Search Self-Test** ([`testsearch.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/testsearch.md))
+### ⚙️ **Boolean Search Self-Test** ([`testsearch.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/testsearch.md))
 
-A battery of tests to check for Boolean logical inconsistencies in the search query parser and subsequent fts5 conversion.
+A battery of tests to check for Boolean logical inconsistencies in the search query parser and subsequent FTS5 conversion.
