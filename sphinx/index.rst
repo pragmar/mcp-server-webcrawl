@@ -16,10 +16,10 @@
 mcp-server-webcrawl
 ===============================================
 
-Bridge the gap between your web crawl and AI language models using Model Context Protocol (MCP). 
-With **mcp-server-webcrawl**, your AI client filters and analyzes web content under your direction or autonomously. The 
-server includes a full-text search interface with boolean support, resource filtering by type, HTTP status, 
-and more. 
+Bridge the gap between your web crawl and AI language models using Model Context Protocol (MCP).
+With **mcp-server-webcrawl**, your AI client filters and analyzes web content under your direction or autonomously. The
+server includes a full-text search interface with boolean support, resource filtering by type, HTTP status,
+and more.
 
 **mcp-server-webcrawl** provides the LLM a complete menu with which to search your web content, and works with
 a variety of web crawlers:
@@ -44,6 +44,7 @@ a variety of web crawlers:
    installation
    guides
    usage
+   prompts
    modules
 
 Indices and tables

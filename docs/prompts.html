@@ -1,0 +1,162 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prompt Routines &mdash; mcp-server-webcrawl  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=888ff710"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="mcp_server_webcrawl" href="modules.html" />
+    <link rel="prev" title="Usage" href="usage.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            mcp-server-webcrawl
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides.html">Setup Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">mcp_server_webcrawl</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">mcp-server-webcrawl</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Prompt Routines</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/prompts.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="prompt-routines">
+<h1>Prompt Routines<a class="headerlink" href="#prompt-routines" title="Link to this heading"></a></h1>
+<p><strong>mcp-server-webcrawl</strong> provides the toolkit necessary to search web crawl data freestyle, figuring it out as you go, reacting to each query. This is what it was designed for.</p>
+<p>It is also capable of running routines (as prompts). You can write these yourself, or use the ones provided. These prompts are <strong>copy and paste</strong>, and used as raw Markdown. They are enabled by the advanced search provided to the LLM; queries and logic can be embedded in a procedural set of instructions, or even an input loop as is the case with Gopher Service.</p>
+<p>If you want to shortcut the site selection (one less query), paste the Markdown and in the same request, type “run pasted for [site name or URL].” It will figure it out. When pasted without additional context, you will be prompted to select a site (if no site is in context).</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Prompt</p></th>
+<th class="head"><p>Download</p></th>
+<th class="head"><p>Category</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>🔍 <strong>SEO Audit</strong></p></td>
+<td><p><a class="reference external" href="https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditseo.md">auditseo.md</a></p></td>
+<td><p>audit</p></td>
+<td><p>Technical SEO (search engine optimization) analysis. Covers the
+basics, with options to dive deeper.</p></td>
+</tr>
+<tr class="row-odd"><td><p>🔗 <strong>404 Audit</strong></p></td>
+<td><p><a class="reference external" href="https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/audit404.md">audit404.md</a></p></td>
+<td><p>audit</p></td>
+<td><p>Broken link detection and pattern analysis. Not only finds issues,
+but suggests fixes.</p></td>
+</tr>
+<tr class="row-even"><td><p>⚡ <strong>Performance Audit</strong></p></td>
+<td><p><a class="reference external" href="https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditperf.md">auditperf.md</a></p></td>
+<td><p>audit</p></td>
+<td><p>Website speed and optimization analysis. Real talk.</p></td>
+</tr>
+<tr class="row-odd"><td><p>📁 <strong>File Audit</strong></p></td>
+<td><p><a class="reference external" href="https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditfiles.md">auditfiles.md</a></p></td>
+<td><p>audit</p></td>
+<td><p>File organization and asset analysis. Discover the composition of
+your website.</p></td>
+</tr>
+<tr class="row-even"><td><p>🌐 <strong>Gopher Interface</strong></p></td>
+<td><p><a class="reference external" href="https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/gopher.md">gopher.md</a></p></td>
+<td><p>interface</p></td>
+<td><p>An old-fashioned search interface inspired by the Gopher clients of
+yesteryear.</p></td>
+</tr>
+<tr class="row-odd"><td><p>⚙️ <strong>Search Test</strong></p></td>
+<td><p><a class="reference external" href="https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/testsearch.md">testsearch.md</a></p></td>
+<td><p>self-test</p></td>
+<td><p>A battery of tests to check for Boolean logical inconsistencies in
+the search query parser and subsequent FTS5 conversion.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="usage.html" class="btn btn-neutral float-left" title="Usage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="modules.html" class="btn btn-neutral float-right" title="mcp_server_webcrawl" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, pragmar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -44,6 +44,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../prompts.html">Prompt Routines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -144,6 +145,58 @@
             <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">hyphenated_resources</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Keyword &#39;</span><span class="si">{</span><span class="n">hyphenated_keyword</span><span class="si">}</span><span class="s2">&#39; should return results&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 2 ORs, three terms bug turns out to be a translation issue condensing fulltext MATCH statement</span>
+        <span class="n">all_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>  <span class="c1"># empty query returns all resources</span>
+        <span class="p">)</span>
+        <span class="n">double_or_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">primary_keyword</span><span class="si">}</span><span class="s2"> OR </span><span class="si">{</span><span class="n">secondary_keyword</span><span class="si">}</span><span class="s2"> OR moffitor)&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span>
+            <span class="n">double_or_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;OR query should return some results&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertLess</span><span class="p">(</span>
+            <span class="n">double_or_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="n">all_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;OR query should be less than all results&quot;</span>
+        <span class="p">)</span>
+        <span class="n">parens_or_and_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">primary_keyword</span><span class="si">}</span><span class="s2"> OR </span><span class="si">{</span><span class="n">secondary_keyword</span><span class="si">}</span><span class="s2">) AND collaborations &quot;</span>
+        <span class="p">)</span>
+        <span class="c1"># respect the AND, there should be only one result</span>
+        <span class="c1"># (A OR B) AND C vs. A OR B AND C</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span>
+            <span class="n">parens_or_and_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;(A OR B) AND C should be 1 result (AND collaborations, unless fixture changed)&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">parens_or_and_resources_reverse</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;collaborations AND (</span><span class="si">{</span><span class="n">primary_keyword</span><span class="si">}</span><span class="s2"> OR </span><span class="si">{</span><span class="n">secondary_keyword</span><span class="si">}</span><span class="s2">) &quot;</span>
+        <span class="p">)</span>
+        <span class="c1"># respect the AND, there should be only one result</span>
+        <span class="c1"># (A OR B) AND C vs. A OR B AND C</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span>
+            <span class="n">parens_or_and_resources_reverse</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;A AND (B OR C) should be 1 result (collaborations AND, unless fixture changed)&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">wide_type_resources</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
+            <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
+            <span class="n">query</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;type: script OR type: style OR type: iframe OR type: font OR type: text OR type: rss OR type: other&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertLess</span><span class="p">(</span>
+            <span class="n">wide_type_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="n">all_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;A long chained OR should not return all results&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span>
+            <span class="n">wide_type_resources</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;A long chained OR should return some results&quot;</span>
+        <span class="p">)</span>
 
         <span class="n">primary_not_secondary</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_resources_api</span><span class="p">(</span>
             <span class="n">sites</span><span class="o">=</span><span class="p">[</span><span class="n">site_id</span><span class="p">],</span>
@@ -592,8 +645,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">mcp_resources_keyword</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;=</span> <span class="n">combo_and_resources_keyword</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="s2">&quot;Total records should be greater or equal to ANDs.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">mcp_resources_keyword</span><span class="o">.</span><span class="n">total</span> <span class="o">&lt;=</span> <span class="n">combo_or_resources_keyword</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="s2">&quot;Total records should be less than or equal to ORs.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">mcp_resources_keyword</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="n">combo_not_resources_keyword</span><span class="o">.</span><span class="n">total</span><span class="p">,</span> <span class="s2">&quot;Total records should be greater than to NOTs.&quot;</span><span class="p">)</span></div>
-
-
 
 
 <div class="viewcode-block" id="BaseCrawlerTests.run_pragmar_site_tests">

@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="mcp_server_webcrawl" href="modules.html" />
+    <link rel="next" title="Prompt Routines" href="prompts.html" />
     <link rel="prev" title="SiteOne MCP Setup Guide" href="guides/siteone.html" /> 
 </head>
 
@@ -50,6 +50,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#available-tools">Available Tools</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="prompts.html">Prompt Routines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -176,7 +177,7 @@ following is the currect API interface for your reference.</p>
 <tr class="row-even"><td><p>extras</p></td>
 <td><p>array&lt;string&gt;</p></td>
 <td><p>No</p></td>
-<td><p>List of additional operations to perform with query. <em>thumbnails</em>: This creates small thumbnails that enable basic image recognition while keeping token output minimal. Only works for image (img) types. SVG format is not currently supported. <em>markdown</em>: Directly transforms the HTML content field into concise markdown, reducing token usage and improving readability for LLMs. This does not create a separate field but replaces the HTML in the content field with its markdown equivalent. Must be used with the content field in the fields parameter. &lt;br&gt; ‘snippets’: matches fulltext queries to contextual keyword usage within the content. When used without requesting the content field (or markdown extra), it can provide an efficient means of refining a search without pulling down the entire page content. Also great for rendering old school hit-highlighted results as a list, like Google search in 1999. Works with HTML, CSS, JS, or any text-based, crawled file.</p></td>
+<td><p>Optional array of extra features to include in results. Options include markdown, snippets, and thumbnails. (see extras table)</p></td>
 </tr>
 </tbody>
 </table>
@@ -524,6 +525,32 @@ supported content types in the search system.</p>
 </tbody>
 </table>
 </section>
+<section id="extras">
+<h3>Extras<a class="headerlink" href="#extras" title="Link to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">extras</span></code> parameter provides additional processing options, transforming result data (markdown, snippets), or connecting the LLM to external data (thumbnails). These options can be combined as needed to achieve the desired result format.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Extra</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>thumbnails</p></td>
+<td><p>Generates base64 encoded images to be viewed and analyzed by AI models. Enables image description, content analysis, and visual understanding while keeping token output minimal. Works with images, which can be filtered using <code class="docutils literal notranslate"><span class="pre">type:</span> <span class="pre">img</span></code> in queries. SVG is not supported.</p></td>
+</tr>
+<tr class="row-odd"><td><p>markdown</p></td>
+<td><p>Provides the HTML content field as concise Markdown, reducing token usage and improving readability for LLMs. Works with HTML, which can be filtered using <code class="docutils literal notranslate"><span class="pre">type:</span> <span class="pre">html</span></code> in queries.</p></td>
+</tr>
+<tr class="row-even"><td><p>snippets</p></td>
+<td><p>Matches fulltext queries to contextual keyword usage within the content. When used without requesting the content field (or markdown extra), it can provide an efficient means of refining a search without pulling down the complete page contents. Also great for rendering old school hit-highlighted results as a list, like Google search in 1999. Works with HTML, CSS, JS, or any text-based, crawled file.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
 </section>
 </section>
 
@@ -532,7 +559,7 @@ supported content types in the search system.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="guides/siteone.html" class="btn btn-neutral float-left" title="SiteOne MCP Setup Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="modules.html" class="btn btn-neutral float-right" title="mcp_server_webcrawl" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="prompts.html" class="btn btn-neutral float-right" title="Prompt Routines" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

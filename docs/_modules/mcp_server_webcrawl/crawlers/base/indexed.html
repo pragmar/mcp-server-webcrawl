@@ -44,6 +44,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../prompts.html">Prompt Routines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -258,6 +259,9 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Context manager for database building operations.</span>
 <span class="sd">        Sets a lock during database building and releases it when done.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            group: SitesGroup to set the build lock for</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="s2">&quot;building&quot;</span><span class="p">)</span>
