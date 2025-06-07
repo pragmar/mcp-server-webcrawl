@@ -49,7 +49,9 @@ INDEXED_BINARY_EXTENSIONS: Final[tuple[str, ...]] = (
 INDEXED_RESOURCE_DEFAULT_PROTOCOL: Final[str] = "https://"
 INDEXED_BATCH_SIZE: Final[int] = 256
 INDEXED_MAX_WORKERS: Final[int] = min(8, os.cpu_count() or 4)
-INDEXED_MAX_FILE_SIZE: Final[int] = 2000000  # 2MB
+
+# 2MB max HTTP content, anything larger passed over by fulltext indexer
+INDEXED_MAX_FILE_SIZE: Final[int] = 2000000
 
 # max indexing time may need a cli arg to override at some point,
 # but for now, this is a fan spinner--just make sure it doesn't run away
@@ -139,13 +141,17 @@ class IndexState:
         return f"{hours:02d}:{minutes:02d}:{seconds:02d}.{milliseconds:03d}"
 
     def is_timeout(self) -> bool:
-        """Check if the indexing operation has exceeded the timeout threshold"""
+        """
+        Check if the indexing operation has exceeded the timeout threshold
+        """
         if not self.time_start:
             return False
         return (datetime.now(timezone.utc) - self.time_start) > INDEXED_MAX_PROCESS_TIME
 
     def to_dict(self) -> dict:
-        """Convert the IndexState to a dictionary representation"""
+        """
+        Convert the IndexState to a dictionary representation
+        """
         status = self.status.value if hasattr(self.status, 'value') else self.status
         result = { "status": status }
         if self.status not in (IndexStatus.REMOTE, IndexStatus.UNDEFINED):
@@ -165,7 +171,6 @@ class SitesGroup:
             datasrc: site datasrc
             site_ids: site ids of the sites
             site_paths: paths to site contents (directories)
-
         """
 
         self.datasrc: Path = datasrc
@@ -184,6 +189,10 @@ class SitesStat:
     def __init__(self, group: SitesGroup, cached: bool) -> None:
         """
         Some basic bookeeping, for troubleshooting
+
+        Args:
+            group: SitesGroup to track statistics for
+            cached: whether the group was retrieved from cache
         """
         self.group: Final[SitesGroup] = group
         self.timestamp: Final[datetime] = datetime.now()
@@ -223,6 +232,16 @@ class BaseManager:
 
     @staticmethod
     def get_basic_headers(file_size: int, resource_type: ResourceResultType) -> str:
+        """
+        Generate basic HTTP headers for a resource.
+
+        Args:
+            file_size: size of the file in bytes
+            resource_type: type of resource to generate headers for
+
+        Returns:
+            HTTP headers string with content type and length
+        """
         content_type = {
             ResourceResultType.PAGE: "text/html",
             ResourceResultType.CSS: "text/css",
@@ -237,6 +256,15 @@ class BaseManager:
 
     @staticmethod
     def read_files(paths: list[Path]) -> dict[Path, str | None]:
+        """
+        Read content from multiple files concurrently.
+
+        Args:
+            paths: list of file paths to read
+
+        Returns:
+            dictionary mapping file paths to their content or None for binary/unreadable files
+        """
         file_contents: dict[Path, str | None] = {}
         with ThreadPoolExecutor(max_workers=INDEXED_MAX_WORKERS) as executor:
             for file_path, content in executor.map(BaseManager.__read_files_contents, paths):
@@ -248,6 +276,12 @@ class BaseManager:
     def __read_files_contents(file_path) -> tuple[Path, str | None]:
         """
         Read content from text files with better error handling and encoding detection.
+
+        Args:
+            file_path: path to the file to read
+
+        Returns:
+            tuple of file path and content string, or None for binary/unreadable files
         """
 
         # a null result just means we're not dealing with the content
@@ -284,7 +318,16 @@ class BaseManager:
 
     @staticmethod
     def read_file_contents(file_path, resource_type) -> str | None:
-        """Read content from text files with better error handling and encoding detection."""
+        """
+        Read content from text files with better error handling and encoding detection.
+
+        Args:
+            file_path: path to the file to read
+            resource_type: type of resource to determine if content should be read
+
+        Returns:
+            file content as string or None for binary/unreadable files
+        """
         if resource_type not in [ResourceResultType.PAGE, ResourceResultType.TEXT,
                     ResourceResultType.CSS, ResourceResultType.SCRIPT, ResourceResultType.OTHER]:
             return None
@@ -316,6 +359,12 @@ class BaseManager:
         """
         Very light touch cleanup of file naming, these tmps are creating noise
         and extensions are useful in classifying resources
+
+        Args:
+            path: file path string to clean up
+
+        Returns:
+            cleaned path string with temp files and weird extensions normalized
         """
         # clean path/file from wget modifications we don't want
         decruftified = str(path)
@@ -454,8 +503,13 @@ class BaseManager:
         else:
             order_clause = " ORDER BY Resources.Id ASC"
 
+        assert isinstance(limit, int), "limit must be an integer"
+        assert isinstance(offset, int), "offset must be an integer"
         limit = min(max(1, limit), RESOURCES_LIMIT_MAX)
-        limit_clause: str = f" LIMIT {limit} OFFSET {offset}"
+        params["limit"] = limit
+        params["offset"] = offset
+        limit_clause = " LIMIT :limit OFFSET :offset"
+
         statement: str = f"SELECT {safe_sql_fields_joined} FROM {from_clause}{where_clause}{order_clause}{limit_clause}"
         results: list[ResourceResult] = []
         total_count: int = 0
@@ -524,10 +578,20 @@ class BaseManager:
             connection: SQLite connection
             site_path: Path to the site data
             site_id: ID for the site
+            index_state: IndexState object for tracking progress
         """
         raise NotImplementedError("Subclasses must implement _load_site_data")
 
     def _determine_resource_type(self, content_type: str) -> ResourceResultType:
+        """
+        Determine resource type from content type string.
+
+        Args:
+            content_type: HTTP content type header value
+
+        Returns:
+            ResourceResultType enum value based on content type
+        """
 
         content_type_mapping = {
             "html": ResourceResultType.PAGE,
@@ -552,6 +616,12 @@ class BaseManager:
     def _is_text_content(self, content_type: str) -> bool:
         """
         Check if content should be stored as text. Filter out deadweight content in fts index.
+
+        Args:
+            content_type: HTTP content type header value
+
+        Returns:
+            True if content should be indexed as text, False otherwise
         """
         content_type_lower = content_type.lower()
         if content_type_lower.startswith("text/"):
@@ -566,4 +636,3 @@ class BaseManager:
             }
         else:
             return True
-

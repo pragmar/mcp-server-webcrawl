@@ -172,6 +172,9 @@ class IndexedManager(BaseManager):
         """
         Context manager for database building operations.
         Sets a lock during database building and releases it when done.
+
+        Args:
+            group: SitesGroup to set the build lock for
         """
         try:
             self._build_locks[group.cache_key] = (datetime.now(), "building")
