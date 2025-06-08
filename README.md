@@ -100,8 +100,8 @@ specific attributes or patterns within crawl data.
 | id | database ID |
 | url | resource URL |
 | type | enumerated list of types (see types table) |
-| status | HTTP response codes |
 | size | file size in bytes |
+| status | HTTP response codes |
 | headers | HTTP response headers |
 | content | HTTP body—HTML, CSS, JS, and more |
 
