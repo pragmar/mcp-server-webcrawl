@@ -22,7 +22,7 @@ from mcp_server_webcrawl.models.resources import (
     RESOURCES_TOOL_NAME,
 )
 from mcp_server_webcrawl.utils.blobs import ThumbnailManager
-from mcp_server_webcrawl.utils.extras import get_markdown, get_snippets
+from mcp_server_webcrawl.utils.extras import get_markdown, get_snippets, get_xpath
 from mcp_server_webcrawl.utils.logger import get_logger
 from mcp_server_webcrawl.models.sites import SITES_TOOL_NAME
 
@@ -158,6 +158,7 @@ class BaseCrawler:
         limit: int = 20,
         offset: int = 0,
         extras: list[str] | None = None,
+        extrasXpath: list[str] | None = None,
     ) -> BaseJsonApi:
         resources_kwargs: dict[str, METADATA_VALUE_TYPE] = {
             "sites": sites,
@@ -191,10 +192,15 @@ class BaseCrawler:
 
         # Handle stealth fields for extras
         extras = extras or []
+        extrasXpath = extrasXpath or []
         fields = fields or []
         fields_extras_override: list[str] = fields.copy()
 
-        if ("markdown" in extras or "snippets" in extras) and "content" not in fields:
+        set_extras_content: set[str] = {"markdown", "snippets", "xpath"}
+        set_extras: set[str] = set(extras)
+        add_content: bool = bool(set_extras_content & set_extras) # intersection
+
+        if add_content and "content" not in fields:
             fields_extras_override.append("content")
         if "snippets" in extras and "headers" not in fields:
             fields_extras_override.append("headers")
@@ -214,6 +220,12 @@ class BaseCrawler:
             for result in results:
                 markdown_result: str | None = get_markdown(result.content)
                 result.set_extra("markdown", markdown_result)
+
+        if "xpath" in extras:
+            result: ResourceResult
+            for result in results:
+                xpath_result: list[dict[str, str | int | float]] = get_xpath(result.content, extrasXpath)
+                result.set_extra("xpath", xpath_result)
 
         if "snippets" in extras and query.strip():
             result: ResourceResult
@@ -264,8 +276,12 @@ class BaseCrawler:
         """
         try:
             if name == SITES_TOOL_NAME:
-                ids = [] if not arguments or "ids" not in arguments else arguments["ids"]
-                fields = [] if not arguments or "fields" not in arguments else arguments["fields"]
+                ids: list[int] = [] if not arguments or "ids" not in arguments else arguments["ids"]
+                fields: list[str] = [] if not arguments or "fields" not in arguments else arguments["fields"]
+
+                assert isinstance(ids, list) and all(isinstance(item, int) for item in ids)
+                assert isinstance(fields, list) and all(isinstance(item, str) for item in fields)
+
                 results_json = self.get_sites_api_json(
                     ids=ids,
                     fields=fields
@@ -275,6 +291,7 @@ class BaseCrawler:
             elif name == RESOURCES_TOOL_NAME:
 
                 extras: list[str] = [] if not arguments or "extras" not in arguments else arguments["extras"]
+                extrasXpath: list[str] = [] if not arguments or "extrasXpath" not in arguments else arguments["extrasXpath"]
                 extras_set: set[str] = set(extras)
                 extras_removed: set[str] = extras_set - RESOURCE_EXTRAS_ALLOWED
                 if extras_removed:
@@ -282,12 +299,21 @@ class BaseCrawler:
                     extras = list(RESOURCE_EXTRAS_ALLOWED.intersection(extras))
 
                 # regular args pass through to the result
-                query = "" if not arguments or "query" not in arguments else arguments["query"]
-                fields = [] if not arguments or "fields" not in arguments else arguments["fields"]
-                sites = [] if not arguments or "sites" not in arguments else arguments["sites"]
-                sort = None if not arguments or "sort" not in arguments else arguments["sort"]
-                limit = 20 if not arguments or "limit" not in arguments else arguments["limit"]
-                offset = 0 if not arguments or "offset" not in arguments else arguments["offset"]
+                query: str = "" if not arguments or "query" not in arguments else arguments["query"]
+                fields: list[str] = [] if not arguments or "fields" not in arguments else arguments["fields"]
+                sites: list[int] = [] if not arguments or "sites" not in arguments else arguments["sites"]
+                sort: str | None = None if not arguments or "sort" not in arguments else arguments["sort"]
+                limit: int = 20 if not arguments or "limit" not in arguments else arguments["limit"]
+                offset: int = 0 if not arguments or "offset" not in arguments else arguments["offset"]
+
+                assert isinstance(query, str)
+                assert isinstance(fields, list) and all(isinstance(item, str) for item in fields)
+                assert isinstance(sites, list) and all(isinstance(item, int) for item in sites)
+                assert isinstance(sort, (str, type(None)))
+                assert isinstance(limit, int)
+                assert isinstance(offset, int)
+                assert isinstance(extras, list) and all(isinstance(item, str) for item in extras)
+                assert isinstance(extrasXpath, list) and all(isinstance(item, str) for item in extrasXpath)
 
                 api_result: BaseJsonApi = self.get_resources_api(
                     sites=sites,
@@ -297,6 +323,7 @@ class BaseCrawler:
                     limit=limit,
                     offset=offset,
                     extras=extras,
+                    extrasXpath=extrasXpath,
                 )
                 if extras_removed:
                     # only allow known extras

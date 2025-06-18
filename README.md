@@ -72,7 +72,7 @@ While the API interface is designed to be consumed by the LLM directly, it can b
 | "privacy policy" | fulltext match exact phrase |
 | boundar* | fulltext wildcard matches results starting with *boundar* (boundary, boundaries) |
 | id: 12345 | id field matches a specific resource by ID |
-| url: example.com/* | url field matches results with URL containing example.com/ |
+| url: example.com/somedir | url field matches results with URL containing example.com/somedir |
 | type: html | type field matches for HTML pages only |
 | status: 200 | status field matches specific HTTP status codes (equal to 200) |
 | status: >=400 | status field matches specific HTTP status code (greater than or equal to 400) |
@@ -127,3 +127,4 @@ The `extras` parameter provides additional processing options, transforming resu
 | thumbnails | Generates base64 encoded images to be viewed and analyzed by AI models. Enables image description, content analysis, and visual understanding while keeping token output minimal. Works with images, which can be filtered using `type: img` in queries. SVG is not supported. |
 | markdown | Provides the HTML content field as concise Markdown, reducing token usage and improving readability for LLMs. Works with HTML, which can be filtered using `type: html` in queries. |
 | snippets | Matches fulltext queries to contextual keyword usage within the content. When used without requesting the content field (or markdown extra), it can provide an efficient means of refining a search without pulling down the complete page contents. Also great for rendering old school hit-highlighted results as a list, like Google search in 1999. Works with HTML, CSS, JS, or any text-based, crawled file. |
+| xpath | Extracts xpath selector data, used in scraping HTML content. Use xpath's text() selector for text-only, element selectors return outerHTML. Only supported with `type: html`, other types will be ignored. |

@@ -1,8 +1,9 @@
 import os
 import sqlite3
 import traceback
-from datetime import timezone
+import re
 
+from datetime import timezone
 from contextlib import closing
 from datetime import datetime
 from pathlib import Path
@@ -117,6 +118,11 @@ class WgetManager(IndexedManager):
         try:
             relative_path = file_path.relative_to(base_dir)
             url = f"{INDEXED_RESOURCE_DEFAULT_PROTOCOL}{base_dir.name}/{str(relative_path).replace(os.sep, '/')}"
+
+            # wget is creating ./index.html from ./ in most cases. eliminate it to preserve homepage sort
+            # which is way more important than the (wget manufactured) filename reference
+            url = re.sub(r"/index\.html($|\?)", r"/\1", url)
+
             decruftified_path = BaseManager.decruft_path(str(file_path))
             extension = Path(decruftified_path).suffix.lower()
             resource_type = INDEXED_TYPE_MAPPING.get(extension, ResourceResultType.OTHER)

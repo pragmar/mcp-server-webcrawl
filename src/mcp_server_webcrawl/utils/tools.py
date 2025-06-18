@@ -67,7 +67,8 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                 "retrieves specified fields. "
                 "Supports boolean queries and field searching, along with site filtering to "
                 "filter with fine control. "
-                "To find a site homepage or index of a site, query type: html AND url: [site domain] with sort='+url' and a limit of 1. "
+                "To find a site homepage reliably, query type: html AND url: example.com (crawled domain) with sort='+url' and a LIMIT of 1. "
+                "This pattern works consistently across all crawlers."
                 "Most sites indexed by this tool will be small to moderately sized websites. "
                 "Don't assume most keywords will generate results; start broader on first search (until you have a feel for results). "
                 "A vital aspect of this API is field control; you can open up the limit wide when dealing with lightweight "
@@ -132,7 +133,7 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                         "type": "array",
                         "items": {
                             "type": "string",
-                            "enum": ["thumbnails", "markdown", "snippets"]
+                            "enum": ["thumbnails", "markdown", "snippets", "xpath"]
                         },
                         "description": ("Optional array of extra features to include in results. Available options include:\n"
                             "- 'thumbnails': generates base64 encoded thumbnails for image resources that can be viewed and "
@@ -145,9 +146,25 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                             "used without requesting the content field (or markdown extra), it can provide an efficient means "
                             "of refining a search without pulling down the complete page contents. Also great for rendering "
                             "old school hit-highlighted results as a list, like Google search in 1999. Works with HTML, CSS, JS, "
-                            "or any text-based, crawled file."
+                            "or any text-based, crawled file.\n"
+                            "- 'xpath': extracts xpath selector data. Supports count(). Use xpath's text() for "
+                            "text only, element selectors for HTML data. Only supported for HTML, other "
+                            "types will be ignored. Sometimes referred to as scraping."
                             "")
                     },
+                    "extrasXpath": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": ("Array of XPath expressions to extract specific content from HTML resources. "
+                            "Each XPath should be a valid selector expression like `/html/body/h1`, `//h1/text()`, "
+                            "//a, //a/@href, or count(//a). If you need many values (such as connected a/text() "
+                            "and a/@href), request elements to preserve the relationship. "
+                            "Use text() or @name when targeting text, elements will return outer HTML. "
+                            "Only used when 'xpath' is included in the extras array. Many xpath expressions can be "
+                            "passed at once to extract multiple selectors. Results are grouped by document within results. ")
+                    }
                 },
                 "required": []
             },

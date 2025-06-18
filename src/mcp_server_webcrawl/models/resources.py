@@ -8,7 +8,7 @@ from mcp_server_webcrawl.utils import to_isoformat_zulu
 RESOURCES_TOOL_NAME: Final[str] = "webcrawl_search"
 RESOURCES_LIMIT_DEFAULT: Final[int] = 20
 RESOURCES_LIMIT_MAX: Final[int] = 100
-RESOURCE_EXTRAS_ALLOWED: Final[set[str]] = {"markdown", "snippets", "thumbnails"}
+RESOURCE_EXTRAS_ALLOWED: Final[set[str]] = {"markdown", "snippets", "thumbnails", "xpath"}
 RESOURCES_FIELDS_REQUIRED: Final[list[str]] = ["id", "url", "site", "type", "status"]
 RESOURCES_FIELDS_DEFAULT: Final[list[str]] = RESOURCES_FIELDS_REQUIRED + ["created", "modified"]
 RESOURCES_DEFAULT_FIELD_MAPPING: Final[dict[str, str]] = {
@@ -177,7 +177,7 @@ class ResourceResult:
 
         return {k: v for k, v in result.items() if v is not None and not (k == "metadata" and v == {})}
 
-    def set_extra(self, extra_name: str, extra_value: str) -> None:
+    def set_extra(self, extra_name: str, extra_value: str | None | list[str] | list[dict[str, str | int | float]]) -> None:
         assert extra_name in RESOURCE_EXTRAS_ALLOWED, f"Unexpected extra requested. {extra_name}"
         self.__extras[extra_name] = extra_value
 

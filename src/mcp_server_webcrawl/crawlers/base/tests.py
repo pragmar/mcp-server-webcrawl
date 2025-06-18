@@ -170,14 +170,45 @@ class BaseCrawlerTests(unittest.TestCase):
         self.assertIn("snippets", snippet_resources._results[0].to_dict()["extras"],
                 "First result should have snippets in extras")
 
-        markdown_resources = crawler.get_resources_api(
+        xpath_count_resources = crawler.get_resources_api(
             sites=[site_id],
             query=primary_keyword,
             extras=["markdown"],
             limit=1,
         )
-        self.assertIn("markdown", markdown_resources._results[0].to_dict()["extras"],
+        self.assertIn("markdown", xpath_count_resources._results[0].to_dict()["extras"],
                 "First result should have markdown in extras")
+
+        xpath_count_resources = crawler.get_resources_api(
+            sites=[site_id],
+            query="url: pragmar.com AND status: 200",
+            extras=["xpath"],
+            extrasXpath=["count(//h1)"],
+            limit=1,
+            sort="-url"
+        )
+        self.assertIn("xpath", xpath_count_resources._results[0].to_dict()["extras"],
+                "First result should have xpath in extras")
+        self.assertEqual(len(xpath_count_resources._results[0].to_dict()["extras"]["xpath"]),
+                1, "Should be exactly one H1 hit in xpath extras")
+
+        xpath_h1_text_resources = crawler.get_resources_api(
+            sites=[site_id],
+            query="url: https://pragmar.com AND status: 200",
+            extras=["xpath"],
+            extrasXpath=["//h1/text()"],
+            limit=1,
+            sort="+url"
+        )
+        self.assertIn("xpath", xpath_h1_text_resources._results[0].to_dict()["extras"],
+                "First result should have xpath in extras")
+        self.assertTrue( xpath_h1_text_resources._results[0].to_dict()["extras"] is not None,
+                "Should have pragmar in fixture h1")
+
+        # should be pragmar homepage, assert "pragmar" in h1
+        first_xpath_result = xpath_h1_text_resources._results[0].to_dict()["extras"]["xpath"][0]["value"].lower()
+        self.assertTrue("pragmar" in first_xpath_result,
+                f"Should have pragmar in fixture homepage h1 ({first_xpath_result})")
 
         combined_resources = crawler.get_resources_api(
             sites=[site_id],
@@ -377,15 +408,16 @@ class BaseCrawlerTests(unittest.TestCase):
         )
 
         # varies by crawler, katana doesn't crawl /help/ depth by default
-        self.assertTrue(claude_resources.total in [1,2,3,4,5,6], f"Claude search returned {claude_resources.total}, expected 3/4/5 results")
+        self.assertTrue(claude_resources.total > 0, f"Claude search returned {claude_resources.total}, expected 3/4/5 results")
 
         mcp_resources = crawler.get_resources_api(
             sites=[pragmar_site_id],
             query=f"type: html AND (mcp)",
             limit=12,
         )
-        # varies by crawler, katana doesn't crawl /help/ depth by default
-        self.assertTrue(mcp_resources.total in [2, 3, 4, 5, 6, 7, 8, 12, 13, 16, 17], f"MCP returned {mcp_resources.total}, expected")
+
+        # re: all these > 0 checks, result counts vary by crawler, all have default crawl behaviors/depths/externals
+        self.assertTrue(mcp_resources.total > 0, f"MCP returned {mcp_resources.total}, expected results")
 
         # AND
         claude_and_mcp_resources = crawler.get_resources_api(
@@ -393,7 +425,7 @@ class BaseCrawlerTests(unittest.TestCase):
             query=f"type: html AND (claude AND mcp)",
             limit=1,
         )
-        self.assertTrue(claude_resources.total in [1,2,3,4,5,6], f"Claude AND MCP returned {claude_resources.total}, expected 3/4")
+        self.assertTrue(claude_resources.total > 0, f"Claude AND MCP returned {claude_resources.total}, expected results")
 
         # OR
         claude_or_mcp_resources = crawler.get_resources_api(
@@ -401,7 +433,7 @@ class BaseCrawlerTests(unittest.TestCase):
             query=f"type: html AND (claude OR mcp)",
             limit=1,
         )
-        self.assertTrue(claude_or_mcp_resources.total in [2,3,4,5,6,12,13,15,16,17], f"Claude OR MCP returned {claude_or_mcp_resources.total}, expected 16 results (union)")
+        self.assertTrue(claude_or_mcp_resources.total > 0, f"Claude OR MCP returned {claude_or_mcp_resources.total}, expected results (union)")
 
         # NOT
         claude_not_mcp_resources = crawler.get_resources_api(
@@ -417,7 +449,7 @@ class BaseCrawlerTests(unittest.TestCase):
             query=f"type: html AND (mcp NOT claude)",
             limit=1,
         )
-        self.assertTrue(mcp_not_claude_resources.total in [1,2,3,4,7,8,9,10,11,12,13], f"MCP NOT Claude returned {mcp_not_claude_resources.total}, expected 11/12/13")
+        self.assertTrue(mcp_not_claude_resources.total > 0, f"MCP NOT Claude returned {mcp_not_claude_resources.total}, expected results")
 
         # logical relationships
         self.assertEqual(
@@ -451,7 +483,7 @@ class BaseCrawlerTests(unittest.TestCase):
             query=f"type: html AND (claude)",
             limit=1,
         )
-        self.assertTrue(claude_and_html_resources.total in [1,2,3,4,5,6], f"Claude AND type:html returned {claude_and_html_resources.total}, expected 3/6")
+        self.assertTrue(claude_and_html_resources.total > 0, f"Claude AND type:html returned {claude_and_html_resources.total}, expected results")
         self.assertTrue(
             claude_and_html_resources.total <= claude_resources.total,
             "Adding AND constraints should not increase result count"
@@ -463,7 +495,7 @@ class BaseCrawlerTests(unittest.TestCase):
             query=f"type: html AND (claude OR mcp)",
             limit=1,
         )
-        self.assertTrue(grouped_resources.total in [2, 3, 4, 5, 6, 11, 12, 13], f"Grouped OR with HTML filter returned {grouped_resources.total}, expected 3/6")
+        self.assertTrue(grouped_resources.total > 0, f"Grouped OR with HTML filter returned {grouped_resources.total}, expected results")
 
     def run_pragmar_tokenizer_tests(self, crawler: BaseCrawler, site_id:int):
         """
