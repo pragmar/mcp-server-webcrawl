@@ -47,8 +47,6 @@ For step-by-step MCP server setup, refer to the [Setup Guides](https://pragmar.g
 
 It is also capable of running routines (as prompts). You can write these yourself, or use the ones provided. These prompts are **copy and paste**, and used as raw Markdown. They are enabled by the advanced search provided to the LLM; queries and logic can be embedded in a procedural set of instructions, or even an input loop as is the case with Gopher Service.
 
-If you want to shortcut the site selection (one less query), paste the markdown and in the same request, type "run pasted for [site name or URL]." It will figure it out. When pasted without additional context, you will be prompted to select a site.
-
 | Prompt | Download | Category | Description |
 |--------|----------|----------|-------------|
 |🔍 **SEO Audit** | [`auditseo.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditseo.md) | audit | Technical SEO (search engine optimization) analysis. Covers the basics, with options to dive deeper. |
@@ -57,6 +55,8 @@ If you want to shortcut the site selection (one less query), paste the markdown 
 |📁 **File Audit** | [`auditfiles.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/auditfiles.md) | audit | File organization and asset analysis. Discover the composition of your website. |
 |🌐 **Gopher Interface** | [`gopher.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/gopher.md) | interface | An old-fashioned search interface inspired by the Gopher clients of yesteryear. |
 |⚙️ **Search Test** | [`testsearch.md`](https://raw.githubusercontent.com/pragmar/mcp-server-webcrawl/master/prompts/testsearch.md) | self-test | A battery of tests to check for Boolean logical inconsistencies in the search query parser and subsequent FTS5 conversion. |
+
+If you want to shortcut the site selection (one less query), paste the markdown and in the same request, type "run pasted for [site name or URL]." It will figure it out. When pasted without additional context, you should be prompted to select from a list of crawled sites.
 
 ## Boolean Search Syntax
 
@@ -129,6 +129,6 @@ The `extras` parameter provides additional processing options, transforming HTTP
 | snippets | Matches fulltext queries to contextual keyword usage within the content. When used without requesting the content field (or markdown extra), it can provide an efficient means of refining a search without pulling down the complete page contents. Also great for rendering old school hit-highlighted results as a list, like Google search in 1999. Works with HTML, CSS, JS, or any text-based, crawled file. |
 | xpath | Extracts XPath selector data, used in scraping HTML content. Use XPath's text() selector for text-only, element selectors return outerHTML. Only supported with `type: html`, other types will be ignored. One or more XPath selectors (//h1, count(//h1), etc.) can be requested, using the `extrasXpath` argument. |
 
-Extras provide a means of producing token-efficient HTTP content responses. Markdown produces roughly 1/3 the bytes of the source HTML, snippets are generally 500 or so bytes per result, and xpath can be as specific or broad as you choose. The more focused your requests, the more results you can fit into your LLM session.
+Extras provide a means of producing token-efficient HTTP content responses. Markdown produces roughly 1/3 the bytes of the source HTML, snippets are generally 500 or so bytes per result, and XPath can be as specific or broad as you choose. The more focused your requests, the more results you can fit into your LLM session.
 
 The idea, of course, is that the LLM takes care of this for you. If you notice your LLM developing an affinity to the "content" field (full HTML), a nudge in chat to budget tokens using the extras feature should be all that is needed.
