@@ -120,11 +120,11 @@ Crawls contain resource types beyond HTML pages. The `type:` field search allows
 
 ## Extras
 
-The `extras` parameter provides additional processing options, transforming result data (markdown, snippets), or connecting the LLM to external data (thumbnails). These options can be combined as needed to achieve the desired result format.
+The `extras` parameter provides additional processing options, transforming HTTP data (markdown, snippets, xpath), or connecting the LLM to external data (thumbnails). These options can be combined as needed to achieve the desired result format. Extras provide a means of producing token-efficient HTTP content responses. Markdown produces roughly 1/3 the bytes of the source HTML, snippets are generally 500 or so bytes per result, and xpath can be as specific or broad as you choose. The more focused your requests, the more results you can fit into your LLM session. The idea, of course, is that the LLM takes care of this for you. If you notice your LLM client developing an affinity to requesting the "content" field (full HTML), a nudge in LLM chat to budget tokens using the extras feature should be all that is needed.
 
 | Extra | Description |
 |-------|-------------|
 | thumbnails | Generates base64 encoded images to be viewed and analyzed by AI models. Enables image description, content analysis, and visual understanding while keeping token output minimal. Works with images, which can be filtered using `type: img` in queries. SVG is not supported. |
 | markdown | Provides the HTML content field as concise Markdown, reducing token usage and improving readability for LLMs. Works with HTML, which can be filtered using `type: html` in queries. |
 | snippets | Matches fulltext queries to contextual keyword usage within the content. When used without requesting the content field (or markdown extra), it can provide an efficient means of refining a search without pulling down the complete page contents. Also great for rendering old school hit-highlighted results as a list, like Google search in 1999. Works with HTML, CSS, JS, or any text-based, crawled file. |
-| xpath | Extracts XPath selector data, used in scraping HTML content. Use XPath's text() selector for text-only, element selectors return outerHTML. Only supported with `type: html`, other types will be ignored. Many selectors can be requested at once, using the `extrasXpath` argument. |
+| xpath | Extracts XPath selector data, used in scraping HTML content. Use XPath's text() selector for text-only, element selectors return outerHTML. Only supported with `type: html`, other types will be ignored. One or more XPath selectors (//h1, count(//h1), etc.) can be requested, using the `extrasXpath` argument. |
