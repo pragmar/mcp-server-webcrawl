@@ -20,24 +20,38 @@ __RE_SNIPPET_END_TRIM: Final[re.Pattern] = re.compile(r"[^\w\]]+$")
 
 logger: Logger = get_logger()
 
-class HTMLContentExtractor:
+class SnippetContentExtractor:
     """
     lxml-based HTML parser for extracting different types of content from HTML.
     Content separates into components: text, markup, attributes (values), and comments.
     These can be prioritized in search so that text is the displayed hit over noisier
     types.
     """
+    PRIORITY_ORDER: list[str] = ["url", "document_text", "document_attributes",
+        "document_comments", "headers", "document_markup"]
 
-    _RE_SPLIT: re.Pattern = re.compile(r"[\s\-_]+")
-    _RE_WHITESPACE: re.Pattern = re.compile(r"\s+")
+    __RE_SPLIT: re.Pattern = re.compile(r"[\s_]+|(?<!\w)-(?!\w)")
+    __RE_WHITESPACE: re.Pattern = re.compile(r"\s+")
+    __MAX_CONTENT_BYTES: int = 2 * 1024 * 1024 # 2MB
 
-    def __init__(self, content: str):
+    def __init__(self, url: str, headers: str, content: str):
+
         self.__document: lxml.html.HtmlElement | None = None
-        self.content: str = content
+
+        self.url: str = url
+        self.content: str = ""
+        # headers one liner to facilitate snippet
+        self.headers: str = re.sub(r"\s+", " ", headers).strip()
         self.document_text: str = ""
         self.document_markup: str = ""
         self.document_attributes: str = ""
         self.document_comments: str = ""
+
+        if len(content) > self.__MAX_CONTENT_BYTES:
+            # ignore large files, slow
+            return
+        else:
+            self.content = content
 
         load_success: bool = self.__load_content()
         if load_success == True:
@@ -75,9 +89,24 @@ class HTMLContentExtractor:
         text_values = []
         markup_values = []
         attribute_values = []
+        comment_values = []
+
         element: lxml.html.HtmlElement | None = None
         for element in self.__document.iter():
 
+            # HTML outliers
+            if element.tag is etree.Comment or element.tag is etree.ProcessingInstruction:
+                if element.text is not None:
+                    comment_values.append(str(element.text.strip()))
+                # avoid regular element text processing
+                continue
+
+            if element.tag is etree.Entity or element.tag is etree.CDATA:
+                if element.text is not None:
+                    text_values.append(str(element.text.strip()))
+                continue
+
+            # HTML tags and attributes
             if element.tag:
                 markup_values.append(element.tag)
                 if element.tag in ("script", "style"):
@@ -92,18 +121,12 @@ class HTMLContentExtractor:
             for attr_name, attr_value in element.attrib.items():
                 markup_values.append(attr_name)
                 if attr_value:
-                    values = [v for v in self._RE_SPLIT.split(attr_value) if v]
+                    values = [v for v in self.__RE_SPLIT.split(attr_value) if v]
                     attribute_values.extend(values)
 
         self.document_text = self.__normalize_values(text_values)
         self.document_markup = self.__normalize_values(markup_values)
         self.document_attributes = self.__normalize_values(attribute_values)
-
-        comment_values = []
-        comment_nodes = self.__document.xpath("//comment()")
-        for comment in comment_nodes:
-            if comment.strip():
-                comment_values.append(comment.strip())
         self.document_comments = self.__normalize_values(comment_values)
 
         return True
@@ -119,8 +142,7 @@ class HTMLContentExtractor:
         """
         Normalize whitespace using pre-compiled pattern.
         """
-        return self._RE_WHITESPACE.sub(" ", text).strip()
-
+        return self.__RE_WHITESPACE.sub(" ", text).strip()
 
 def get_markdown(content: str) -> str | None:
     if content is None or content == "":
@@ -143,10 +165,13 @@ def find_matches_in_text(
     seen_snippets: set[str] = set()
     text_lower: str = text.lower()
 
-    highlight_patterns: list[re.Pattern] = [(re.compile(rf"\b({re.escape(term)})\b",
-            re.IGNORECASE), term) for term in terms]
     escaped_terms = [re.escape(term) for term in terms]
     pattern: str = rf"\b({'|'.join(escaped_terms)})\b"
+    highlight_patterns: list[tuple[re.Pattern, str]] = [
+        (re.compile(rf"\b({re.escape(term)})\b",
+        re.IGNORECASE), term) for term in terms
+    ]
+
     matches = list(re.finditer(pattern, text_lower))
 
     for match in matches:
@@ -177,8 +202,7 @@ def find_matches_in_text(
 
     return snippets
 
-
-def get_snippets(headers: str, content: str, query: str) -> str | None:
+def get_snippets(url: str, headers: str, content: str, query: str) -> str | None:
     """
     Takes a query and content, reduces the HTML to text content and extracts hits
     as excerpts of text.
@@ -189,13 +213,15 @@ def get_snippets(headers: str, content: str, query: str) -> str | None:
         query: The search query string
 
     Returns:
-        A string of snippets with context around matched terms, separated by " ... "
+        A string of snippets with context around matched terms, separated by " ... " or None
     """
-    if content in (None, "") or query in (None, ""):
+    if query in (None, ""):
         return None
 
+    url = url or ""
+    content = content or ""
     headers = headers or ""
-    headers_one_liner = re.sub(r"\s+", " ", headers).strip()
+
     search_terms_parser = SearchQueryParser()
     search_terms: list[str] = search_terms_parser.get_fulltext_terms(query)
 
@@ -203,29 +229,12 @@ def get_snippets(headers: str, content: str, query: str) -> str | None:
         return None
 
     snippets = []
+    search_terms_parser = SnippetContentExtractor(url, headers, content)
 
-    search_groups: dict[str, str] = {
-        "headers": headers_one_liner,
-        "text": "",
-        "html_attributes": "",
-        "html_comments": "",
-        "html_markup": "",
-    }
-
-    search_terms_parser = HTMLContentExtractor(content)
-    try:
-        search_groups["text"] = search_terms_parser.document_text
-        search_groups["html_attributes"] = search_terms_parser.document_attributes
-        search_groups["html_comments"] = search_terms_parser.document_comments
-        search_groups["html_markup"] = search_terms_parser.document_markup
-    except Exception as e:
-        # fallback to plain text, if <=1MB
-        if len(content) < 1024 * 1024:
-            search_groups["text"] = content
-
-    # priority order text, attributes, comments, headers, markup
-    for group_name in ["text", "html_attributes", "html_comments", "headers", "html_markup"]:
-        search_group_text = search_groups[group_name]
+    # priority order url, text, attributes, comments, headers, markup
+    # most interesting to least, as search hits
+    for group_name in search_terms_parser.PRIORITY_ORDER:
+        search_group_text = getattr(search_terms_parser, group_name)
         if not search_group_text:
             continue
         group_snippets = find_matches_in_text(search_group_text, search_terms,

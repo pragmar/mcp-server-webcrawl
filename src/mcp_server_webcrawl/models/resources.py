@@ -6,11 +6,14 @@ from mcp_server_webcrawl.models import METADATA_VALUE_TYPE
 from mcp_server_webcrawl.utils import to_isoformat_zulu
 
 RESOURCES_TOOL_NAME: Final[str] = "webcrawl_search"
+RESOURCE_EXTRAS_ALLOWED: Final[set[str]] = {"markdown", "snippets", "thumbnails", "xpath"}
 RESOURCES_LIMIT_DEFAULT: Final[int] = 20
 RESOURCES_LIMIT_MAX: Final[int] = 100
-RESOURCE_EXTRAS_ALLOWED: Final[set[str]] = {"markdown", "snippets", "thumbnails", "xpath"}
-RESOURCES_FIELDS_REQUIRED: Final[list[str]] = ["id", "url", "site", "type", "status"]
-RESOURCES_FIELDS_DEFAULT: Final[list[str]] = RESOURCES_FIELDS_REQUIRED + ["created", "modified"]
+
+RESOURCES_FIELDS_BASE: Final[list[str]] = ["id", "url", "site", "type", "status"]
+RESOURCES_FIELDS_DEFAULT: Final[list[str]] = RESOURCES_FIELDS_BASE + ["created", "modified"]
+RESOURCES_FIELDS_OPTIONS: Final[list[str]] = ["created", "modified", "size", "headers", "content"]
+
 RESOURCES_DEFAULT_FIELD_MAPPING: Final[dict[str, str]] = {
     "id": "ResourcesFullText.Id",
     "site": "ResourcesFullText.Project",

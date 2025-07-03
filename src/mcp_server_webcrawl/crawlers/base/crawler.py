@@ -218,7 +218,9 @@ class BaseCrawler:
         if "markdown" in extras:
             result: ResourceResult
             for result in results:
-                markdown_result: str | None = get_markdown(result.content)
+                markdown_result: str | None = None
+                if result.type == ResourceResultType.PAGE:
+                    markdown_result = get_markdown(result.content)
                 result.set_extra("markdown", markdown_result)
 
         if "xpath" in extras:
@@ -230,7 +232,7 @@ class BaseCrawler:
         if "snippets" in extras and query.strip():
             result: ResourceResult
             for result in results:
-                snippets: str | None = get_snippets(result.headers, result.content, query)
+                snippets: str | None = get_snippets(result.url, result.headers, result.content, query)
                 result.set_extra("snippets", snippets)
 
         extras_only_fields = set(fields_extras_override) - set(fields)

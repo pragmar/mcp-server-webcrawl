@@ -3,14 +3,15 @@ from mcp.types import Tool
 from mcp_server_webcrawl.models.resources import (
     ResourceResultType,
     RESOURCES_FIELDS_DEFAULT,
-    RESOURCES_FIELDS_REQUIRED,
+    RESOURCES_FIELDS_BASE,
+    RESOURCES_FIELDS_OPTIONS,
     RESOURCES_DEFAULT_SORT_MAPPING,
     RESOURCES_TOOL_NAME,
 )
 from mcp_server_webcrawl.models.sites import (
     SiteResult,
     SITES_FIELDS_DEFAULT,
-    SITES_FIELDS_REQUIRED,
+    SITES_FIELDS_BASE,
     SITES_TOOL_NAME,
 )
 
@@ -29,8 +30,7 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
     # each crawler having its own peculiarities -- just let the subclass hack this
     # into whatever misshapen ball of clay it needs to be
 
-    sites_field_options = list(set(SITES_FIELDS_DEFAULT) - set(SITES_FIELDS_REQUIRED))
-    resources_field_options = list(set(RESOURCES_FIELDS_DEFAULT) - set(RESOURCES_FIELDS_REQUIRED))
+    sites_field_options = list(set(SITES_FIELDS_DEFAULT) - set(SITES_FIELDS_BASE))
     resources_type_options = list(ResourceResultType.values())
     resources_sort_options = list(RESOURCES_DEFAULT_SORT_MAPPING.keys())
     sites_display = ", ".join([f"{s.url} (site: {s.id})" for s in sites]) if sites is not None else ""
@@ -109,11 +109,14 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                         "type": "array",
                         "items": {
                             "type": "string",
-                            "enum": resources_field_options
+                            "enum": RESOURCES_FIELDS_OPTIONS
                         },
-                        "description": ("List of additional fields to include in the response beyond the defaults "
-                            f"({', '.join(resources_field_options)}). Empty list means default fields only. "
-                            "The content field can lead to large results and should be used judiciously with LIMIT.")
+                        "description": ("List of additional fields to include in the response beyond the base fields "
+                            f"({', '.join(RESOURCES_FIELDS_BASE)}) returned for all results. "
+                            "Empty list means base fields only. Use headers and content to retrieve raw HTTP contents, "
+                            "and size to collect file size in bytes. "
+                            "The content field can lead to large results and should be used judiciously with LIMIT. "
+                            "Fields must be explicitly requested even when used with sort. ")
                     },
                     "sort": {
                         "type": "string",

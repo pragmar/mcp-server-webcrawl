@@ -6,7 +6,7 @@ from mcp.types import Tool
 from mcp_server_webcrawl.models.sites import SiteResult
 from mcp_server_webcrawl.models.resources import (
     RESOURCES_FIELDS_DEFAULT,
-    RESOURCES_FIELDS_REQUIRED,
+    RESOURCES_FIELDS_BASE,
     RESOURCES_DEFAULT_SORT_MAPPING,
 )
 from mcp_server_webcrawl.crawlers.base.crawler import BaseCrawler
@@ -65,7 +65,7 @@ class InterroBotCrawler(BaseCrawler):
         dst_props: dict = default_sites_tool.inputSchema["properties"]
         dst_props["fields"]["items"]["enum"] = sites_field_options
 
-        resources_field_options: list[str] = list(set(RESOURCES_FIELDS_DEFAULT) - set(RESOURCES_FIELDS_REQUIRED))
+        resources_field_options: list[str] = list(set(RESOURCES_FIELDS_DEFAULT) - set(RESOURCES_FIELDS_BASE))
         resources_sort_options: list[str] = list(RESOURCES_DEFAULT_SORT_MAPPING.keys())
         all_sites_display: str = ", ".join([f"{s.url} (site: {s.id})" for s in all_sites])
 

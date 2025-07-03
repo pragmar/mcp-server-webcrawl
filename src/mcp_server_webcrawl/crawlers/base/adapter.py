@@ -19,7 +19,7 @@ from mcp_server_webcrawl.models.resources import (
     ResourceResultType,
     RESOURCES_DEFAULT_FIELD_MAPPING,
     RESOURCES_DEFAULT_SORT_MAPPING,
-    RESOURCES_FIELDS_REQUIRED,
+    RESOURCES_FIELDS_BASE,
     RESOURCES_ENUMERATED_TYPE_MAPPING,
     RESOURCES_LIMIT_MAX,
 )
@@ -109,7 +109,7 @@ class IndexState:
     time_start: datetime | None = None
     time_end: datetime | None = None
 
-    def set_status(self, status: IndexStatus):
+    def set_status(self, status: IndexStatus) -> None:
         if self.status == IndexStatus.UNDEFINED:
             self.time_start = datetime.now(timezone.utc)
             self.processed = 0
@@ -273,7 +273,7 @@ class BaseManager:
         return file_contents
 
     @staticmethod
-    def __read_files_contents(file_path) -> tuple[Path, str | None]:
+    def __read_files_contents(file_path: Path) -> tuple[Path, str | None]:
         """
         Read content from text files with better error handling and encoding detection.
 
@@ -317,7 +317,7 @@ class BaseManager:
         return file_path, content
 
     @staticmethod
-    def read_file_contents(file_path, resource_type) -> str | None:
+    def read_file_contents(file_path: Path, resource_type: ResourceResultType) -> str | None:
         """
         Read content from text files with better error handling and encoding detection.
 
@@ -355,7 +355,7 @@ class BaseManager:
         return content
 
     @staticmethod
-    def decruft_path(path:str) -> str:
+    def decruft_path(path: str) -> str:
         """
         Very light touch cleanup of file naming, these tmps are creating noise
         and extensions are useful in classifying resources
@@ -457,11 +457,14 @@ class BaseManager:
                 status_applied = True
                 break
         if not status_applied:
+            # AND ... combines under trailing NOT, since it is an AND, it can safely modify the head of the query
+            # but not the tail. this may be a bandaid over something more structural, we'll see. but so long as I'm
+            # modifying the user query, it should not create a Boolean interference, at minimum.
             http_status_received = SearchSubquery("status", 100, "term", [], "AND", comparator=">=")
             parsed_query.append(http_status_received)
 
         # determine fields to be retrieved
-        selected_fields: set[str] = set(RESOURCES_FIELDS_REQUIRED)
+        selected_fields: set[str] = set(RESOURCES_FIELDS_BASE)
         if fields:
             selected_fields.update(f for f in fields if f in RESOURCES_DEFAULT_FIELD_MAPPING)
 

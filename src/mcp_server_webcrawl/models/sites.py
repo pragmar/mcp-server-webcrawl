@@ -6,8 +6,8 @@ from mcp_server_webcrawl.models import METADATA_VALUE_TYPE
 from mcp_server_webcrawl.utils import to_isoformat_zulu
 
 SITES_TOOL_NAME: Final[str] = "webcrawl_sites"
-SITES_FIELDS_REQUIRED: Final[list[str]] = ["id", "url"]
-SITES_FIELDS_DEFAULT: Final[list[str]] = SITES_FIELDS_REQUIRED + ["created", "modified"]
+SITES_FIELDS_BASE: Final[list[str]] = ["id", "url"]
+SITES_FIELDS_DEFAULT: Final[list[str]] = SITES_FIELDS_BASE + ["created", "modified"]
 
 class SiteResult:
     """

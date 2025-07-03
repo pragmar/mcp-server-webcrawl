@@ -25,7 +25,7 @@ from mcp_server_webcrawl.models.resources import (
 )
 from mcp_server_webcrawl.models.sites import (
     SiteResult,
-    SITES_FIELDS_REQUIRED,
+    SITES_FIELDS_BASE,
     SITES_FIELDS_DEFAULT,
 )
 from mcp_server_webcrawl.utils import to_isoformat_zulu
@@ -110,7 +110,7 @@ class IndexedManager(BaseManager):
             return []
 
         # determine which fields to include
-        select_fields: set[str] = set(SITES_FIELDS_REQUIRED)
+        select_fields: set[str] = set(SITES_FIELDS_BASE)
         if fields:
             valid_fields: set[str] = set(SITES_FIELDS_DEFAULT)
             select_fields.update(f for f in fields if f in valid_fields)

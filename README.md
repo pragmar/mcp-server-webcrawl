@@ -17,7 +17,7 @@ Advanced search and retrieval for web crawler data. With **mcp-server-webcrawl**
 
 | Crawler/Format | Description | Platforms | Setup Guide |
 |----------------|-------------|-----------|-------------|
-| [**WARC**](https://en.wikipedia.org/wiki/WARC_(file_format)) | Standard web archive format          | N/A                 | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/warc.html) |
+| [**WARC**](https://en.wikipedia.org/wiki/WARC_(file_format)) | Standard web archive format          | varies by client    | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/warc.html) |
 | [**wget**](https://en.wikipedia.org/wiki/Wget)               | Command-line website mirroring tool  | macOS/Linux         | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/wget.html) |
 | [**InterroBot**](https://interro.bot)                        | GUI crawler and analyzer             | macOS/Windows       | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/interrobot.html) |
 | [**Katana**](https://github.com/projectdiscovery/katana)     | Security-focused crawler             | macOS/Windows/Linux | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/katana.html) |

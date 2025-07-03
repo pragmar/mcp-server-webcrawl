@@ -45,7 +45,7 @@ limit: 1
 sites: [target_site_id]
 fields: []
 extras: ["markdown"]
-sort: +id
+sort: +url
 ```
 
 ```
@@ -54,7 +54,7 @@ limit: 1
 sites: [target_site_id]
 fields: []
 extras: ["markdown"]
-sort: +id
+sort: +url
 ```
 
 ```
@@ -63,7 +63,7 @@ limit: 1
 sites: [target_site_id]
 fields: []
 extras: ["markdown"]
-sort: +id
+sort: +url
 ```
 
 ```
@@ -72,7 +72,7 @@ limit: 1
 sites: [target_site_id]
 fields: []
 extras: ["markdown"]
-sort: +id
+sort: +url
 ```
 
 **Record baseline totals and document which pages contain each term for mathematical validation.**
@@ -88,7 +88,7 @@ limit: 1
 sites: [target_site_id]
 fields: ["content", "headers"]
 extras: ["markdown"]
-sort: +id
+sort: +url
 ```
 
 ### 4. Boolean Logic Validation Tests
@@ -102,7 +102,7 @@ limit: 1
 sites: [target_site_id]
 fields: []
 extras: ["markdown"]
-sort: +id
+sort: +url
 ```
 
 ```
@@ -111,7 +111,7 @@ limit: 1
 sites: [target_site_id]
 fields: []
 extras: ["markdown"]
-sort: +id
+sort: +url
 ```
 
 ```
@@ -120,7 +120,7 @@ limit: 1
 sites: [target_site_id]
 fields: []
 extras: ["markdown"]
-sort: +id
+sort: +url
 ```
 
 **Validation:** AND results must be ≤ smallest individual term count. Verify content contains both terms.
@@ -132,7 +132,7 @@ limit: 1
 sites: [target_site_id]
 fields: []
 extras: ["markdown"]
-sort: +id
+sort: +url
 ```
 
 ```
@@ -141,14 +141,14 @@ limit: 1
 sites: [target_site_id]
 fields: []
 extras: ["markdown"]
-sort: +id
+sort: +url
 ```
 
 ```
 query: "[phrase_c]" OR [term_d]
 limit: 1
 sites: [target_site_id]
-sort: +id
+sort: +url
 ```
 
 **Validation:** OR results must be ≥ largest individual term count. Verify content contains at least one term.
@@ -160,7 +160,7 @@ limit: 1
 sites: [target_site_id]
 fields: []
 extras: ["markdown"]
-sort: +id
+sort: +url
 ```
 
 ```
@@ -169,7 +169,7 @@ limit: 1
 sites: [target_site_id]
 fields: []
 extras: ["markdown"]
-sort: +id
+sort: +url
 ```
 
 ```
@@ -178,10 +178,50 @@ limit: 1
 sites: [target_site_id]
 fields: []
 extras: ["markdown"]
-sort: +id
+sort: +url
 ```
 
 **Validation:** NOT results = (Term1 count) - (Term1 AND Term2 count). Verify content contains first term but not second.
+
+#### 4.4: Field/NOT Operations (Dynamic Field Exclusion Tests)
+
+**Test field/NOT syntax using established terms across different field types:**
+
+
+```
+query: type: html NOT content: [term_b]
+limit: 1
+sites: [target_site_id]
+fields: []
+extras: ["markdown"]
+sort: +url
+```
+
+```
+query: [term_a] NOT type: img
+limit: 1
+sites: [target_site_id]
+fields: []
+extras: ["markdown"]
+sort: +url
+```
+
+```
+query: status: 200 NOT type: script
+limit: 1
+sites: [target_site_id]
+fields: []
+extras: ["markdown"]
+sort: +url
+```
+
+**Validation:** Field/NOT must exclude based on field-specific content, not fulltext matching. Critical parser test distinguishing `content` (fulltext) vs `content: value` (field search).
+
+**Mathematical Check:**
+- A NOT B = A - (A AND B)
+- Verify field-specific exclusions follow set theory rules
+- Sample results to confirm field syntax working, not fulltext fallback
+
 
 ### 5. Complex Boolean Expression Tests
 
@@ -193,7 +233,7 @@ limit: 1
 sites: [target_site_id]
 fields: []
 extras: ["markdown"]
-sort: +id
+sort: +url
 ```
 
 ```
@@ -202,7 +242,7 @@ limit: 1
 sites: [target_site_id]
 fields: []
 extras: ["markdown"]
-sort: +id
+sort: +url
 ```
 
 ```
@@ -211,7 +251,7 @@ limit: 1
 sites: [target_site_id]
 fields: []
 extras: ["markdown"]
-sort: +id
+sort: +url
 ```
 
 **Validation:** Verify operator precedence and parentheses grouping work correctly.

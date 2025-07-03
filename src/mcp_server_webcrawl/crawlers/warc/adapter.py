@@ -24,7 +24,7 @@ from mcp_server_webcrawl.models.resources import (
 from mcp_server_webcrawl.models.sites import (
     SiteResult,
     SITES_FIELDS_DEFAULT,
-    SITES_FIELDS_REQUIRED,
+    SITES_FIELDS_BASE,
 )
 from mcp_server_webcrawl.utils.logger import get_logger
 
@@ -185,7 +185,7 @@ def get_sites(
         return []
 
     # determine which fields to include
-    selected_fields: set[str] = set(SITES_FIELDS_REQUIRED)
+    selected_fields: set[str] = set(SITES_FIELDS_BASE)
     if fields:
         valid_fields: set[str] = set(SITES_FIELDS_DEFAULT)
         selected_fields.update(f for f in fields if f in valid_fields)
