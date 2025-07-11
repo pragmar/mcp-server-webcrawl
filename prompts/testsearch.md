@@ -35,6 +35,8 @@ sort: +url
 - **Phrase C:** Exact phrase in quotes for phrase matching validation
 - **Term D (Rare):** Very specific term likely appearing on 1-3 pages
 
+*When selecting test terms, avoid combinations where a term is a subset of a phrase, as this will lead to suspicious counts during AND operation testing. Avoid terms in global navigation and header/footer listed on every page, the result counts will all look the same.*
+
 ### 3. Establish Baseline Counts
 
 **Test each term individually to establish baseline sets:**
@@ -254,7 +256,18 @@ extras: ["markdown"]
 sort: +url
 ```
 
-**Validation:** Verify operator precedence and parentheses grouping work correctly.
+**Validation:** Verify operator precedence follows standard search engine convention
+(AND before OR) and parentheses precedence correctly.
+
+Before declaring precedence failure, verify the mathematics:
+
+For query: [term_a] OR [term_b] AND [term_d]
+Expected parsing: [term_a] OR ([term_b] AND [term_d])
+
+1. Calculate: [term_b] AND [term_d] = X results
+2. Calculate: [term_a] OR X should ≈ [term_a] baseline (if [term_a] >> X)
+3. If actual results ≈ [term_a] baseline, precedence is CORRECT
+4. Only flag as error if mathematics don't match expected precedence
 
 ### 6. Content Verification Sampling
 

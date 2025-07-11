@@ -7,7 +7,7 @@ from mcp_server_webcrawl.models.resources import RESOURCES_TOOL_NAME
 from mcp_server_webcrawl.crawlers import get_fixture_directory
 from mcp_server_webcrawl.utils.logger import get_logger
 
-# these IDs belong to a db fixture, static for testing
+# these IDs belong to the db test fixture (interrobot.v2.db)
 EXAMPLE_SITE_ID = 1
 PRAGMAR_SITE_ID = 2
 

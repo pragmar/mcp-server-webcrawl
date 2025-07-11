@@ -17,11 +17,13 @@ __XSLT_HTML_TO_MARKDOWN = """<?xml version="1.0" encoding="UTF-8"?>
 
     <xsl:template name="heading">
         <xsl:param name="prefix"/>
-        <xsl:text>&#10;&#10;</xsl:text>
-        <xsl:value-of select="$prefix"/>
-        <xsl:text> </xsl:text>
-        <xsl:value-of select="normalize-space(.)"/>
-        <xsl:text>&#10;&#10;</xsl:text>
+        <xsl:if test="normalize-space(.) != ''">
+            <xsl:text>&#10;&#10;</xsl:text>
+            <xsl:value-of select="$prefix"/>
+            <xsl:text> </xsl:text>
+            <xsl:value-of select="normalize-space(.)"/>
+            <xsl:text>&#10;&#10;</xsl:text>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template match="h1">
@@ -61,11 +63,15 @@ __XSLT_HTML_TO_MARKDOWN = """<?xml version="1.0" encoding="UTF-8"?>
     </xsl:template>
 
     <xsl:template match="strong | b">
-        <xsl:text>**</xsl:text><xsl:apply-templates/><xsl:text>**</xsl:text>
+        <xsl:if test="normalize-space(.) != ''">
+            <xsl:text>**</xsl:text><xsl:apply-templates/><xsl:text>**</xsl:text>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template match="em | i">
-        <xsl:text>*</xsl:text><xsl:apply-templates/><xsl:text>*</xsl:text>
+        <xsl:if test="normalize-space(.) != ''">
+            <xsl:text>*</xsl:text><xsl:apply-templates/><xsl:text>*</xsl:text>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template match="ul | ol">
@@ -81,7 +87,7 @@ __XSLT_HTML_TO_MARKDOWN = """<?xml version="1.0" encoding="UTF-8"?>
     </xsl:template>
 
     <xsl:template match="li">
-
+        
         <xsl:param name="list-type" select="'ul'"/>
 
         <xsl:variable name="depth" select="count(ancestor::li)"/>
@@ -115,8 +121,14 @@ __XSLT_HTML_TO_MARKDOWN = """<?xml version="1.0" encoding="UTF-8"?>
         <xsl:value-of select="substring('                                        ', 1, $count)"/>
     </xsl:template>
 
-    <xsl:template match="p">
-        <xsl:text>&#10;&#10;</xsl:text><xsl:apply-templates/><xsl:text>&#10;&#10;</xsl:text>
+    <xsl:template match="p">        
+        <xsl:if test="not(ancestor::li)">
+            <xsl:text>&#10;&#10;</xsl:text>
+        </xsl:if>
+        <xsl:apply-templates/>
+        <xsl:if test="not(ancestor::li)">
+            <xsl:text>&#10;&#10;</xsl:text>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template match="div[not(parent::div) and not(ancestor-or-self::td)]">
@@ -127,6 +139,7 @@ __XSLT_HTML_TO_MARKDOWN = """<?xml version="1.0" encoding="UTF-8"?>
     </xsl:template>
 
     <xsl:template match="span/div | li/p | li/div | td/div">
+    
         <xsl:apply-templates/>
     </xsl:template>
 
@@ -150,10 +163,8 @@ __XSLT_HTML_TO_MARKDOWN = """<?xml version="1.0" encoding="UTF-8"?>
                 <!-- contains block elements -->
                 <xsl:choose>
                     <xsl:when test="not(ancestor::li) and (div | p | h1 | h2 | h3 | h4 | h5 | h6 | blockquote | pre)">
-                        <xsl:text>&#10;&#10;</xsl:text>
-                        <xsl:text>[ </xsl:text>
-                        <xsl:apply-templates/>
-                        <xsl:text> ]</xsl:text>
+                        <!-- as much as a link here would be nice, it's invalid markdown -->
+                        <xsl:text>[</xsl:text><xsl:value-of select="$text"/><xsl:text>]</xsl:text>
                         <xsl:text>(</xsl:text><xsl:value-of select="$href"/><xsl:text>)</xsl:text>
                     </xsl:when>
                     <xsl:otherwise>
@@ -163,6 +174,11 @@ __XSLT_HTML_TO_MARKDOWN = """<?xml version="1.0" encoding="UTF-8"?>
                 </xsl:choose>
             </xsl:when>
         </xsl:choose>
+        <xsl:variable name="nexttext" select="string(following-sibling::text())"/>
+        <xsl:if test="starts-with($nexttext, ' ')">
+            <xsl:text> </xsl:text>
+        </xsl:if>
+
     </xsl:template>
 
     <xsl:template match="img">
@@ -238,9 +254,7 @@ __XSLT_HTML_TO_MARKDOWN = """<?xml version="1.0" encoding="UTF-8"?>
         <xsl:text>&#10;&#10;</xsl:text>
         <xsl:variable name="rows" select=".//tr"/>
         <xsl:choose>
-            <xsl:when test="normalize-space(.) = ''">
-
-            </xsl:when>
+            <xsl:when test="normalize-space(.) = ''"></xsl:when>
             <xsl:when test="count($rows[1]/th) > 0">
                 <xsl:apply-templates select="$rows[1]"/>
                 <xsl:call-template name="table-separator">
@@ -344,17 +358,16 @@ __XSLT_HTML_TO_MARKDOWN = """<?xml version="1.0" encoding="UTF-8"?>
 
     <xsl:template match="text()">
         <xsl:value-of select="normalize-space(.)"/>
-        <xsl:if test="following-sibling::ul or following-sibling::ol or following-sibling::table">
+        <xsl:if test="(not(ancestor::li) and following-sibling::ul) or following-sibling::ol or following-sibling::table">
             <xsl:text>&#10;&#10;</xsl:text>
         </xsl:if>
     </xsl:template>
 
-    <xsl:template match="*">
+    <xsl:template match="*">        
         <xsl:variable name="isOwnLine" select="not(ancestor::li) or following-sibling::*[self::ul or self::ol]"/>
         <xsl:if test="$isOwnLine">
             <xsl:text>&#10;&#10;</xsl:text>
         </xsl:if>
-
         <xsl:apply-templates/>
         <xsl:if test="$isOwnLine">
             <xsl:text>&#10;</xsl:text>

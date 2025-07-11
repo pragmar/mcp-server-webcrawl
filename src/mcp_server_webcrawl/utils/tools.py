@@ -2,7 +2,6 @@ from mcp.types import Tool
 
 from mcp_server_webcrawl.models.resources import (
     ResourceResultType,
-    RESOURCES_FIELDS_DEFAULT,
     RESOURCES_FIELDS_BASE,
     RESOURCES_FIELDS_OPTIONS,
     RESOURCES_DEFAULT_SORT_MAPPING,
@@ -50,7 +49,6 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                     "fields": {
                         "type": "array",
                         "items": {
-                            "type": "string",
                             "enum": sites_field_options
                         },
                         "description": ("List of additional fields to include in the response beyond the defaults "
@@ -101,14 +99,13 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                     "sites": {
                         "type": "array",
                         "items": {"type": "integer"},
-                        "description": ("Optional list of project ID to filter search results to a specific site. In 95% "
-                            "of scenarios, you'd filter to only one site, but multiple site filtering is offered for "
+                        "description": ("List of crawl site IDs to filter search results to a specific site. In most "
+                            "scenarios, you should filter to only one site, but multiple site filtering is offered for "
                             f"advanced search scenarios. Available sites include {sites_display}.")
                     },
                     "fields": {
                         "type": "array",
                         "items": {
-                            "type": "string",
                             "enum": RESOURCES_FIELDS_OPTIONS
                         },
                         "description": ("List of additional fields to include in the response beyond the base fields "
@@ -116,13 +113,15 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                             "Empty list means base fields only. Use headers and content to retrieve raw HTTP contents, "
                             "and size to collect file size in bytes. "
                             "The content field can lead to large results and should be used judiciously with LIMIT. "
-                            "Fields must be explicitly requested even when used with sort. ")
+                            "Fields must be explicitly requested, even when used with sort. ")
                     },
                     "sort": {
-                        "type": "string",
                         "enum": resources_sort_options,
-                        "description": ("Sort order for results. Prefixed with + for ascending, - for descending. "
-                        "? is a special option for random sort, useful in statistical sampling.")
+                        "default": "+url",
+                        "description": ("Sort order for results. Prefixed with + for ascending, - for descending "
+                        f"({', '.join(resources_sort_options)}). "
+                        "? is a special option for random sort, useful in statistical sampling. The API expects exactly "
+                        "one of the enum values above, not a quoted string.")
                     },
                     "limit": {
                         "type": "integer",
@@ -135,7 +134,6 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                     "extras": {
                         "type": "array",
                         "items": {
-                            "type": "string",
                             "enum": ["thumbnails", "markdown", "snippets", "xpath"]
                         },
                         "description": ("Optional array of extra features to include in results. Available options include:\n"

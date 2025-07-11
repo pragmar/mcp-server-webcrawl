@@ -18,6 +18,7 @@ from mcp_server_webcrawl.models.resources import (
     ResourceResult,
     ResourceResultType,
     RESOURCES_DEFAULT_FIELD_MAPPING,
+    RESOURCES_DEFAULT_SORT_MAPPING,
     RESOURCE_EXTRAS_ALLOWED,
     RESOURCES_TOOL_NAME,
 )
@@ -308,6 +309,9 @@ class BaseCrawler:
                 limit: int = 20 if not arguments or "limit" not in arguments else arguments["limit"]
                 offset: int = 0 if not arguments or "offset" not in arguments else arguments["offset"]
 
+                # claude keeps getting this wrong, but it is properly documented
+                clean_sort = sort.strip("\"'`") if isinstance(sort, str) else None
+
                 assert isinstance(query, str)
                 assert isinstance(fields, list) and all(isinstance(item, str) for item in fields)
                 assert isinstance(sites, list) and all(isinstance(item, int) for item in sites)
@@ -321,12 +325,15 @@ class BaseCrawler:
                     sites=sites,
                     query=query,
                     fields=fields,
-                    sort=sort,
+                    sort=clean_sort,
                     limit=limit,
                     offset=offset,
                     extras=extras,
                     extrasXpath=extrasXpath,
                 )
+                if sort != clean_sort:
+                    # let the MCP host know the error of its ways
+                    api_result.append_error(f"invalid sort ({sort}) requested [{', '.join(RESOURCES_DEFAULT_SORT_MAPPING.keys())}]")
                 if extras_removed:
                     # only allow known extras
                     api_result.append_error(f"invalid extras requested ({', '.join(extras_removed)})")

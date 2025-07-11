@@ -29,10 +29,10 @@ query: type: html AND url: [target_site_domain]
 limit: 100
 sites: [target_site_id]
 fields: []
-sort: +id
+sort: +url
 ```
 
-**Purpose:** Get homepage first (lowest ID), then analyze remaining 99 pages from the specified domain only to identify page templates and URL patterns.
+**Purpose:** Get homepage first, then analyze remaining 99 pages from the specified domain only to identify page templates and URL patterns.
 
 ### 3. Analyze URL Patterns
 

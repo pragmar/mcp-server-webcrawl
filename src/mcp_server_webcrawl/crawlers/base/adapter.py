@@ -439,8 +439,8 @@ class BaseManager:
             logger.info(f"Database for sites {sites} is currently being built, try again later")
             return null_result
 
-        parser = SearchQueryParser()
-        parsed_query = []
+        parser: SearchQueryParser = SearchQueryParser()
+        parsed_query: list[SearchSubquery] = []
 
         if query.strip():
             try:
@@ -448,18 +448,17 @@ class BaseManager:
             except Exception as e:
                 logger.error(f"Error parsing query: {e}")
                 # fall back to simple text search
-                parsed_query = []
+
+        parsed_query = parsed_query or []
 
         # if status not explicitly in query, add status >=100
-        status_applied = False
+        status_applied: bool = False
         for squery in parsed_query:
             if squery.field == "status":
                 status_applied = True
                 break
         if not status_applied:
-            # AND ... combines under trailing NOT, since it is an AND, it can safely modify the head of the query
-            # but not the tail. this may be a bandaid over something more structural, we'll see. but so long as I'm
-            # modifying the user query, it should not create a Boolean interference, at minimum.
+            # add default status constraint ANDed at end
             http_status_received = SearchSubquery("status", 100, "term", [], "AND", comparator=">=")
             parsed_query.append(http_status_received)
 

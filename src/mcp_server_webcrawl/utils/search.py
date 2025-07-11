@@ -69,8 +69,10 @@ class SearchQueryParser:
 
         if isinstance(result, SearchSubquery):
             return [result]
-
-        return result
+        elif isinstance(result, list) and all(isinstance(item, SearchSubquery) for item in result):
+            return result
+        else:
+            return []
 
     def to_sqlite_fts(
             self,
@@ -138,20 +140,16 @@ class SearchQueryParser:
                         param_name: str = param_manager.add_param(processed_value)
                         sql_part += f"{safe_sql_field} {subquery.comparator} :{param_name}"
                     else:
-                        if field == "url" or field == "headers":
+                        # headers currently handled FTS5_MATCH_FIELDS handler
+                        if field == "url":
                             # Use LIKE for certain field searches instead of MATCH, maximize the hits
                             # with %LIKE%. Think of https://example.com/logo.png?cache=20250112
                             # and a search of url: *.png and the 10s of ways broader match is better
                             # fit for intention
                             sql_part += f"{safe_sql_field} LIKE :"
-                            # strip wildcards whether wildcard or not
-                            unwildcarded_value: str = str(processed_value).strip("*")
-                            param_name: str = param_manager.add_param(f"%{unwildcarded_value}%")
+                            trimmed_url: str = str(processed_value).strip("*\"'`")
+                            param_name: str = param_manager.add_param(f"%{trimmed_url}%")
                             sql_part += param_name
-                        # type currently handled FTS5_MATCH_FIELDS handler
-                        elif field == "type":
-                            param_name: str = param_manager.add_param(processed_value)
-                            sql_part += f"{safe_sql_field} = :{param_name}"
                         elif value_type == "phrase":
                             formatted_term: str = self.__format_search_term(processed_value, value_type)
                             param_name: str = param_manager.add_param(formatted_term)

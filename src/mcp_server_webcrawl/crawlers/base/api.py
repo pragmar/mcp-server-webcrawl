@@ -30,6 +30,7 @@ class BaseJsonApiEncoder(json.JSONEncoder):
         Returns:
             JSON serializable representation of the object
         """
+
         if isinstance(obj, BaseJsonApi):
             return obj.__dict__
         elif isinstance(obj, ResourceResultType):
@@ -57,6 +58,7 @@ class BaseJsonApi:
             args: Dictionary of API arguments
             index_state: indexing, complete, remote, etc.
         """
+
         from mcp_server_webcrawl import __version__, __name__
         self._start_time = time()
         self.method = method
@@ -78,9 +80,17 @@ class BaseJsonApi:
         Returns:
             Integer count of total results
         """
+
         return self._results_total
 
     def get_results(self) -> list[SiteResult | ResourceResult]:
+        """
+        Returns list of results.
+
+        Returns:
+            Results of type SiteResult or ResourceResult
+        """
+
         return self._results.copy()
 
     def set_results(self, results: list[SiteResult | ResourceResult], total: int, offset: int, limit: int) -> None:
@@ -106,6 +116,7 @@ class BaseJsonApi:
         Args:
             message: Error message to add
         """
+
         self._errors.append(message)
 
     def to_dict(self) -> dict[str, METADATA_VALUE_TYPE]:
@@ -149,4 +160,5 @@ class BaseJsonApi:
         Returns:
             JSON string representation of the API response
         """
+
         return json.dumps(self.to_dict(), indent=1, cls=BaseJsonApiEncoder)

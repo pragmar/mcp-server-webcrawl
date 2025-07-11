@@ -36,7 +36,7 @@ query: type: style AND url: [target_site_domain]
 limit: 100
 sites: [target_site_id]
 fields: []
-sort: +id
+sort: +url
 ```
 
 **If 0 results, try Asset Domain Discovery:**
@@ -45,7 +45,7 @@ query: type: style
 limit: 100
 sites: [target_site_id]
 fields: []
-sort: +id
+sort: +url
 ```
 
 **Then filter results for common asset domain patterns:**
@@ -82,7 +82,7 @@ query: type: script AND url: [target_site_domain]
 limit: 100
 sites: [target_site_id]
 fields: []
-sort: +id
+sort: +url
 ```
 
 **If 0 results, use discovered asset domain:**
@@ -91,7 +91,7 @@ query: type: script AND url: [discovered_asset_domain]
 limit: 100
 sites: [target_site_id]
 fields: []
-sort: +id
+sort: +url
 ```
 
 **If still 0 results, broad asset discovery:**
@@ -100,7 +100,7 @@ query: type: script
 limit: 100
 sites: [target_site_id]
 fields: []
-sort: +id
+sort: +url
 ```
 
 **Then apply same domain filtering logic as CSS**
@@ -120,7 +120,7 @@ query: type: html AND (content: "<link rel=\"stylesheet\"" OR content: "<script 
 limit: 50
 sites: [target_site_id]
 fields: []
-sort: +id
+sort: +url
 ```
 
 **Map critical rendering path dependencies**
