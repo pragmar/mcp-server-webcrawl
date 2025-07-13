@@ -100,15 +100,17 @@ Field search provides search precision, allowing you to specify which columns of
 
 ## Field Content
 
-A subset of fields can be indepently requested with results, while core fields are always on. Use of headers and content can consume tokens quickly, use judiciously, or use extras to crunch more results into the context window.
+A subset of fields can be indepently requested with results, while core fields are always on. Use of headers and content can consume tokens quickly. Use judiciously, or use extras to crunch more results into the context window. Fields are a top level argument, independent of any field searching taking place in the query.
 
 | Field | Description |
 |-------|-------------|
 | id | always available |
 | url | always available |
 | type | always available |
+| status | always available |
+| created | on request |
+| modified | on request |
 | size | on request |
-| status | on request |
 | headers | on request |
 | content | on request |
 
