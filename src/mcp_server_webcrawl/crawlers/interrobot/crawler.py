@@ -51,6 +51,7 @@ class InterroBotCrawler(BaseCrawler):
         """
         # get the default crawler tools, then override necessary fields
         all_sites: list[SiteResult] = self._adapter_get_sites(self._datasrc)
+        all_sites_ids: list[int] = [s.id for s in all_sites if s is not None and isinstance(s.id, int)]
         default_tools: list[Tool] = get_crawler_tools(sites=all_sites)
         assert len(default_tools) == 2, "expected exactly 2 Tools: sites and resources"
 
@@ -72,7 +73,7 @@ class InterroBotCrawler(BaseCrawler):
         drt_props: dict = default_resources_tool.inputSchema["properties"]
         drt_props["fields"]["items"]["enum"] = resources_field_options
         drt_props["sort"]["enum"] = resources_sort_options
-        drt_props["sites"]["enum"] = sites_field_options
+        drt_props["sites"]["enum"] = all_sites_ids
         drt_props["sites"]["description"] = ("Optional "
                 "list of project ID to filter search results to a specific site. In 95% "
                 "of scenarios, you'd filter to only one site, but many site filtering is offered "

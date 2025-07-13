@@ -309,7 +309,7 @@ class BaseCrawler:
                 limit: int = 20 if not arguments or "limit" not in arguments else arguments["limit"]
                 offset: int = 0 if not arguments or "offset" not in arguments else arguments["offset"]
 
-                # claude keeps getting this wrong, but it is properly documented
+                # claude keeps getting this wrong, it is properly enumerated in Tool definition
                 clean_sort = sort.strip("\"'`") if isinstance(sort, str) else None
 
                 assert isinstance(query, str)
@@ -331,9 +331,13 @@ class BaseCrawler:
                     extras=extras,
                     extrasXpath=extrasXpath,
                 )
-                if sort != clean_sort:
-                    # let the MCP host know the error of its ways
-                    api_result.append_error(f"invalid sort ({sort}) requested [{', '.join(RESOURCES_DEFAULT_SORT_MAPPING.keys())}]")
+                # sometimes nudging makes things worse, AI doubles down on percieved
+                # rightousness of position. just let it have it. claims in the end it's
+                # a JSON encoding confusion with the +/- leading char. who knows? more
+                # importantly, who cares? play it loose.
+                # if sort != clean_sort:
+                #     # let the MCP host know the error of its ways
+                #     api_result.append_error(f"invalid sort ({sort}) requested [{', '.join(RESOURCES_DEFAULT_SORT_MAPPING.keys())}]")
                 if extras_removed:
                     # only allow known extras
                     api_result.append_error(f"invalid extras requested ({', '.join(extras_removed)})")
