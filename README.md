@@ -18,9 +18,9 @@ Advanced search and retrieval for web crawler data. With **mcp-server-webcrawl**
 | Crawler/Format | Description | Platforms | Setup Guide |
 |----------------|-------------|-----------|-------------|
 | [**WARC**](https://en.wikipedia.org/wiki/WARC_(file_format)) | Standard web archive format          | varies by client    | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/warc.html) |
-| [**wget**](https://en.wikipedia.org/wiki/Wget)               | Command-line website mirroring tool  | macOS/Linux         | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/wget.html) |
+| [**wget**](https://en.wikipedia.org/wiki/Wget)               | CLI website mirroring tool  | macOS/Linux         | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/wget.html) |
 | [**InterroBot**](https://interro.bot)                        | GUI crawler and analyzer             | macOS/Windows       | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/interrobot.html) |
-| [**Katana**](https://github.com/projectdiscovery/katana)     | Security-focused crawler             | macOS/Windows/Linux | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/katana.html) |
+| [**Katana**](https://github.com/projectdiscovery/katana)     | CLI security-focused crawler             | macOS/Windows/Linux | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/katana.html) |
 | [**SiteOne**](https://crawler.siteone.io)                    | GUI crawler and analyzer             | macOS/Windows/Linux | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/siteone.html) |
 
 
@@ -97,6 +97,20 @@ Field search provides search precision, allowing you to specify which columns of
 | status | HTTP response codes |
 | headers | HTTP response headers |
 | content | HTTP body—HTML, CSS, JS, and more |
+
+## Field Content
+
+A subset of fields can be indepently requested with results, while core fields are always on. Use of headers and content can consume tokens quickly, use judiciously, or use extras to crunch more results into the context window.
+
+| Field | Description |
+|-------|-------------|
+| id | always available |
+| url | always available |
+| type | always available |
+| size | on request |
+| status | on request |
+| headers | on request |
+| content | on request |
 
 ## Content Types
 

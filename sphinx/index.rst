@@ -16,25 +16,45 @@
 mcp-server-webcrawl
 ===============================================
 
-Bridge the gap between your web crawl and AI language models using Model Context Protocol (MCP).
-With **mcp-server-webcrawl**, your AI client filters and analyzes web content under your direction or autonomously. The
-server includes a full-text search interface with boolean support, resource filtering by type, HTTP status,
-and more.
+Advanced search and retrieval for web crawler data. With **mcp-server-webcrawl**, your AI client filters
+and analyzes web content under your direction or autonomously. The server includes a full-text search
+interface with boolean support, and resource filtering by type, HTTP status, and more.
 
 **mcp-server-webcrawl** provides the LLM a complete menu with which to search your web content, and works with
 a variety of web crawlers:
 
-* `WARC <https://en.wikipedia.org/wiki/WARC_(file_format)>`_
-* `wget <https://en.wikipedia.org/wiki/Wget>`_
-* `InterroBot <https://interro.bot>`_
-* `Katana <https://github.com/projectdiscovery/katana>`_
-* `SiteOne <https://crawler.siteone.io>`_
+.. list-table:: Supported Crawlers
+   :header-rows: 1
+   :widths: 30 50 20
+
+   * - Crawler/Format
+     - Description
+     - Setup Guide
+   * - `WARC <https://en.wikipedia.org/wiki/WARC_(file_format)>`_
+     - Standard web archive format
+     - `Setup Guide <https://pragmar.github.io/mcp-server-webcrawl/guides/warc.html>`_
+   * - `wget <https://en.wikipedia.org/wiki/Wget>`_
+     - CLI website mirroring tool
+     - `Setup Guide <https://pragmar.github.io/mcp-server-webcrawl/guides/wget.html>`_
+   * - `InterroBot <https://interro.bot>`_
+     - GUI crawler and analyzer
+     - `Setup Guide <https://pragmar.github.io/mcp-server-webcrawl/guides/interrobot.html>`_
+   * - `Katana <https://github.com/projectdiscovery/katana>`_
+     - CLI security-focused crawler
+     - `Setup Guide <https://pragmar.github.io/mcp-server-webcrawl/guides/katana.html>`_
+   * - `SiteOne <https://crawler.siteone.io>`_
+     - GUI crawler and analyzer
+     - `Setup Guide <https://pragmar.github.io/mcp-server-webcrawl/guides/siteone.html>`_
 
 **mcp-server-webcrawl** is free and open source, and requires Claude Desktop, Python (>=3.10). It is installed on the command line, via pip install:
 
 .. code-block:: bash
 
    pip install mcp-server-webcrawl
+
+.. raw:: html
+
+   <iframe width="560" height="315" style="display: block;margin-bottom:1rem;" src="https://www.youtube.com/embed/Sid-GBxII1o" frameborder="0" allowfullscreen></iframe>
 
 
 .. toctree::

@@ -37,7 +37,7 @@ Verify installation was successful by checking the version:
 
 .. code-block:: bash
 
-    mcp-server-webcrawl --version
+    mcp-server-webcrawl --help
 
 2. Configure Claude Desktop
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -103,4 +103,4 @@ Troubleshooting
 - Remember that the first time you use a function, Claude will ask for permission
 - Indexing for file-based archives (wget included) requires build time on first search, time is dependent on archive size
 
-For more details, including API documentation and other crawler options, visit the `mcp-server-webcrawl documentation <https://github.com/pragmar/mcp_server_webcrawl>`_.
+For more details, including API documentation and other crawler options, visit the `mcp-server-webcrawl documentation <https://github.com/pragmar/mcp-server-webcrawl>`_.

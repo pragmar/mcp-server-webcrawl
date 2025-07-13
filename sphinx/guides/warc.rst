@@ -1,8 +1,8 @@
 WARC MCP Setup Guide
 ====================
 
-Instructions for setting up `mcp-server-webcrawl <https://pragmar.com/mcp-server-webcrawl/>`_ with 
-`WARC <https://en.wikipedia.org/wiki/WARC_\(file_format\)>`_ files. This allows your LLM (e.g. 
+Instructions for setting up `mcp-server-webcrawl <https://pragmar.com/mcp-server-webcrawl/>`_ with
+`WARC <https://en.wikipedia.org/wiki/WARC_\(file_format\)>`_ files to allow your LLM (e.g.
 Claude Desktop) to search content and metadata from websites you've archived in WARC format.
 
 .. raw:: html
@@ -24,13 +24,13 @@ Before you begin, ensure you have:
 What are WARC Files?
 --------------------
 
-WARC (Web ARChive) files are single-file web archives that store complete crawl data including:
+WARC files are single-file archives that store complete crawl data including:
 
 - HTTP status codes
 - HTTP headers
 - Response content
 
-Compared to wget mirror mode:
+Compared to wget running in mirror mode:
 
 - **WARC**: More comprehensive (preserves status codes and headers) but slower crawling
 - **wget mirror**: Faster crawling but doesn't preserve status codes or headers
@@ -47,7 +47,7 @@ Open your terminal or command line and install the package::
 
 Verify installation was successful::
 
-    mcp-server-webcrawl --version
+    mcp-server-webcrawl --help
 
 2. Configure Claude Desktop
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -62,7 +62,7 @@ Verify installation was successful::
       "mcpServers": {
         "webcrawl": {
           "command": "/path/to/mcp-server-webcrawl",
-          "args": ["--crawler", "warc", "--datasrc", 
+          "args": ["--crawler", "warc", "--datasrc",
             "/path/to/warc/archives/"]
         }
       }
@@ -85,10 +85,10 @@ Verify installation was successful::
 
 .. code-block:: bash
 
-    # Basic WARC capture
+    # basic WARC capture
     wget --warc-file=example --recursive https://example.com
 
-    # More comprehensive capture with page requirements (CSS, images, etc.)
+    # more comprehensive capture with page requirements (CSS, images, etc.)
     wget --warc-file=example --recursive --page-requisites https://example.com
 
 Your WARC files will be created with a .warc.gz extension in your current directory.
@@ -115,4 +115,4 @@ Troubleshooting
 - Remember that the first time you use each function, Claude will ask for permission
 - For large WARC files, initial indexing may take some time
 
-For more details, including API documentation and other crawler options, visit the `mcp-server-webcrawl documentation <https://github.com/pragmar/mcp_server_webcrawl>`_.
+For more details, including API documentation and other crawler options, visit the `mcp-server-webcrawl documentation <https://github.com/pragmar/mcp-server-webcrawl>`_.

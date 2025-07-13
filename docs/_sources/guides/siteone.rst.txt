@@ -1,7 +1,7 @@
 SiteOne MCP Setup Guide
 =======================
 
-Instructions for setting up `mcp-server-webcrawl <https://pragmar.com/mcp-server-webcrawl/>`_ with SiteOne crawler. 
+Instructions for setting up `mcp-server-webcrawl <https://pragmar.com/mcp-server-webcrawl/>`_ with SiteOne crawler.
 This allows your LLM (e.g. Claude Desktop) to search content and metadata from websites you've crawled using SiteOne.
 
 .. raw:: html
@@ -23,7 +23,7 @@ Before you begin, ensure you have:
 What is SiteOne?
 ----------------
 
-SiteOne is a graphical web crawler that offers:
+SiteOne is a GUI crawler that offers:
 
 - User-friendly desktop interface for setting up and managing crawls
 - Offline website generation capabilities
@@ -42,7 +42,7 @@ Open your terminal or command line and install the package::
 
 Verify installation was successful::
 
-    mcp-server-webcrawl --version
+    mcp-server-webcrawl --help
 
 2. Create Crawls with SiteOne
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,7 +67,7 @@ Verify installation was successful::
       "mcpServers": {
         "webcrawl": {
           "command": "/path/to/mcp-server-webcrawl",
-          "args": ["--crawler", "siteone", "--datasrc", 
+          "args": ["--crawler", "siteone", "--datasrc",
             "/path/to/siteone/archives/"]
         }
       }
@@ -95,7 +95,7 @@ Verify installation was successful::
 
 4. Explore specific topics on your crawled sites::
 
-    I'm interested in AppStat on pragmar.com. Can you tell me about it?
+    I'm interested in [keyword] in [crawled domain]. Can you tell me about it?
 
 Troubleshooting
 ---------------
@@ -107,4 +107,4 @@ Troubleshooting
 - Verify that each crawl completed successfully and files were saved to the expected location
 - Remember that the first time you use a function, Claude will ask for permission
 
-For more details, including API documentation and other crawler options, visit the `mcp-server-webcrawl documentation <https://github.com/pragmar/mcp_server_webcrawl>`_.
+For more details, including API documentation and other crawler options, visit the `mcp-server-webcrawl documentation <https://github.com/pragmar/mcp-server-webcrawl>`_.

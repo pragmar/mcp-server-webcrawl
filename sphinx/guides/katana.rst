@@ -44,7 +44,7 @@ Open your terminal or command line and install the package::
 
 Verify installation was successful::
 
-    mcp-server-webcrawl --version
+    mcp-server-webcrawl --help
 
 2. Install and Run Katana
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -129,4 +129,4 @@ Troubleshooting
 - Verify that each crawl completed successfully and files were saved to the expected location
 - Remember that the first time you use a function, Claude will ask for permission
 
-For more details, including API documentation and other crawler options, visit the `mcp-server-webcrawl documentation <https://github.com/pragmar/mcp_server_webcrawl>`_.
+For more details, including API documentation and other crawler options, visit the `mcp-server-webcrawl documentation <https://github.com/pragmar/mcp-server-webcrawl>`_.

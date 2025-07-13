@@ -83,24 +83,52 @@
 
 </div><section id="mcp-server-webcrawl">
 <h1>mcp-server-webcrawl<a class="headerlink" href="#mcp-server-webcrawl" title="Link to this heading"></a></h1>
-<p>Bridge the gap between your web crawl and AI language models using Model Context Protocol (MCP).
-With <strong>mcp-server-webcrawl</strong>, your AI client filters and analyzes web content under your direction or autonomously. The
-server includes a full-text search interface with boolean support, resource filtering by type, HTTP status,
-and more.</p>
+<p>Advanced search and retrieval for web crawler data. With <strong>mcp-server-webcrawl</strong>, your AI client filters
+and analyzes web content under your direction or autonomously. The server includes a full-text search
+interface with boolean support, and resource filtering by type, HTTP status, and more.</p>
 <p><strong>mcp-server-webcrawl</strong> provides the LLM a complete menu with which to search your web content, and works with
 a variety of web crawlers:</p>
-<ul class="simple">
-<li><p><a class="reference external" href="https://en.wikipedia.org/wiki/WARC_(file_format)">WARC</a></p></li>
-<li><p><a class="reference external" href="https://en.wikipedia.org/wiki/Wget">wget</a></p></li>
-<li><p><a class="reference external" href="https://interro.bot">InterroBot</a></p></li>
-<li><p><a class="reference external" href="https://github.com/projectdiscovery/katana">Katana</a></p></li>
-<li><p><a class="reference external" href="https://crawler.siteone.io">SiteOne</a></p></li>
-</ul>
+<table class="docutils align-default" id="id5">
+<caption><span class="caption-text">Supported Crawlers</span><a class="headerlink" href="#id5" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 50.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Crawler/Format</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Setup Guide</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference external" href="https://en.wikipedia.org/wiki/WARC_(file_format)">WARC</a></p></td>
+<td><p>Standard web archive format</p></td>
+<td><p><a class="reference external" href="https://pragmar.github.io/mcp-server-webcrawl/guides/warc.html">Setup Guide</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="https://en.wikipedia.org/wiki/Wget">wget</a></p></td>
+<td><p>CLI website mirroring tool</p></td>
+<td><p><a class="reference external" href="https://pragmar.github.io/mcp-server-webcrawl/guides/wget.html">Setup Guide</a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference external" href="https://interro.bot">InterroBot</a></p></td>
+<td><p>GUI crawler and analyzer</p></td>
+<td><p><a class="reference external" href="https://pragmar.github.io/mcp-server-webcrawl/guides/interrobot.html">Setup Guide</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="https://github.com/projectdiscovery/katana">Katana</a></p></td>
+<td><p>CLI security-focused crawler</p></td>
+<td><p><a class="reference external" href="https://pragmar.github.io/mcp-server-webcrawl/guides/katana.html">Setup Guide</a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference external" href="https://crawler.siteone.io">SiteOne</a></p></td>
+<td><p>GUI crawler and analyzer</p></td>
+<td><p><a class="reference external" href="https://pragmar.github.io/mcp-server-webcrawl/guides/siteone.html">Setup Guide</a></p></td>
+</tr>
+</tbody>
+</table>
 <p><strong>mcp-server-webcrawl</strong> is free and open source, and requires Claude Desktop, Python (&gt;=3.10). It is installed on the command line, via pip install:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>mcp-server-webcrawl
 </pre></div>
 </div>
-<div class="toctree-wrapper compound">
+<iframe width="560" height="315" style="display: block;margin-bottom:1rem;" src="https://www.youtube.com/embed/Sid-GBxII1o" frameborder="0" allowfullscreen></iframe><div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>

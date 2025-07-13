@@ -54,6 +54,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../prompts.html">Prompt Routines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -99,7 +100,7 @@ This allows your LLM (e.g. Claude Desktop) to search content and metadata from w
 </section>
 <section id="what-is-siteone">
 <h2>What is SiteOne?<a class="headerlink" href="#what-is-siteone" title="Link to this heading"></a></h2>
-<p>SiteOne is a graphical web crawler that offers:</p>
+<p>SiteOne is a GUI crawler that offers:</p>
 <ul class="simple">
 <li><p>User-friendly desktop interface for setting up and managing crawls</p></li>
 <li><p>Offline website generation capabilities</p></li>
@@ -116,7 +117,7 @@ This allows your LLM (e.g. Claude Desktop) to search content and metadata from w
 </pre></div>
 </div>
 <p>Verify installation was successful:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mcp</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">webcrawl</span> <span class="o">--</span><span class="n">version</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mcp</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">webcrawl</span> <span class="o">--</span><span class="n">help</span>
 </pre></div>
 </div>
 </section>
@@ -177,7 +178,7 @@ This allows your LLM (e.g. Claude Desktop) to search content and metadata from w
 </div>
 </li>
 <li><p>Explore specific topics on your crawled sites:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">I</span><span class="s1">&#39;m interested in AppStat on pragmar.com. Can you tell me about it?</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">I</span><span class="s1">&#39;m interested in [keyword] in [crawled domain]. Can you tell me about it?</span>
 </pre></div>
 </div>
 </li>
@@ -194,7 +195,7 @@ This allows your LLM (e.g. Claude Desktop) to search content and metadata from w
 <li><p>Verify that each crawl completed successfully and files were saved to the expected location</p></li>
 <li><p>Remember that the first time you use a function, Claude will ask for permission</p></li>
 </ul>
-<p>For more details, including API documentation and other crawler options, visit the <a class="reference external" href="https://github.com/pragmar/mcp_server_webcrawl">mcp-server-webcrawl documentation</a>.</p>
+<p>For more details, including API documentation and other crawler options, visit the <a class="reference external" href="https://github.com/pragmar/mcp-server-webcrawl">mcp-server-webcrawl documentation</a>.</p>
 </section>
 </section>
 

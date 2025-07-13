@@ -110,6 +110,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            JSON serializable representation of the object</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">BaseJsonApi</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__dict__</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="p">):</span>
@@ -143,6 +144,7 @@
 <span class="sd">            args: Dictionary of API arguments</span>
 <span class="sd">            index_state: indexing, complete, remote, etc.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="kn">from</span> <span class="nn">mcp_server_webcrawl</span> <span class="kn">import</span> <span class="n">__version__</span><span class="p">,</span> <span class="vm">__name__</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
@@ -165,11 +167,19 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Integer count of total results</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results_total</span>
 
 <div class="viewcode-block" id="BaseJsonApi.get_results">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.api.BaseJsonApi.get_results">[docs]</a>
     <span class="k">def</span> <span class="nf">get_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SiteResult</span> <span class="o">|</span> <span class="n">ResourceResult</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns list of results.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Results of type SiteResult or ResourceResult</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
 
 
@@ -201,6 +211,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            message: Error message to add</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
 
 
@@ -250,6 +261,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            JSON string representation of the API response</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">BaseJsonApiEncoder</span><span class="p">)</span></div>
 </div>
 
