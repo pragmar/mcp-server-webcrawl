@@ -296,23 +296,48 @@ class BaseCrawlerTests(unittest.TestCase):
         self.assertTrue("created" in site_field_result)
         self.assertTrue("modified" in site_field_result)
 
-    def run_pragmar_sort_tests(self, crawler: BaseCrawler, site_id:int):
+    def run_pragmar_sort_tests(self, crawler: BaseCrawler, site_id: int):
+        """
+        Test sorting functionality with performance optimizations.
+        """
+        sorted_default = crawler.get_resources_api(sites=[site_id], limit=3, fields=[])
+        sorted_url_ascending = crawler.get_resources_api(sites=[site_id], sort="+url", limit=3, fields=[])
+        sorted_url_descending = crawler.get_resources_api(sites=[site_id], sort="-url", limit=3, fields=[])
 
-        random1_resources = crawler.get_resources_api(sites=[site_id], sort="?", limit=20)
-        self.assertTrue(random1_resources.total > 0, "Database should contain resources")
-        random1_ids = [r.id for r in random1_resources._results]
-        random2_resources = crawler.get_resources_api(sites=[site_id], sort="?", limit=20)
-        self.assertTrue(random2_resources.total > 0, "Random sort should return results")
-        random2_ids = [r.id for r in random2_resources._results]
-        if random2_resources.total >= 10:
-            self.assertNotEqual(
-                random1_ids,
-                random2_ids,
-                "Random sort should produce different order than standard sort.\nStandard: "
-                f"{random1_ids}\nRandom: {random2_ids}"
-            )
+        self.assertTrue(sorted_url_ascending.total > 0, "Database should contain resources")
+        self.assertTrue(sorted_url_descending.total > 0, "Database should contain resources")
+        if len(sorted_default._results) > 0 and len(sorted_url_ascending._results) > 0:
+            default_urls = [r.url for r in sorted_default._results]
+            ascending_urls = [r.url for r in sorted_url_ascending._results]
+            self.assertEqual(default_urls, ascending_urls, "Default sort should match +url sort")
+
+        sorted_size_ascending = crawler.get_resources_api(sites=[site_id], sort="+size", limit=3, fields=["size"])
+        sorted_size_descending = crawler.get_resources_api(sites=[site_id], sort="-size", limit=3, fields=["size"])
+        if len(sorted_url_ascending._results) > 1:
+            for i in range(len(sorted_url_ascending._results) - 1):
+                self.assertLessEqual(sorted_url_ascending._results[i].url,
+                        sorted_url_ascending._results[i + 1].url, "URLs should be ascending")
+        if len(sorted_url_descending._results) > 1:
+            for i in range(len(sorted_url_descending._results) - 1):
+                self.assertGreaterEqual(sorted_url_descending._results[i].url,
+                        sorted_url_descending._results[i + 1].url, "URLs should be descending")
+        if len(sorted_size_ascending._results) > 1:
+            for i in range(len(sorted_size_ascending._results) - 1):
+                self.assertLessEqual(sorted_size_ascending._results[i].to_dict()["size"],
+                        sorted_size_ascending._results[i + 1].to_dict()["size"], "Sizes should be ascending")
+        if len(sorted_size_descending._results) > 1:
+            for i in range(len(sorted_size_descending._results) - 1):
+                self.assertGreaterEqual(sorted_size_descending._results[i].to_dict()["size"],
+                        sorted_size_descending._results[i + 1].to_dict()["size"], "Sizes should be descending")
+
+        random_1 = crawler.get_resources_api(sites=[site_id], sort="?", limit=20, fields=[])
+        random_2 = crawler.get_resources_api(sites=[site_id], sort="?", limit=20, fields=[])
+        self.assertTrue(random_1.total > 0, "Random sort should return results")
+        if random_1.total >= 10:
+            self.assertNotEqual([r.id for r in random_1._results], [r.id for r in random_2._results],
+                            "Random sort should produce different orders")
         else:
-            logger.info(f"Skip randomness verification: Not enough resources ({random2_resources.total})")
+            logger.info(f"Skip randomness verification: Not enough resources ({random_1.total})")
 
     def run_pragmar_content_tests(self, crawler: BaseCrawler, site_id:int, html_leniency: bool):
 

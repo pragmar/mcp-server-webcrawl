@@ -61,7 +61,7 @@ class WarcTests(BaseCrawlerTests):
     #     crawler = WarcCrawler(self._datasrc)
     #     self.run_pragmar_image_tests(crawler, PRAGMAR_WARC_ID)
 
-    def test_warc_random_sort(self):
+    def test_warc_sorts(self):
         """
         Test random sort functionality using the '?' sort parameter.
         """
@@ -77,7 +77,7 @@ class WarcTests(BaseCrawlerTests):
 
     def test_report(self):
         """
-        Test thumbnail generation functionality (InterroBot-specific).
+        Run test report, save to data directory.
         """
         crawler = WarcCrawler(self._datasrc)
         logger.info(self.run_pragmar_report(crawler, PRAGMAR_WARC_ID, "WARC"))

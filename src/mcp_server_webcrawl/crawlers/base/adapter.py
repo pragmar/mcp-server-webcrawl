@@ -503,7 +503,7 @@ class BaseManager:
             else:
                 order_clause = f" ORDER BY {field} {direction}"
         else:
-            order_clause = " ORDER BY Resources.Id ASC"
+            order_clause = " ORDER BY ResourcesFullText.Url ASC"
 
         assert isinstance(limit, int), "limit must be an integer"
         assert isinstance(offset, int), "offset must be an integer"

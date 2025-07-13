@@ -59,7 +59,7 @@ class SiteOneTests(BaseCrawlerTests):
         crawler = SiteOneCrawler(self._datasrc)
         self.run_pragmar_image_tests(crawler, PRAGMAR_SITE_ID)
 
-    def test_siteone_random_sort(self):
+    def test_siteone_sorts(self):
         """
         Test random sort functionality using the '?' sort parameter.
         """
@@ -125,7 +125,7 @@ class SiteOneTests(BaseCrawlerTests):
 
     def test_report(self):
         """
-        Test thumbnail generation functionality (InterroBot-specific).
+        Run test report, save to data directory.
         """
         crawler = SiteOneCrawler(self._datasrc)
         logger.info(self.run_pragmar_report(crawler, PRAGMAR_SITE_ID, "SiteOne"))

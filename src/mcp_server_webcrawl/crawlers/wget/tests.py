@@ -52,7 +52,7 @@ class WgetTests(BaseCrawlerTests):
         self.run_sites_resources_tests(crawler, PRAGMAR_SITE_ID, EXAMPLE_SITE_ID)
 
 
-    def test_wget_random_sort(self):
+    def test_wget_sorts(self):
         """
         Test random sort functionality using the '?' sort parameter.
         """
@@ -68,7 +68,7 @@ class WgetTests(BaseCrawlerTests):
 
     def test_report(self):
         """
-        Test thumbnail generation functionality (InterroBot-specific).
+        Run test report, save to data directory.
         """
         crawler = WgetCrawler(self._datasrc)
         logger.info(self.run_pragmar_report(crawler, PRAGMAR_SITE_ID, "wget"))

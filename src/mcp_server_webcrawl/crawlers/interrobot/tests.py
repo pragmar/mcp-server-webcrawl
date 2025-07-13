@@ -1,6 +1,8 @@
 import asyncio
 from logging import Logger
+
 from mcp.types import EmbeddedResource, ImageContent, TextContent
+
 from mcp_server_webcrawl.crawlers.base.tests import BaseCrawlerTests
 from mcp_server_webcrawl.crawlers.interrobot.crawler import InterroBotCrawler
 from mcp_server_webcrawl.models.resources import RESOURCES_TOOL_NAME
@@ -62,7 +64,7 @@ class InterroBotTests(BaseCrawlerTests):
         crawler = InterroBotCrawler(self.fixture_path)
         self.run_pragmar_image_tests(crawler, PRAGMAR_SITE_ID)
 
-    def test_interrobot_random_sort(self):
+    def test_interrobot_sorts(self):
         """
         Test random sort functionality using the '?' sort parameter.
         """
@@ -86,18 +88,20 @@ class InterroBotTests(BaseCrawlerTests):
 
     def test_thumbnails_sync(self):
         """
-        Test thumbnail generation functionality (InterroBot-specific).
+        Test thumbnail generation functionality.
         """
         asyncio.run(self.__test_thumbnails())
 
     async def __test_thumbnails(self):
         """
-        Test thumbnails are a special case for InterroBot
+        Test thumbnails are a special case for InterroBot. Other fixtures are
+        not dependable, either images removed to slim archive, or not captured
+        with defaults. Testing thumbnails here is enough.
         """
         crawler = InterroBotCrawler(self.fixture_path)
         thumbnail_args = {
             "datasrc": crawler.datasrc,
-            "sites": [2],
+            "sites": [PRAGMAR_SITE_ID],
             "extras": ["thumbnails"],
             "query": "type: img AND url: *.png",
             "limit": 4,
@@ -132,7 +136,7 @@ class InterroBotTests(BaseCrawlerTests):
 
     def test_report(self):
         """
-        Test thumbnail generation functionality (InterroBot-specific).
+        Run test report, save to data directory.
         """
         crawler = InterroBotCrawler(self.fixture_path)
         logger.info(self.run_pragmar_report(crawler, PRAGMAR_SITE_ID, "InterroBot"))

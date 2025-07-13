@@ -69,7 +69,7 @@ class KatanaTests(BaseCrawlerTests):
         crawler = KatanaCrawler(self._datasrc)
         self.run_pragmar_image_tests(crawler, PRAGMAR_SITE_ID)
 
-    def test_katana_random_sort(self):
+    def test_katana_sorts(self):
         """
         random sort functionality using the '?' sort parameter.
         """
@@ -85,7 +85,7 @@ class KatanaTests(BaseCrawlerTests):
 
     def test_report(self):
         """
-        Test thumbnail generation functionality (InterroBot-specific).
+        Run test report, save to data directory.
         """
         crawler = KatanaCrawler(self._datasrc)
         logger.info(self.run_pragmar_report(crawler, PRAGMAR_SITE_ID, "Katana"))
