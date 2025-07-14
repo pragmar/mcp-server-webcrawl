@@ -148,7 +148,7 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                             "of refining a search without pulling down the complete page contents. Also great for rendering "
                             "old school hit-highlighted results as a list, like Google search in 1999. Works with HTML, CSS, JS, "
                             "or any text-based, crawled file.\n"
-                            "- 'regex': extracts regular expression matches from crawled files such as HTML, CSS, Javascript, "
+                            "- 'regex': extracts regular expression matches from crawled files such as HTML, CSS, JavaScript, "
                             "etc.. Not as precise a tool as xpath for HTML, but supports any text file as a data source. "
                             "- 'xpath': extracts xpath selector data. Supports count(). Use xpath's text() for "
                             "text only, element selectors for HTML data. Only supported for HTML, other "
