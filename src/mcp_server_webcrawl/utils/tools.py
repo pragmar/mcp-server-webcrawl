@@ -134,7 +134,7 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                     "extras": {
                         "type": "array",
                         "items": {
-                            "enum": ["thumbnails", "markdown", "snippets", "xpath"]
+                            "enum": ["thumbnails", "markdown", "snippets", "regex", "xpath"]
                         },
                         "description": ("Optional array of extra features to include in results. Available options include:\n"
                             "- 'thumbnails': generates base64 encoded thumbnails for image resources that can be viewed and "
@@ -148,10 +148,23 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                             "of refining a search without pulling down the complete page contents. Also great for rendering "
                             "old school hit-highlighted results as a list, like Google search in 1999. Works with HTML, CSS, JS, "
                             "or any text-based, crawled file.\n"
+                            "- 'regex': extracts regular expression matches from crawled files such as HTML, CSS, Javascript, "
+                            "etc.. Not as precise a tool as xpath for HTML, but supports any text file as a data source. "
                             "- 'xpath': extracts xpath selector data. Supports count(). Use xpath's text() for "
                             "text only, element selectors for HTML data. Only supported for HTML, other "
                             "types will be ignored. Sometimes referred to as scraping."
                             "")
+                    },
+                    "extrasRegex": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": ("Array of regular expression patterns to extract content. "
+                        "Examples: `\\d{3}-\\d{3}-\\d{4}` (phone numbers), `https?://[^\\s]+` (URLs). "
+                        "Use capture groups `(pattern)` to extract specific parts. "
+                        "Only used when 'regex' is included in the extras array. "
+                        "Results include matches, capture groups, and position information.")
                     },
                     "extrasXpath": {
                         "type": "array",

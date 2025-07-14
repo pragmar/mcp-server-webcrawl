@@ -14,6 +14,7 @@ from mcp.types import EmbeddedResource, ImageContent, TextContent, Tool
 from mcp_server_webcrawl.crawlers.base.api import BaseJsonApi
 from mcp_server_webcrawl.crawlers.base.adapter import IndexState
 from mcp_server_webcrawl.models import METADATA_VALUE_TYPE
+from mcp_server_webcrawl.models.sites import SITES_TOOL_NAME
 from mcp_server_webcrawl.models.resources import (
     ResourceResult,
     ResourceResultType,
@@ -22,10 +23,13 @@ from mcp_server_webcrawl.models.resources import (
     RESOURCE_EXTRAS_ALLOWED,
     RESOURCES_TOOL_NAME,
 )
-from mcp_server_webcrawl.utils.blobs import ThumbnailManager
-from mcp_server_webcrawl.utils.extras import get_markdown, get_snippets, get_xpath
+from mcp_server_webcrawl.extras.thumbnails import ThumbnailManager
+from mcp_server_webcrawl.extras.markdown import get_markdown
+from mcp_server_webcrawl.extras.regex import get_regex
+from mcp_server_webcrawl.extras.snippets import get_snippets
+from mcp_server_webcrawl.extras.xpath import get_xpath
+
 from mcp_server_webcrawl.utils.logger import get_logger
-from mcp_server_webcrawl.models.sites import SITES_TOOL_NAME
 
 OVERRIDE_ERROR_MESSAGE: Final[str] = """BaseCrawler subclasses must implement the following \
 methods: handle_list_tools, handle_call_tool, at minimum."""
@@ -159,6 +163,7 @@ class BaseCrawler:
         limit: int = 20,
         offset: int = 0,
         extras: list[str] | None = None,
+        extrasRegex: list[str] | None = None,
         extrasXpath: list[str] | None = None,
     ) -> BaseJsonApi:
         resources_kwargs: dict[str, METADATA_VALUE_TYPE] = {
@@ -191,19 +196,22 @@ class BaseCrawler:
         if not site_matches:
             return no_results()
 
-        # Handle stealth fields for extras
         extras = extras or []
         extrasXpath = extrasXpath or []
+        extrasRegex = extrasRegex or []
         fields = fields or []
         fields_extras_override: list[str] = fields.copy()
 
-        set_extras_content: set[str] = {"markdown", "snippets", "xpath"}
         set_extras: set[str] = set(extras)
-        add_content: bool = bool(set_extras_content & set_extras) # intersection
+        set_extras_content: set[str] = {"markdown", "snippets", "xpath", "regex"}
+        set_extras_headers: set[str] = {"snippets", "regex"}
+        add_content: bool = bool(set_extras_content & set_extras)
+        add_headers: bool = bool(set_extras_headers & set_extras)
 
         if add_content and "content" not in fields:
             fields_extras_override.append("content")
-        if "snippets" in extras and "headers" not in fields:
+
+        if add_headers and "headers" not in fields:
             fields_extras_override.append("headers")
 
         results, total, index_state = self._adapter_get_resources(
@@ -229,6 +237,12 @@ class BaseCrawler:
             for result in results:
                 xpath_result: list[dict[str, str | int | float]] = get_xpath(result.content, extrasXpath)
                 result.set_extra("xpath", xpath_result)
+
+        if "regex" in extras:
+            result: ResourceResult
+            for result in results:
+                regex_result: list[dict[str, str | int | float]] = get_regex(result.headers, result.content, extrasRegex)
+                result.set_extra("regex", regex_result)
 
         if "snippets" in extras and query.strip():
             result: ResourceResult
@@ -294,6 +308,7 @@ class BaseCrawler:
             elif name == RESOURCES_TOOL_NAME:
 
                 extras: list[str] = [] if not arguments or "extras" not in arguments else arguments["extras"]
+                extrasRegex: list[str] = [] if not arguments or "extrasRegex" not in arguments else arguments["extrasRegex"]
                 extrasXpath: list[str] = [] if not arguments or "extrasXpath" not in arguments else arguments["extrasXpath"]
                 extras_set: set[str] = set(extras)
                 extras_removed: set[str] = extras_set - RESOURCE_EXTRAS_ALLOWED
@@ -329,6 +344,7 @@ class BaseCrawler:
                     limit=limit,
                     offset=offset,
                     extras=extras,
+                    extrasRegex=extrasRegex,
                     extrasXpath=extrasXpath,
                 )
                 # sometimes nudging makes things worse, AI doubles down on percieved
