@@ -136,7 +136,7 @@ Crawls contain resource types beyond HTML pages. The `type:` field search allows
 
 ## Extras
 
-The `extras` parameter provides additional processing options, transforming HTTP data (markdown, snippets, xpath), or connecting the LLM to external data (thumbnails). These options can be combined as needed to achieve the desired result format.
+The `extras` parameter provides additional processing options, transforming HTTP data (markdown, snippets, regex, xpath), or connecting the LLM to external data (thumbnails). These options can be combined as needed to achieve the desired result format.
 
 | Extra | Description |
 |-------|-------------|
