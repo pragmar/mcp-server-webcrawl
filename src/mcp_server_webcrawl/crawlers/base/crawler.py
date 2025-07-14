@@ -308,8 +308,13 @@ class BaseCrawler:
             elif name == RESOURCES_TOOL_NAME:
 
                 extras: list[str] = [] if not arguments or "extras" not in arguments else arguments["extras"]
+
+                # in case there is any LLM confusion of XPath/xpath or Markdown/markdown, these are
+                # defined lowercase in the MCP Tool definition, but have counter-weighting as proper nouns
+                extras = [extra.lower() for extra in extras if isinstance(extra, str)]
                 extrasRegex: list[str] = [] if not arguments or "extrasRegex" not in arguments else arguments["extrasRegex"]
                 extrasXpath: list[str] = [] if not arguments or "extrasXpath" not in arguments else arguments["extrasXpath"]
+
                 extras_set: set[str] = set(extras)
                 extras_removed: set[str] = extras_set - RESOURCE_EXTRAS_ALLOWED
                 if extras_removed:
