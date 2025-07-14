@@ -1,0 +1,227 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mcp_server_webcrawl.extras.regex &mdash; mcp-server-webcrawl  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=888ff710"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            mcp-server-webcrawl
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guides.html">Setup Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">mcp_server_webcrawl</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">mcp-server-webcrawl</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">mcp_server_webcrawl.extras.regex</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mcp_server_webcrawl.extras.regex</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">re</span>
+
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">Logger</span>
+
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="n">__REGEX_PATTERNS_REGEX_HAZARDS</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="sa">r</span><span class="s2">&quot;\([^)]*\*[^)]*\+&quot;</span><span class="p">,</span>                   <span class="c1"># (.*)*+, (.+)*+, etc.</span>
+    <span class="sa">r</span><span class="s2">&quot;\([^)]*\+[^)]*\*&quot;</span><span class="p">,</span>                   <span class="c1"># (.+)*., (.*)++, etc.</span>
+    <span class="sa">r</span><span class="s2">&quot;\([^)]*\+[^)]*\+&quot;</span><span class="p">,</span>                   <span class="c1"># (.+)+, (.++)+ etc.</span>
+    <span class="sa">r</span><span class="s2">&quot;\([^)]*\*[^)]*\*&quot;</span><span class="p">,</span>                   <span class="c1"># (.*)*, (.**) etc.</span>
+    <span class="sa">r</span><span class="s2">&quot;\.\*.*\.\*&quot;</span><span class="p">,</span>                         <span class="c1"># .*.* patterns</span>
+    <span class="sa">r</span><span class="s2">&quot;\.\+.*\.\+&quot;</span><span class="p">,</span>                         <span class="c1"># .+.+ patterns</span>
+    <span class="sa">r</span><span class="s2">&quot;\([^)]*\?\)\*&quot;</span><span class="p">,</span>                      <span class="c1"># (a?)* patterns</span>
+    <span class="sa">r</span><span class="s2">&quot;\([^)]*\?\)\+&quot;</span><span class="p">,</span>                      <span class="c1"># (a?)+ patterns</span>
+    <span class="sa">r</span><span class="s2">&quot;\([^)]*[*+?][^)]*[*+?][^)]*\)[*+]&quot;</span><span class="p">,</span>  <span class="c1"># 2+ quantifiers inside, then quantifier outside</span>
+<span class="p">]</span>
+
+<span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
+
+<span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">__get_compiled_hazard_patterns</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Lazy load compiled patterns</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">compiled_patterns</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">hazard</span> <span class="ow">in</span> <span class="n">__REGEX_PATTERNS_REGEX_HAZARDS</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">compiled_patterns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">hazard</span><span class="p">))</span>
+        <span class="k">except</span> <span class="n">re</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid hazard pattern </span><span class="si">{</span><span class="n">hazard</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+    <span class="k">return</span> <span class="n">compiled_patterns</span>
+
+<span class="k">def</span> <span class="nf">__regex_is_hazardous</span><span class="p">(</span><span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check if a regex pattern might cause catastrophic backtracking</span>
+<span class="sd">    or otherwise unacceptable performance over up to 100 HTML files</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">compiled_hazards</span> <span class="o">=</span> <span class="n">__get_compiled_hazard_patterns</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">hazard_pattern</span> <span class="ow">in</span> <span class="n">compiled_hazards</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">hazard_pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">pattern</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hazardous regex discarded </span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="s2"> matched </span><span class="si">{</span><span class="n">hazard_pattern</span><span class="o">.</span><span class="n">pattern</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="n">re</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error checking hazard pattern </span><span class="si">{</span><span class="n">hazard_pattern</span><span class="o">.</span><span class="n">pattern</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+    <span class="k">return</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="get_regex">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.extras.html#mcp_server_webcrawl.extras.regex.get_regex">[docs]</a>
+<span class="k">def</span> <span class="nf">get_regex</span><span class="p">(</span><span class="n">headers</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">patterns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Takes headers and content and gets regex matches</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">        headers: The headers to search</span>
+<span class="sd">        content: The content to search</span>
+<span class="sd">        patterns: The regex patterns</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A list of dicts, with selector, value, groups, position info, and source</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">patterns</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">patterns</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;patterns must be a list of strings&quot;</span><span class="p">)</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">content</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span> <span class="ow">and</span> <span class="n">headers</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">results</span>
+
+    <span class="n">re_patterns</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">patterns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">__regex_is_hazardous</span><span class="p">(</span><span class="n">pattern</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hazardous regex pattern &#39;</span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">re_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
+            <span class="n">re_patterns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">re_pattern</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">re</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid regex pattern &#39;</span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+    <span class="c1"># search headers and content</span>
+    <span class="n">search_targets</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;headers&quot;</span><span class="p">,</span> <span class="n">headers</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="n">content</span><span class="p">)]</span>
+
+    <span class="k">for</span> <span class="n">re_pattern</span> <span class="ow">in</span> <span class="n">re_patterns</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">source_name</span><span class="p">,</span> <span class="n">search_text</span> <span class="ow">in</span> <span class="n">search_targets</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">search_text</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">re_pattern</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">search_text</span><span class="p">):</span>
+                <span class="n">regex_hit</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;selector&quot;</span><span class="p">:</span> <span class="n">re_pattern</span><span class="o">.</span><span class="n">pattern</span><span class="p">,</span>
+                    <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                    <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="n">source_name</span>  <span class="c1"># headers or content</span>
+                <span class="p">}</span>
+
+                <span class="k">if</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">():</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">group</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="n">regex_hit</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;group_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">group</span>
+
+                <span class="n">regex_hit</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+                <span class="n">regex_hit</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+                <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">regex_hit</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">results</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, pragmar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

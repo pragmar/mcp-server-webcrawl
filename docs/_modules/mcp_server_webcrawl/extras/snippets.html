@@ -1,0 +1,382 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mcp_server_webcrawl.extras.snippets &mdash; mcp-server-webcrawl  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=888ff710"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            mcp-server-webcrawl
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guides.html">Setup Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">mcp_server_webcrawl</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">mcp-server-webcrawl</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">mcp_server_webcrawl.extras.snippets</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mcp_server_webcrawl.extras.snippets</h1><div class="highlight"><pre>
+<span></span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">lxml.html</span>
+
+<span class="kn">from</span> <span class="nn">lxml</span> <span class="kn">import</span> <span class="n">etree</span>
+<span class="kn">from</span> <span class="nn">lxml.etree</span> <span class="kn">import</span> <span class="n">ParserError</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">Logger</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
+
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.search</span> <span class="kn">import</span> <span class="n">SearchQueryParser</span>
+
+<span class="n">MAX_SNIPPETS_MATCHED_COUNT</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">15</span>
+<span class="n">MAX_SNIPPETS_RETURNED_COUNT</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">MAX_SNIPPETS_CONTEXT_SIZE</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">48</span>
+
+<span class="n">__RE_SNIPPET_START_TRIM</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">Pattern</span><span class="p">]</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^[^\w\[]+&quot;</span><span class="p">)</span>
+<span class="n">__RE_SNIPPET_END_TRIM</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">Pattern</span><span class="p">]</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[^\w\]]+$&quot;</span><span class="p">)</span>
+
+<span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SnippetContentExtractor">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.extras.html#mcp_server_webcrawl.extras.snippets.SnippetContentExtractor">[docs]</a>
+<span class="k">class</span> <span class="nc">SnippetContentExtractor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    lxml-based HTML parser for extracting different types of content from HTML.</span>
+<span class="sd">    Content separates into components: text, markup, attributes (values), and comments.</span>
+<span class="sd">    These can be prioritized in search so that text is the displayed hit over noisier</span>
+<span class="sd">    types.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">PRIORITY_ORDER</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;url&quot;</span><span class="p">,</span> <span class="s2">&quot;document_text&quot;</span><span class="p">,</span> <span class="s2">&quot;document_attributes&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;document_comments&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">,</span> <span class="s2">&quot;document_markup&quot;</span><span class="p">]</span>
+
+    <span class="n">__RE_SPLIT</span><span class="p">:</span> <span class="n">re</span><span class="o">.</span><span class="n">Pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[\s_]+|(?&lt;!\w)-(?!\w)&quot;</span><span class="p">)</span>
+    <span class="n">__RE_WHITESPACE</span><span class="p">:</span> <span class="n">re</span><span class="o">.</span><span class="n">Pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s+&quot;</span><span class="p">)</span>
+    <span class="n">__MAX_CONTENT_BYTES</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span> <span class="c1"># 2MB</span>
+
+<div class="viewcode-block" id="SnippetContentExtractor.__init__">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.extras.html#mcp_server_webcrawl.extras.snippets.SnippetContentExtractor.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">headers</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__document</span><span class="p">:</span> <span class="n">lxml</span><span class="o">.</span><span class="n">html</span><span class="o">.</span><span class="n">HtmlElement</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">url</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="c1"># headers one liner to facilitate snippet</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s+&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">headers</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">document_text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">document_markup</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">document_attributes</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">document_comments</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">__MAX_CONTENT_BYTES</span><span class="p">:</span>
+            <span class="c1"># ignore large files, slow</span>
+            <span class="k">return</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">content</span>
+
+        <span class="n">load_success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__load_content</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">load_success</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__extract</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">document_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__normalize_whitespace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">__load_content</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load content string into lxml doc.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__document</span> <span class="o">=</span> <span class="n">lxml</span><span class="o">.</span><span class="n">html</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">ParserError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">UnicodeDecodeError</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">wrapped_content</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&lt;html&gt;&lt;body&gt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2">&lt;/body&gt;&lt;/html&gt;&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__document</span> <span class="o">=</span> <span class="n">lxml</span><span class="o">.</span><span class="n">html</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">wrapped_content</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">ParserError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">UnicodeDecodeError</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">__extract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract content from lxml doc.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__document</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">text_values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">markup_values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">attribute_values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">comment_values</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">element</span><span class="p">:</span> <span class="n">lxml</span><span class="o">.</span><span class="n">html</span><span class="o">.</span><span class="n">HtmlElement</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__document</span><span class="o">.</span><span class="n">iter</span><span class="p">():</span>
+
+            <span class="c1"># HTML outliers</span>
+            <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">tag</span> <span class="ow">is</span> <span class="n">etree</span><span class="o">.</span><span class="n">Comment</span> <span class="ow">or</span> <span class="n">element</span><span class="o">.</span><span class="n">tag</span> <span class="ow">is</span> <span class="n">etree</span><span class="o">.</span><span class="n">ProcessingInstruction</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">comment_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()))</span>
+                <span class="c1"># avoid regular element text processing</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">tag</span> <span class="ow">is</span> <span class="n">etree</span><span class="o">.</span><span class="n">Entity</span> <span class="ow">or</span> <span class="n">element</span><span class="o">.</span><span class="n">tag</span> <span class="ow">is</span> <span class="n">etree</span><span class="o">.</span><span class="n">CDATA</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">text_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()))</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># HTML tags and attributes</span>
+            <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">tag</span><span class="p">:</span>
+                <span class="n">markup_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">tag</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">tag</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;script&quot;</span><span class="p">,</span> <span class="s2">&quot;style&quot;</span><span class="p">):</span>
+                    <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                <span class="n">text_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+            <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">tail</span><span class="p">:</span>
+                <span class="n">text_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">tail</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+            <span class="k">for</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">attr_value</span> <span class="ow">in</span> <span class="n">element</span><span class="o">.</span><span class="n">attrib</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">markup_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">attr_name</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">attr_value</span><span class="p">:</span>
+                    <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__RE_SPLIT</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">attr_value</span><span class="p">)</span> <span class="k">if</span> <span class="n">v</span><span class="p">]</span>
+                    <span class="n">attribute_values</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">document_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__normalize_values</span><span class="p">(</span><span class="n">text_values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">document_markup</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__normalize_values</span><span class="p">(</span><span class="n">markup_values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">document_attributes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__normalize_values</span><span class="p">(</span><span class="n">attribute_values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">document_comments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__normalize_values</span><span class="p">(</span><span class="n">comment_values</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">__normalize_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Concatenate values and normalize whitespace for list of values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">value</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span> <span class="k">if</span> <span class="n">value</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__normalize_whitespace</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__normalize_whitespace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Normalize whitespace using pre-compiled pattern.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__RE_WHITESPACE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="get_snippets">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.extras.html#mcp_server_webcrawl.extras.snippets.get_snippets">[docs]</a>
+<span class="k">def</span> <span class="nf">get_snippets</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">headers</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Takes a query and content, reduces the HTML to text content and extracts hits</span>
+<span class="sd">    as excerpts of text.</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">        headers: Header content to search</span>
+<span class="sd">        content: The HTML or text content to search in</span>
+<span class="sd">        query: The search query string</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A string of snippets with context around matched terms, separated by &quot; ... &quot; or None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">query</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">url</span> <span class="o">=</span> <span class="n">url</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="n">content</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="n">headers</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="n">search_terms_parser</span> <span class="o">=</span> <span class="n">SearchQueryParser</span><span class="p">()</span>
+    <span class="n">search_terms</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">search_terms_parser</span><span class="o">.</span><span class="n">get_fulltext_terms</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">search_terms</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">snippets</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">search_terms_parser</span> <span class="o">=</span> <span class="n">SnippetContentExtractor</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
+
+    <span class="c1"># priority order url, text, attributes, comments, headers, markup</span>
+    <span class="c1"># most interesting to least, as search hits</span>
+    <span class="k">for</span> <span class="n">group_name</span> <span class="ow">in</span> <span class="n">search_terms_parser</span><span class="o">.</span><span class="n">PRIORITY_ORDER</span><span class="p">:</span>
+        <span class="n">search_group_text</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">search_terms_parser</span><span class="p">,</span> <span class="n">group_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">search_group_text</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">group_snippets</span> <span class="o">=</span> <span class="n">find_snippets_in_text</span><span class="p">(</span><span class="n">search_group_text</span><span class="p">,</span> <span class="n">search_terms</span><span class="p">,</span>
+                <span class="n">max_snippets</span><span class="o">=</span><span class="n">MAX_SNIPPETS_MATCHED_COUNT</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">group_name</span><span class="o">=</span><span class="n">group_name</span><span class="p">)</span>
+        <span class="n">snippets</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">group_snippets</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">snippets</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_SNIPPETS_MATCHED_COUNT</span><span class="p">:</span>
+            <span class="k">break</span>
+
+    <span class="k">if</span> <span class="n">snippets</span><span class="p">:</span>
+        <span class="n">total_snippets</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">snippets</span><span class="p">)</span>
+        <span class="n">displayed_snippets</span> <span class="o">=</span> <span class="n">snippets</span><span class="p">[:</span><span class="n">MAX_SNIPPETS_RETURNED_COUNT</span><span class="p">]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="s2">&quot; ... &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">displayed_snippets</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">total_snippets</span> <span class="o">&gt;</span> <span class="n">MAX_SNIPPETS_MATCHED_COUNT</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; ... + &gt;</span><span class="si">{</span><span class="n">MAX_SNIPPETS_MATCHED_COUNT</span><span class="si">}</span><span class="s2"> more&quot;</span>
+        <span class="k">elif</span> <span class="n">total_snippets</span> <span class="o">&gt;</span> <span class="n">MAX_SNIPPETS_RETURNED_COUNT</span><span class="p">:</span>
+            <span class="n">remaining</span> <span class="o">=</span> <span class="n">total_snippets</span> <span class="o">-</span> <span class="n">MAX_SNIPPETS_RETURNED_COUNT</span>
+            <span class="n">result</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; ... +</span><span class="si">{</span><span class="n">remaining</span><span class="si">}</span><span class="s2"> more&quot;</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="find_snippets_in_text">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.extras.html#mcp_server_webcrawl.extras.snippets.find_snippets_in_text">[docs]</a>
+<span class="k">def</span> <span class="nf">find_snippets_in_text</span><span class="p">(</span>
+        <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">terms</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">max_snippets</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">MAX_SNIPPETS_MATCHED_COUNT</span><span class="p">,</span>
+        <span class="n">group_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Searches for whole-word matches of the given terms in the text and extracts</span>
+<span class="sd">    surrounding context to create highlighted snippets. Each snippet shows the matched term</span>
+<span class="sd">    in context with markdown-style bold highlighting (**term**).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        text: The text to search within</span>
+<span class="sd">        terms: List of search terms to find (case-insensitive, whole words only)</span>
+<span class="sd">        max_snippets: Maximum number of snippets to return (default: MAX_SNIPPETS_MATCHED_COUNT)</span>
+<span class="sd">        group_name: Regex group identifier (reserved for future use)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of unique snippet strings with matched terms highlighted using **bold** markdown.</span>
+<span class="sd">        Each snippet includes surrounding context up to MAX_SNIPPETS_CONTEXT_SIZE characters</span>
+<span class="sd">        on each side of the match. Returns empty list if no matches found or invalid input.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">terms</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">snippets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">seen_snippets</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">text_lower</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+    <span class="n">escaped_terms</span> <span class="o">=</span> <span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">term</span><span class="p">)</span> <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">terms</span><span class="p">]</span>
+    <span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;\b(</span><span class="si">{</span><span class="s1">&#39;|&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">escaped_terms</span><span class="p">)</span><span class="si">}</span><span class="s2">)\b&quot;</span>
+    <span class="n">highlight_patterns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">Pattern</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s2">&quot;\b(</span><span class="si">{</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">term</span><span class="p">)</span><span class="si">}</span><span class="s2">)\b&quot;</span><span class="p">,</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">),</span> <span class="n">term</span><span class="p">)</span> <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">terms</span>
+    <span class="p">]</span>
+
+    <span class="n">matches</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">text_lower</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">snippets</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">max_snippets</span><span class="p">:</span>
+            <span class="k">break</span>
+
+        <span class="n">context_start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">match</span><span class="o">.</span><span class="n">start</span><span class="p">()</span> <span class="o">-</span> <span class="n">MAX_SNIPPETS_CONTEXT_SIZE</span><span class="p">)</span>
+        <span class="n">context_end</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">),</span> <span class="n">match</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="o">+</span> <span class="n">MAX_SNIPPETS_CONTEXT_SIZE</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">context_start</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">while</span> <span class="n">context_start</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">text</span><span class="p">[</span><span class="n">context_start</span><span class="p">]</span><span class="o">.</span><span class="n">isalnum</span><span class="p">():</span>
+                <span class="n">context_start</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">context_end</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+            <span class="k">while</span> <span class="n">context_end</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="ow">and</span> <span class="n">text</span><span class="p">[</span><span class="n">context_end</span><span class="p">]</span><span class="o">.</span><span class="n">isalnum</span><span class="p">():</span>
+                <span class="n">context_end</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">snippet</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">context_start</span><span class="p">:</span><span class="n">context_end</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">snippet</span> <span class="o">=</span> <span class="n">__RE_SNIPPET_START_TRIM</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">snippet</span><span class="p">)</span>
+        <span class="n">snippet</span> <span class="o">=</span> <span class="n">__RE_SNIPPET_END_TRIM</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">snippet</span><span class="p">)</span>
+        <span class="n">highlighted_snippet</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">snippet</span>
+
+        <span class="k">for</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">highlight_patterns</span><span class="p">:</span>
+            <span class="n">highlighted_snippet</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;**\1**&quot;</span><span class="p">,</span> <span class="n">highlighted_snippet</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">highlighted_snippet</span> <span class="ow">and</span> <span class="n">highlighted_snippet</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_snippets</span><span class="p">:</span>
+            <span class="n">seen_snippets</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">highlighted_snippet</span><span class="p">)</span>
+            <span class="n">snippets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">highlighted_snippet</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">snippets</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, pragmar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

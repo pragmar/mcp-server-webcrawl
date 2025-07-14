@@ -76,7 +76,9 @@
   <h1>Source code for mcp_server_webcrawl.crawlers.interrobot.tests</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">Logger</span>
+
 <span class="kn">from</span> <span class="nn">mcp.types</span> <span class="kn">import</span> <span class="n">EmbeddedResource</span><span class="p">,</span> <span class="n">ImageContent</span><span class="p">,</span> <span class="n">TextContent</span>
+
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.tests</span> <span class="kn">import</span> <span class="n">BaseCrawlerTests</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.interrobot.crawler</span> <span class="kn">import</span> <span class="n">InterroBotCrawler</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">RESOURCES_TOOL_NAME</span>
@@ -158,9 +160,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">run_pragmar_image_tests</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">PRAGMAR_SITE_ID</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="InterroBotTests.test_interrobot_random_sort">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_random_sort">[docs]</a>
-    <span class="k">def</span> <span class="nf">test_interrobot_random_sort</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="InterroBotTests.test_interrobot_sorts">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_interrobot_sorts">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_interrobot_sorts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Test random sort functionality using the &#39;?&#39; sort parameter.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -193,19 +195,21 @@
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_thumbnails_sync">[docs]</a>
     <span class="k">def</span> <span class="nf">test_thumbnails_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Test thumbnail generation functionality (InterroBot-specific).</span>
+<span class="sd">        Test thumbnail generation functionality.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__test_thumbnails</span><span class="p">())</span></div>
 
 
     <span class="k">async</span> <span class="k">def</span> <span class="nf">__test_thumbnails</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Test thumbnails are a special case for InterroBot</span>
+<span class="sd">        Test thumbnails are a special case for InterroBot. Other fixtures are</span>
+<span class="sd">        not dependable, either images removed to slim archive, or not captured</span>
+<span class="sd">        with defaults. Testing thumbnails here is enough.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
         <span class="n">thumbnail_args</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;datasrc&quot;</span><span class="p">:</span> <span class="n">crawler</span><span class="o">.</span><span class="n">datasrc</span><span class="p">,</span>
-            <span class="s2">&quot;sites&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+            <span class="s2">&quot;sites&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">],</span>
             <span class="s2">&quot;extras&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;thumbnails&quot;</span><span class="p">],</span>
             <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;type: img AND url: *.png&quot;</span><span class="p">,</span>
             <span class="s2">&quot;limit&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
@@ -245,7 +249,7 @@
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.tests.InterroBotTests.test_report">[docs]</a>
     <span class="k">def</span> <span class="nf">test_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Test thumbnail generation functionality (InterroBot-specific).</span>
+<span class="sd">        Run test report, save to data directory.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_pragmar_report</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">PRAGMAR_SITE_ID</span><span class="p">,</span> <span class="s2">&quot;InterroBot&quot;</span><span class="p">))</span></div>

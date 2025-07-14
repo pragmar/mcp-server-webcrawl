@@ -212,7 +212,7 @@
                     <span class="s2">&quot;extras&quot;</span><span class="p">:</span> <span class="p">{</span>
                         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
                         <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span>
-                            <span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;thumbnails&quot;</span><span class="p">,</span> <span class="s2">&quot;markdown&quot;</span><span class="p">,</span> <span class="s2">&quot;snippets&quot;</span><span class="p">,</span> <span class="s2">&quot;xpath&quot;</span><span class="p">]</span>
+                            <span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;thumbnails&quot;</span><span class="p">,</span> <span class="s2">&quot;markdown&quot;</span><span class="p">,</span> <span class="s2">&quot;snippets&quot;</span><span class="p">,</span> <span class="s2">&quot;regex&quot;</span><span class="p">,</span> <span class="s2">&quot;xpath&quot;</span><span class="p">]</span>
                         <span class="p">},</span>
                         <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Optional array of extra features to include in results. Available options include:</span><span class="se">\n</span><span class="s2">&quot;</span>
                             <span class="s2">&quot;- &#39;thumbnails&#39;: generates base64 encoded thumbnails for image resources that can be viewed and &quot;</span>
@@ -226,10 +226,23 @@
                             <span class="s2">&quot;of refining a search without pulling down the complete page contents. Also great for rendering &quot;</span>
                             <span class="s2">&quot;old school hit-highlighted results as a list, like Google search in 1999. Works with HTML, CSS, JS, &quot;</span>
                             <span class="s2">&quot;or any text-based, crawled file.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                            <span class="s2">&quot;- &#39;regex&#39;: extracts regular expression matches from crawled files such as HTML, CSS, JavaScript, &quot;</span>
+                            <span class="s2">&quot;etc.. Not as precise a tool as xpath for HTML, but supports any text file as a data source. &quot;</span>
                             <span class="s2">&quot;- &#39;xpath&#39;: extracts xpath selector data. Supports count(). Use xpath&#39;s text() for &quot;</span>
                             <span class="s2">&quot;text only, element selectors for HTML data. Only supported for HTML, other &quot;</span>
                             <span class="s2">&quot;types will be ignored. Sometimes referred to as scraping.&quot;</span>
                             <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                    <span class="p">},</span>
+                    <span class="s2">&quot;extrasRegex&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span>
+                        <span class="p">},</span>
+                        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Array of regular expression patterns to extract content. &quot;</span>
+                        <span class="s2">&quot;Examples: `</span><span class="se">\\</span><span class="s2">d</span><span class="si">{3}</span><span class="s2">-</span><span class="se">\\</span><span class="s2">d</span><span class="si">{3}</span><span class="s2">-</span><span class="se">\\</span><span class="s2">d</span><span class="si">{4}</span><span class="s2">` (phone numbers), `https?://[^</span><span class="se">\\</span><span class="s2">s]+` (URLs). &quot;</span>
+                        <span class="s2">&quot;Use capture groups `(pattern)` to extract specific parts. &quot;</span>
+                        <span class="s2">&quot;Only used when &#39;regex&#39; is included in the extras array. &quot;</span>
+                        <span class="s2">&quot;Results include matches, capture groups, and position information.&quot;</span><span class="p">)</span>
                     <span class="p">},</span>
                     <span class="s2">&quot;extrasXpath&quot;</span><span class="p">:</span> <span class="p">{</span>
                         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>

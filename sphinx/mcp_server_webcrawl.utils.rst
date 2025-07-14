@@ -4,14 +4,6 @@ mcp\_server\_webcrawl.utils package
 Submodules
 ----------
 
-mcp\_server\_webcrawl.utils.blobs module
-----------------------------------------
-
-.. automodule:: mcp_server_webcrawl.utils.blobs
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 mcp\_server\_webcrawl.utils.cli module
 --------------------------------------
 

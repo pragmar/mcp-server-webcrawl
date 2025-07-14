@@ -86,11 +86,15 @@ This tool searches for resources (webpages, CSS, images, etc.) across projects a
    * - extras
      - array<string>
      - No
-     - Optional array of extra features to include in results. Options include markdown, snippets, thumbnails, and xpath. (see extras table)
+     - Array of extra features to include in results. Options include markdown, snippets, thumbnails, regex, and xpath. (see extras table)
+   * - extrasRegex
+     - array<string>
+     - No
+     - Array of regular expression patterns to extract content. One or more regex patterns can be requested. Only used when 'regex' is included in the extras array.
    * - extrasXpath
      - array<string>
      - No
-     - Array of XPath expressions to extract specific content from HTML resources. Use text() for text-only or element selectors for HTML. Only used when 'xpath' is included in the extras array.
+     - Array of XPath expressions to extract specific content from HTML resources. One or more XPath selectors can be requested. Only used when 'xpath' is included in the extras array.
 
 
 Crawler Features Support
@@ -313,6 +317,36 @@ specific attributes or patterns within crawl data.
    * - content
      - HTTP body—HTML, CSS, JS, and more
 
+Field Content
+~~~~~~~~~~~~~
+
+A subset of fields can be independently requested with results, while core fields are always on. Use of headers and content can consume tokens quickly. Use judiciously, or use extras to crunch more results into the context window. Fields are a top level argument, independent of any field searching taking place in the query.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Field
+     - Description
+   * - id
+     - always available
+   * - url
+     - always available
+   * - type
+     - always available
+   * - status
+     - always available
+   * - created
+     - on request
+   * - modified
+     - on request
+   * - size
+     - on request
+   * - headers
+     - on request
+   * - content
+     - on request
+
 Content Types
 ~~~~~~~~~~~~~
 
@@ -372,6 +406,8 @@ The ``extras`` parameter provides additional processing options, transforming re
      - Provides the HTML content field as concise Markdown, reducing token usage and improving readability for LLMs. Works with HTML, which can be filtered using ``type: html`` in queries.
    * - snippets
      - Matches fulltext queries to contextual keyword usage within the content. When used without requesting the content field (or markdown extra), it can provide an efficient means of refining a search without pulling down the complete page contents. Also great for rendering old school hit-highlighted results as a list, like Google search in 1999. Works with HTML, CSS, JS, or any text-based, crawled file.
+   * - regex
+     - Extracts regular expression matches from crawled files such as HTML, CSS, JavaScript, etc. Not as precise a tool as XPath for HTML, but supports any text file as a data source. One or more regex patterns can be requested, using the ``extrasRegex`` argument.
    * - xpath
      - Extracts XPath selector data, used in scraping HTML content. Use XPath's text() selector for text-only, element selectors return outerHTML. Only supported with ``type: html``, other types will be ignored. One or more XPath selectors (//h1, count(//h1), etc.) can be requested, using the ``extrasXpath`` argument.
 

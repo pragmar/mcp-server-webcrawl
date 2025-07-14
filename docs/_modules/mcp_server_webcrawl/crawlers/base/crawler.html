@@ -90,6 +90,7 @@
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.api</span> <span class="kn">import</span> <span class="n">BaseJsonApi</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.adapter</span> <span class="kn">import</span> <span class="n">IndexState</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models</span> <span class="kn">import</span> <span class="n">METADATA_VALUE_TYPE</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="n">SITES_TOOL_NAME</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ResourceResult</span><span class="p">,</span>
     <span class="n">ResourceResultType</span><span class="p">,</span>
@@ -98,10 +99,13 @@
     <span class="n">RESOURCE_EXTRAS_ALLOWED</span><span class="p">,</span>
     <span class="n">RESOURCES_TOOL_NAME</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.blobs</span> <span class="kn">import</span> <span class="n">ThumbnailManager</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.extras</span> <span class="kn">import</span> <span class="n">get_markdown</span><span class="p">,</span> <span class="n">get_snippets</span><span class="p">,</span> <span class="n">get_xpath</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.extras.thumbnails</span> <span class="kn">import</span> <span class="n">ThumbnailManager</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.extras.markdown</span> <span class="kn">import</span> <span class="n">get_markdown</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.extras.regex</span> <span class="kn">import</span> <span class="n">get_regex</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.extras.snippets</span> <span class="kn">import</span> <span class="n">get_snippets</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.extras.xpath</span> <span class="kn">import</span> <span class="n">get_xpath</span>
+
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="n">SITES_TOOL_NAME</span>
 
 <span class="n">OVERRIDE_ERROR_MESSAGE</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;BaseCrawler subclasses must implement the following </span><span class="se">\</span>
 <span class="s2">methods: handle_list_tools, handle_call_tool, at minimum.&quot;&quot;&quot;</span>
@@ -263,6 +267,7 @@
         <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">extras</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">extrasRegex</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">extrasXpath</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseJsonApi</span><span class="p">:</span>
         <span class="n">resources_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">METADATA_VALUE_TYPE</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
@@ -295,19 +300,22 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">site_matches</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">no_results</span><span class="p">()</span>
 
-        <span class="c1"># Handle stealth fields for extras</span>
         <span class="n">extras</span> <span class="o">=</span> <span class="n">extras</span> <span class="ow">or</span> <span class="p">[]</span>
         <span class="n">extrasXpath</span> <span class="o">=</span> <span class="n">extrasXpath</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="n">extrasRegex</span> <span class="o">=</span> <span class="n">extrasRegex</span> <span class="ow">or</span> <span class="p">[]</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="n">fields</span> <span class="ow">or</span> <span class="p">[]</span>
         <span class="n">fields_extras_override</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
-        <span class="n">set_extras_content</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;markdown&quot;</span><span class="p">,</span> <span class="s2">&quot;snippets&quot;</span><span class="p">,</span> <span class="s2">&quot;xpath&quot;</span><span class="p">}</span>
         <span class="n">set_extras</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">extras</span><span class="p">)</span>
-        <span class="n">add_content</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">set_extras_content</span> <span class="o">&amp;</span> <span class="n">set_extras</span><span class="p">)</span> <span class="c1"># intersection</span>
+        <span class="n">set_extras_content</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;markdown&quot;</span><span class="p">,</span> <span class="s2">&quot;snippets&quot;</span><span class="p">,</span> <span class="s2">&quot;xpath&quot;</span><span class="p">,</span> <span class="s2">&quot;regex&quot;</span><span class="p">}</span>
+        <span class="n">set_extras_headers</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;snippets&quot;</span><span class="p">,</span> <span class="s2">&quot;regex&quot;</span><span class="p">}</span>
+        <span class="n">add_content</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">set_extras_content</span> <span class="o">&amp;</span> <span class="n">set_extras</span><span class="p">)</span>
+        <span class="n">add_headers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">set_extras_headers</span> <span class="o">&amp;</span> <span class="n">set_extras</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">add_content</span> <span class="ow">and</span> <span class="s2">&quot;content&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
             <span class="n">fields_extras_override</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s2">&quot;snippets&quot;</span> <span class="ow">in</span> <span class="n">extras</span> <span class="ow">and</span> <span class="s2">&quot;headers&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="n">add_headers</span> <span class="ow">and</span> <span class="s2">&quot;headers&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
             <span class="n">fields_extras_override</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;headers&quot;</span><span class="p">)</span>
 
         <span class="n">results</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">index_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adapter_get_resources</span><span class="p">(</span>
@@ -333,6 +341,12 @@
             <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
                 <span class="n">xpath_result</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">get_xpath</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="n">extrasXpath</span><span class="p">)</span>
                 <span class="n">result</span><span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;xpath&quot;</span><span class="p">,</span> <span class="n">xpath_result</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;regex&quot;</span> <span class="ow">in</span> <span class="n">extras</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">:</span> <span class="n">ResourceResult</span>
+            <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+                <span class="n">regex_result</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">get_regex</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="n">extrasRegex</span><span class="p">)</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;regex&quot;</span><span class="p">,</span> <span class="n">regex_result</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="s2">&quot;snippets&quot;</span> <span class="ow">in</span> <span class="n">extras</span> <span class="ow">and</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
             <span class="n">result</span><span class="p">:</span> <span class="n">ResourceResult</span>
@@ -404,7 +418,13 @@
             <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="n">RESOURCES_TOOL_NAME</span><span class="p">:</span>
 
                 <span class="n">extras</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;extras&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;extras&quot;</span><span class="p">]</span>
+
+                <span class="c1"># in case there is any LLM confusion of XPath/xpath or Markdown/markdown, these are</span>
+                <span class="c1"># defined lowercase in the MCP Tool definition, but have counter-weighting as proper nouns</span>
+                <span class="n">extras</span> <span class="o">=</span> <span class="p">[</span><span class="n">extra</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">extra</span> <span class="ow">in</span> <span class="n">extras</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">extra</span><span class="p">,</span> <span class="nb">str</span><span class="p">)]</span>
+                <span class="n">extrasRegex</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;extrasRegex&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;extrasRegex&quot;</span><span class="p">]</span>
                 <span class="n">extrasXpath</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">arguments</span> <span class="ow">or</span> <span class="s2">&quot;extrasXpath&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arguments</span> <span class="k">else</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">&quot;extrasXpath&quot;</span><span class="p">]</span>
+
                 <span class="n">extras_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">extras</span><span class="p">)</span>
                 <span class="n">extras_removed</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">extras_set</span> <span class="o">-</span> <span class="n">RESOURCE_EXTRAS_ALLOWED</span>
                 <span class="k">if</span> <span class="n">extras_removed</span><span class="p">:</span>
@@ -439,6 +459,7 @@
                     <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span>
                     <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
                     <span class="n">extras</span><span class="o">=</span><span class="n">extras</span><span class="p">,</span>
+                    <span class="n">extrasRegex</span><span class="o">=</span><span class="n">extrasRegex</span><span class="p">,</span>
                     <span class="n">extrasXpath</span><span class="o">=</span><span class="n">extrasXpath</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="c1"># sometimes nudging makes things worse, AI doubles down on percieved</span>

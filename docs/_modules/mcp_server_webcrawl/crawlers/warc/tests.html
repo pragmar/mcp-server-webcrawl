@@ -44,6 +44,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../prompts.html">Prompt Routines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -153,9 +154,9 @@
     <span class="c1">#     crawler = WarcCrawler(self._datasrc)</span>
     <span class="c1">#     self.run_pragmar_image_tests(crawler, PRAGMAR_WARC_ID)</span>
 
-<div class="viewcode-block" id="WarcTests.test_warc_random_sort">
-<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_warc_random_sort">[docs]</a>
-    <span class="k">def</span> <span class="nf">test_warc_random_sort</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="WarcTests.test_warc_sorts">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_warc_sorts">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_warc_sorts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Test random sort functionality using the &#39;?&#39; sort parameter.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -177,7 +178,7 @@
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.warc.html#mcp_server_webcrawl.crawlers.warc.tests.WarcTests.test_report">[docs]</a>
     <span class="k">def</span> <span class="nf">test_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Test thumbnail generation functionality (InterroBot-specific).</span>
+<span class="sd">        Run test report, save to data directory.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">crawler</span> <span class="o">=</span> <span class="n">WarcCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datasrc</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_pragmar_report</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">PRAGMAR_WARC_ID</span><span class="p">,</span> <span class="s2">&quot;WARC&quot;</span><span class="p">))</span></div>
