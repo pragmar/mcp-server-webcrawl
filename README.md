@@ -10,6 +10,7 @@
 </p>
 
 # mcp-server-webcrawl
+[![Trust Score](https://archestra.ai/mcp-catalog/api/badge/quality/pragmar/mcp-server-webcrawl)](https://archestra.ai/mcp-catalog/pragmar__mcp-server-webcrawl)
 
 Advanced search and retrieval for web crawler data. With **mcp-server-webcrawl**, your AI client filters and analyzes web content under your direction or autonomously. The server includes a fulltext search interface with boolean support, and resource filtering by type, HTTP status, and more.
 
