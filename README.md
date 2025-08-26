@@ -19,7 +19,7 @@ Advanced search and retrieval for web crawler data. With **mcp-server-webcrawl**
 |----------------|-------------|-----------|-------------|
 | [**WARC**](https://en.wikipedia.org/wiki/WARC_(file_format)) | Standard web archive format          | varies by client    | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/warc.html) |
 | [**wget**](https://en.wikipedia.org/wiki/Wget)               | CLI website mirroring tool  | macOS/Linux         | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/wget.html) |
-| [**InterroBot**](https://interro.bot)                        | GUI crawler and analyzer             | macOS/Windows       | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/interrobot.html) |
+| [**InterroBot**](https://interro.bot)                        | GUI crawler and analyzer             | macOS/Windows/Linux  | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/interrobot.html) |
 | [**Katana**](https://github.com/projectdiscovery/katana)     | CLI security-focused crawler             | macOS/Windows/Linux | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/katana.html) |
 | [**SiteOne**](https://crawler.siteone.io)                    | GUI crawler and analyzer             | macOS/Windows/Linux | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/siteone.html) |
 
@@ -149,3 +149,4 @@ The `extras` parameter provides additional processing options, transforming HTTP
 Extras provide a means of producing token-efficient HTTP content responses. Markdown produces roughly 1/3 the bytes of the source HTML, snippets are generally 500 or so bytes per result, and XPath can be as specific or broad as you choose. The more focused your requests, the more results you can fit into your LLM session.
 
 The idea, of course, is that the LLM takes care of this for you. If you notice your LLM developing an affinity to the "content" field (full HTML), a nudge in chat to budget tokens using the extras feature should be all that is needed.
+
