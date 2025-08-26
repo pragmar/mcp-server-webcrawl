@@ -1,1 +1,2 @@
+include src/mcp_server_webcrawl/templates/*.xslt
 global-exclude *settings_local.py
