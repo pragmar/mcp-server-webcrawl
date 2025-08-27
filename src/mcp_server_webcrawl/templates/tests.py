@@ -1,19 +1,12 @@
 import re
 import unittest
-import difflib
 
+from importlib import resources
 from urllib.request import urlopen
 from mcp_server_webcrawl.utils.logger import get_logger
 from mcp_server_webcrawl.extras.markdown import get_markdown
 
 logger = get_logger()
-
-try:
-    # optional dependency only used in testing
-    from html2text import html2text
-except ImportError:
-    logger.error(f"html2text is required to run tests")
-    pass
 
 class TemplateTests(unittest.TestCase):
     """
@@ -25,11 +18,7 @@ class TemplateTests(unittest.TestCase):
     interaction.
     * aggressively removes images (html2text selectively renders)
     * links with block decendents will render like a <p> 
-        (html2text treats as <a><br>)
-    * this may be a rabbit hole trying to compare anything with 
-        practical pass/fail when it's never going equivalent. 
-        TODO: look for fuzzy solution, or hyper customize comparisons
-        for a handful of webpages.
+        (html2text treats as <a><br>)    
     """
 
     def setUp(self):
@@ -38,53 +27,69 @@ class TemplateTests(unittest.TestCase):
         """
         super().setUp()
 
-    def normalize_text(self, text):
-        """
-        Normalize text for loose comparison - ignore whitespace differences.
-        """
-        if text is None:
-            return ""
+    def test_core_html(self):
+        core_html: str = resources.read_text("mcp_server_webcrawl.templates", "tests_core.html")
+        markdown = get_markdown(core_html)
 
-        lines = [line.strip() for line in text.splitlines()]
-        normalized = '\n'.join(lines)
-        normalized = re.sub(r'[ \t]+', ' ', normalized)
-        normalized = re.sub(r'\n{4,}', '\n\n\n', normalized)
-        normalized = re.sub(r'(?<![.!?:])\n(?=[a-zA-Z])', ' ', normalized)
-        return normalized.strip()
+        # h1-6
+        self.assertIn("# Lorem Ipsum Dolor Sit Amet", markdown)
+        self.assertIn("## Consectetur Adipiscing Elit", markdown)
+        self.assertIn("### Nemo Enim Ipsam Voluptatem", markdown)
+        self.assertIn("#### Sed Quia Non Numquam", markdown)
+        self.assertIn("##### Nisi Ut Aliquid Ex Ea", markdown)
+        self.assertIn("###### At Vero Eos Et Accusamus", markdown)
 
-    def compare_transforms(self, url) -> bool:
-        """
-        Compare markdown converters
-        """
+        # no content loss - key phrases should be preserved
+        self.assertIn("Lorem ipsum dolor sit amet", markdown)
+        self.assertIn("Definition List Example", markdown)
+        self.assertIn("More Text Elements", markdown)
 
-        response = urlopen(url, timeout=10)
-        if response.status != 200:
-            return False
+        # inline formatting (proper spacing)
+        self.assertIn("amet, **consectetur adipiscing elit**. Sed", markdown)
+        self.assertIn("laborum. **Sed ut perspiciatis** unde", markdown)
+        self.assertIn("consequat. *Duis aute irure dolor* in", markdown)
+        self.assertIn("laudantium. *Totam rem aperiam*, eaque", markdown)
 
-        html = response.read().decode("utf-8")
-        result1 = get_markdown(html) or None
-        result2 = html2text(html) or None
-        if result1 is None or result2 is None:
-            return False
+        # link formatting (proper spacing)
+        self.assertIn("veniam, quis nostrud exercitation ullamco", markdown)  # Fragment links as plain text
+        self.assertIn("and a link back to top. Nam", markdown)
 
-        normalized1 = self.normalize_text(result1)
-        normalized2 = self.normalize_text(result2)
+        # list formatting
+        self.assertIn("* Similique sunt in culpa", markdown)
+        self.assertIn("1. Temporibus autem quibusdam", markdown)
 
-        if normalized1 != normalized2:
-            diff = difflib.unified_diff(
-                normalized2.splitlines(keepends=True),  # html2text as baselineif content is None or content
-                normalized1.splitlines(keepends=True),  # custom transform
-                fromfile='html2text (normalized)',
-                tofile='transform_to_markdown (normalized)',
-                lineterm=''
-            )
+        # dl/dt
+        self.assertIn("**Lorem Ipsum**", markdown)
+        self.assertIn("    Dolor sit amet, consectetur adipiscing elit", markdown)
+        self.assertIn("**Ut Enim**", markdown)
+        self.assertIn("    Ad minim veniam, quis nostrud exercitation", markdown)
+        self.assertIn("**Duis Aute**", markdown)
+        self.assertIn("    Irure dolor in reprehenderit in voluptate", markdown)
 
-            diff_output = ''.join(diff)
-            logger.warning(f"Semantic differences found for {url}\n\n{diff_output}")
-            return False
+        # table structure
+        self.assertIn("| Lorem | Ipsum | Dolor | Sit |", markdown)
+        self.assertIn("|---|---|---|---|", markdown)
+        self.assertIn("| Consectetur | Adipiscing | Elit | Sed |", markdown)
 
-        return True
+        # code formatting
+        self.assertIn("Here we have some `inline code` and", markdown)
+        self.assertIn("```\nfunction lorem() {\n    return \"ipsum dolor sit amet\";\n}\n```", markdown)
 
-    def test_example_com(self):
-        result: bool = self.compare_transforms("https://example.com")
-        self.assertTrue(result, "example.com should contain functionally equivalent HTML to text (simple).")
+        # blockquotes
+        self.assertIn("> \"Sed ut perspiciatis unde omnis iste natus", markdown)
+
+        # horizontal rule
+        self.assertIn("---", markdown)
+
+        # no double spacing for inline elements
+        self.assertNotIn("**  ", markdown)  # No double spaces after bold
+        self.assertNotIn("  **", markdown)  # No double spaces before bold
+        self.assertNotIn("*  ", markdown)   # No double spaces after emphasis
+        self.assertNotIn("  *", markdown)   # No double spaces before emphasis
+
+        # structural integrity - count major elements
+        heading_count = len(re.findall(r"^#{1,6} ", markdown, re.MULTILINE))
+        self.assertEqual(heading_count, 11, "Should have exactly 6 headings")
+        table_count = len(re.findall(r"^\|.*\|$", markdown, re.MULTILINE))
+        self.assertGreater(table_count, 5, "Should have multiple table rows")
+

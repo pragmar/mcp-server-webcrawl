@@ -62,14 +62,27 @@
     </xsl:template>
 
     <xsl:template match="strong | b">
+        <!-- proper whitespace handling for preceding/following sibling text -->
         <xsl:if test="normalize-space(.) != ''">
+            <xsl:if test="preceding-sibling::text()[1][substring(., string-length(.)) = ' ']">
+                <xsl:text> </xsl:text>
+            </xsl:if>
             <xsl:text>**</xsl:text><xsl:apply-templates/><xsl:text>**</xsl:text>
+            <xsl:if test="following-sibling::text()[1][starts-with(., ' ')]">
+                <xsl:text> </xsl:text>
+            </xsl:if>
         </xsl:if>
     </xsl:template>
 
     <xsl:template match="em | i">
         <xsl:if test="normalize-space(.) != ''">
+            <xsl:if test="preceding-sibling::text()[1][substring(., string-length(.)) = ' ']">
+                <xsl:text> </xsl:text>
+            </xsl:if>
             <xsl:text>*</xsl:text><xsl:apply-templates/><xsl:text>*</xsl:text>
+            <xsl:if test="following-sibling::text()[1][starts-with(., ' ')]">
+                <xsl:text> </xsl:text>
+            </xsl:if>
         </xsl:if>
     </xsl:template>
 
@@ -142,16 +155,29 @@
     </xsl:template>
 
     <xsl:template match="span/div | li/p | li/div | td/div">
-
         <xsl:apply-templates/>
     </xsl:template>
 
     <xsl:template match="span">
-        <xsl:value-of select="normalize-space(.)"/>
+        <xsl:if test="normalize-space(.) != ''">
+            <xsl:if test="preceding-sibling::text()[1][substring(., string-length(.)) = ' ']">
+                <xsl:text> </xsl:text>
+            </xsl:if>
+            <xsl:value-of select="normalize-space(.)"/>
+            <xsl:if test="following-sibling::text()[1][starts-with(., ' ')]">
+                <xsl:text> </xsl:text>
+            </xsl:if>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template match="a[starts-with(@href, '#')]">
+        <xsl:if test="preceding-sibling::text()[1][substring(., string-length(.)) = ' ']">
+            <xsl:text> </xsl:text>
+        </xsl:if>
         <xsl:value-of select="normalize-space(.)"/>
+        <xsl:if test="following-sibling::text()[1][starts-with(., ' ')]">
+            <xsl:text> </xsl:text>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template match="a">
@@ -160,8 +186,7 @@
         <xsl:variable name="within-structural-container">
             <xsl:call-template name="structural"/>
         </xsl:variable>
-        <xsl:if test="preceding-sibling::text()[normalize-space(.) != ''] or
-                    (preceding-sibling::* and not(preceding-sibling::*[1][self::br]))">
+        <xsl:if test="preceding-sibling::text()[1][substring(., string-length(.)) = ' ']">
             <xsl:text> </xsl:text>
         </xsl:if>
         <xsl:choose>
@@ -185,8 +210,8 @@
                 </xsl:choose>
             </xsl:when>
         </xsl:choose>
-        <xsl:variable name="nexttext" select="string(following-sibling::text())"/>
-        <xsl:if test="starts-with($nexttext, ' ')">
+
+        <xsl:if test="following-sibling::text()[1][starts-with(., ' ')]">
             <xsl:text> </xsl:text>
         </xsl:if>
 
@@ -222,8 +247,14 @@
     </xsl:template>
 
     <xsl:template match="code">
+        <xsl:if test="preceding-sibling::text()[1][substring(., string-length(.)) = ' ']">
+            <xsl:text> </xsl:text>
+        </xsl:if>
         <xsl:if test="not(parent::pre)">
             <xsl:text>`</xsl:text><xsl:value-of select="."/><xsl:text>`</xsl:text>
+        </xsl:if>
+        <xsl:if test="following-sibling::text()[1][starts-with(., ' ')]">
+            <xsl:text> </xsl:text>
         </xsl:if>
     </xsl:template>
 
@@ -358,7 +389,15 @@
     </xsl:template>
 
     <xsl:template match="del | s | strike">
-        <xsl:text>~~</xsl:text><xsl:apply-templates/><xsl:text>~~</xsl:text>
+        <xsl:if test="normalize-space(.) != ''">
+            <xsl:if test="preceding-sibling::text()[1][substring(., string-length(.)) = ' ']">
+                <xsl:text> </xsl:text>
+            </xsl:if>
+            <xsl:text>~~</xsl:text><xsl:apply-templates/><xsl:text>~~</xsl:text>
+            <xsl:if test="following-sibling::text()[1][starts-with(., ' ')]">
+                <xsl:text> </xsl:text>
+            </xsl:if>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template match="dl">
@@ -368,11 +407,32 @@
     </xsl:template>
 
     <xsl:template match="dt">
-        <xsl:text>&#10;</xsl:text><xsl:apply-templates/><xsl:text>&#10;</xsl:text>
+        <xsl:variable name="within-structural-container">
+            <xsl:call-template name="structural"/>
+        </xsl:variable>
+
+        <xsl:if test="$within-structural-container = 'false'">
+            <xsl:text>&#10;</xsl:text>
+        </xsl:if>
+        <xsl:text>**</xsl:text><xsl:apply-templates/><xsl:text>**</xsl:text>
+        <xsl:if test="$within-structural-container = 'false'">
+            <xsl:text>&#10;</xsl:text>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template match="dd">
-        <xsl:text>:   </xsl:text><xsl:apply-templates/><xsl:text>&#10;</xsl:text>
+        <xsl:variable name="within-structural-container">
+            <xsl:call-template name="structural"/>
+        </xsl:variable>
+
+        <xsl:choose>
+            <xsl:when test="$within-structural-container = 'true'">
+                <xsl:text>: </xsl:text><xsl:apply-templates/>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:text>    </xsl:text><xsl:apply-templates/><xsl:text>&#10;</xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
     </xsl:template>
 
     <xsl:template match="div">

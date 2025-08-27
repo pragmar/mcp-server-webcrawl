@@ -25,11 +25,6 @@ dependencies = [
 ]
 dynamic = ["version"]
 
-[project.optional-dependencies]
-test = [
-    "html2text>=2024.2.25",
-]
-
 [project.scripts]
 mcp-server-webcrawl = "mcp_server_webcrawl:main"
 

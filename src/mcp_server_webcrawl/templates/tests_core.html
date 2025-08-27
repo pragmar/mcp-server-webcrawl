@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>HTML Basic Page</title>
+    <!--
+    tests depend on this file being stable, don't update without planning of updating tests.py
+    this file is transformed to markdown to test transform integrity
+    -->
+    <style>
+        body { font-family: Georgia, serif; line-height: 1.6; margin: 2em; background: #fafafa; }
+        h1 { color: #333; border-bottom: 2px solid #666; }
+        h2 { color: #555; margin-top: 2em; }
+        h3 { color: #777; }
+        h4, h5, h6 { color: #888; }
+        p { margin-bottom: 1em; }
+        a { color: #0066cc; text-decoration: underline; }
+        a:hover { color: #004499; }
+        em { font-style: italic; color: #666; }
+        strong, b { font-weight: bold; }
+        i { font-style: italic; }
+        ul, ol { margin: 1em 0; padding-left: 2em; }
+        li { margin-bottom: 0.5em; }
+        table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+        th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
+        th { background: #f0f0f0; font-weight: bold; }
+        blockquote { margin: 1em 2em; padding-left: 1em; border-left: 3px solid #ccc; font-style: italic; }
+        code { background: #f5f5f5; padding: 0.2em 0.4em; font-family: monospace; }
+        pre { background: #f5f5f5; padding: 1em; overflow-x: auto; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 2em 0; }
+        dl { margin: 1em 0; }
+        dt { font-weight: bold; margin-top: 0.5em; }
+        dd { margin-left: 2em; margin-bottom: 0.5em; }
+    </style>
+</head>
+<body>
+    <h1>Lorem Ipsum Dolor Sit Amet</h1>
+    <p>Lorem ipsum dolor sit amet, <strong>consectetur adipiscing elit</strong>. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, <a href="#nowhere">quis nostrud exercitation</a> ullamco laboris nisi ut aliquip ex ea commodo consequat. <em>Duis aute irure dolor</em> in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+
+    <h2>Consectetur Adipiscing Elit</h2>
+    <p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. <b>Sed ut perspiciatis</b> unde omnis iste natus error sit voluptatem accusantium doloremque laudantium. <i>Totam rem aperiam</i>, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
+
+    <h3>Nemo Enim Ipsam Voluptatem</h3>
+    <p>Quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.</p>
+
+    <h4>Sed Quia Non Numquam</h4>
+    <p>Eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam.</p>
+
+    <h5>Nisi Ut Aliquid Ex Ea</h5>
+    <p>Commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?</p>
+
+    <h6>At Vero Eos Et Accusamus</h6>
+    <p>Et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.</p>
+
+    <hr>
+
+    <h2>Unordered List Example</h2>
+    <ul>
+        <li>Similique sunt in culpa qui officia deserunt</li>
+        <li>Mollitia animi, id est laborum et dolorum fuga</li>
+        <li>Et harum quidem rerum facilis est et expedita distinctio</li>
+        <li>Nam libero tempore, cum soluta nobis est eligendi optio</li>
+        <li>Cumque nihil impedit quo minus id quod maxime</li>
+    </ul>
+
+    <h2>Ordered List Example</h2>
+    <ol>
+        <li>Temporibus autem quibusdam et aut officiis debitis</li>
+        <li>Aut reiciendis voluptatibus maiores alias consequatur</li>
+        <li>Aut perferendis doloribus asperiores repellat</li>
+        <li>Itaque earum rerum hic tenetur a sapiente delectus</li>
+        <li>Ut aut reiciendis voluptatibus maiores alias</li>
+    </ol>
+
+    <h2>Definition List Example</h2>
+    <dl>
+        <dt>Lorem Ipsum</dt>
+        <dd>Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</dd>
+
+        <dt>Ut Enim</dt>
+        <dd>Ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</dd>
+
+        <dt>Duis Aute</dt>
+        <dd>Irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</dd>
+    </dl>
+
+    <h2>Table Example</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Lorem</th>
+                <th>Ipsum</th>
+                <th>Dolor</th>
+                <th>Sit</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Consectetur</td>
+                <td>Adipiscing</td>
+                <td>Elit</td>
+                <td>Sed</td>
+            </tr>
+            <tr>
+                <td>Eiusmod</td>
+                <td>Tempor</td>
+                <td>Incididunt</td>
+                <td>Labore</td>
+            </tr>
+            <tr>
+                <td>Dolore</td>
+                <td>Magna</td>
+                <td>Aliqua</td>
+                <td>Enim</td>
+            </tr>
+            <tr>
+                <td>Minim</td>
+                <td>Veniam</td>
+                <td>Quis</td>
+                <td>Nostrud</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>More Text Elements</h2>
+    <p>Here we have some <code>inline code</code> and a longer code block below:</p>
+
+    <pre><code>function lorem() {
+    return "ipsum dolor sit amet";
+}</code></pre>
+
+    <blockquote>
+        <p>"Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis."</p>
+    </blockquote>
+
+    <p>Final paragraph with mixed formatting: <strong>bold text</strong>, <em>emphasized text</em>, <i>italic text</i>, <b>more bold</b>, and a <a href="#top">link back to top</a>. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus.</p>
+</body>
+</html>

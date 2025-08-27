@@ -1,2 +1,3 @@
-include src/mcp_server_webcrawl/templates/*.xslt
+include src/mcp_server_webcrawl/templates/markdown.xslt
+include src/mcp_server_webcrawl/templates/test_*.html
 global-exclude *settings_local.py
