@@ -94,8 +94,8 @@ class WarcManager(IndexedManager):
                 if index_state is not None and index_state.status == IndexStatus.INDEXING:
                     index_state.set_status(IndexStatus.COMPLETE)
 
-            except Exception as e:
-                logger.error(f"Error processing WARC file {warc_path}: {e}")
+            except Exception as ex:
+                logger.error(f"Error processing WARC file {warc_path}: {ex}")
                 if index_state is not None:
                     index_state.set_status(IndexStatus.FAILED)
 
@@ -155,8 +155,8 @@ class WarcManager(IndexedManager):
                 time=0  # time not available
             )
             return result
-        except Exception as e:
-            logger.error(f"Error processing WARC record for URL {url if 'url' in locals() else 'unknown'}: {e}")
+        except Exception as ex:
+            logger.error(f"Error processing WARC record for URL {url if 'url' in locals() else 'unknown'}: {ex}")
             return None
 
 manager: WarcManager = WarcManager()

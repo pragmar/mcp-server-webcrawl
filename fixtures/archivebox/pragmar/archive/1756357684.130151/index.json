@@ -1,0 +1,262 @@
+{
+    "archive_path": "archive/1756357684.130151",
+    "base_url": "pragmar.com/qbit",
+    "basename": "",
+    "bookmarked_date": "2025-08-28 05:08",
+    "canonical": {
+        "archive_org_path": "https://web.archive.org/web/pragmar.com/qbit",
+        "dom_path": "output.html",
+        "favicon_path": "favicon.ico",
+        "git_path": "git/",
+        "google_favicon_path": "https://www.google.com/s2/favicons?domain=pragmar.com",
+        "headers_path": "headers.json",
+        "index_path": "index.html",
+        "media_path": "media/",
+        "mercury_path": "mercury/content.html",
+        "pdf_path": "output.pdf",
+        "readability_path": "readability/content.html",
+        "screenshot_path": "screenshot.png",
+        "singlefile_path": "singlefile.html",
+        "warc_path": "warc/",
+        "wget_path": "pragmar.com/qbit/index.html"
+    },
+    "domain": "pragmar.com",
+    "extension": "",
+    "hash": "11RK25BP279QP4NRAK4D",
+    "history": {
+        "archive_org": [
+            {
+                "cmd": [
+                    "curl",
+                    "--silent",
+                    "--location",
+                    "--compressed",
+                    "--head",
+                    "--max-time",
+                    "60",
+                    "--user-agent",
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 ArchiveBox/0.7.1 (+https://github.com/ArchiveBox/ArchiveBox/) curl/curl 8.5.0 (x86_64-pc-linux-gnu)",
+                    "https://web.archive.org/save/https://pragmar.com/qbit/"
+                ],
+                "cmd_version": "curl 8.5.0 (x86_64-pc-linux-gnu)",
+                "end_ts": "2025-08-28T05:10:41.159311+00:00",
+                "index_texts": null,
+                "output": "TimeoutExpired: Command '['curl', '--silent', '--location', '--compressed', '--head', '--max-time', '60', '--user-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 ArchiveBox/0.7.1 (+https://github.com/ArchiveBox/ArchiveBox/) curl/curl 8.5.0 (x86_64-pc-linux-gnu)', 'https://web.archive.org/save/https://pragmar.com/qbit/']' timed out after 60 seconds",
+                "pwd": "/home/archivebox-data/pragmar/archive/1756357684.130151",
+                "schema": "ArchiveResult",
+                "start_ts": "2025-08-28T05:09:41.149734+00:00",
+                "status": "failed"
+            }
+        ],
+        "dom": [],
+        "favicon": [
+            {
+                "cmd": [
+                    "curl",
+                    "--silent",
+                    "--location",
+                    "--compressed",
+                    "--max-time",
+                    "60",
+                    "--output",
+                    "favicon.ico",
+                    "--user-agent",
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 ArchiveBox/0.7.1 (+https://github.com/ArchiveBox/ArchiveBox/) curl/curl 8.5.0 (x86_64-pc-linux-gnu)",
+                    "https://www.google.com/s2/favicons?domain=pragmar.com"
+                ],
+                "cmd_version": "curl 8.5.0 (x86_64-pc-linux-gnu)",
+                "end_ts": "2025-08-28T05:09:27.147988+00:00",
+                "index_texts": null,
+                "output": "favicon.ico",
+                "pwd": "/home/archivebox-data/pragmar/archive/1756357684.130151",
+                "schema": "ArchiveResult",
+                "start_ts": "2025-08-28T05:09:26.868150+00:00",
+                "status": "succeeded"
+            }
+        ],
+        "git": [],
+        "headers": [
+            {
+                "cmd": [
+                    "curl",
+                    "--silent",
+                    "--location",
+                    "--compressed",
+                    "--head",
+                    "--max-time",
+                    "60",
+                    "--user-agent",
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 ArchiveBox/0.7.1 (+https://github.com/ArchiveBox/ArchiveBox/) curl/curl 8.5.0 (x86_64-pc-linux-gnu)",
+                    "https://pragmar.com/qbit/"
+                ],
+                "cmd_version": "curl 8.5.0 (x86_64-pc-linux-gnu)",
+                "end_ts": "2025-08-28T05:09:27.305770+00:00",
+                "index_texts": null,
+                "output": "headers.json",
+                "pwd": "/home/archivebox-data/pragmar/archive/1756357684.130151",
+                "schema": "ArchiveResult",
+                "start_ts": "2025-08-28T05:09:27.159605+00:00",
+                "status": "succeeded"
+            }
+        ],
+        "media": [
+            {
+                "cmd": [
+                    "yt-dlp",
+                    "--write-description",
+                    "--write-info-json",
+                    "--write-annotations",
+                    "--write-thumbnail",
+                    "--no-call-home",
+                    "--write-sub",
+                    "--write-auto-subs",
+                    "--convert-subs=srt",
+                    "--yes-playlist",
+                    "--continue",
+                    "--no-abort-on-error",
+                    "--ignore-errors",
+                    "--geo-bypass",
+                    "--add-metadata",
+                    "--format=(bv*+ba/b)[filesize<=750m][filesize_approx<=?750m]/(bv*+ba/b)",
+                    "https://pragmar.com/qbit/"
+                ],
+                "cmd_version": "2025.08.27",
+                "end_ts": "2025-08-28T05:09:41.134283+00:00",
+                "index_texts": [
+                    "Download Free Version: \nhttps://pragmar.com/qbit/\n\nQbit is a tool for game developers. Given an image, the application will output six images\u2014one for each face of a skybox. The exported images can be used in any modern 3d game engine.",
+                    "1\n00:00:00,319 --> 00:00:05,960\n\nall right so Cupid is basically a\n\n2\n00:00:05,960 --> 00:00:05,970\nall right so Cupid is basically a\n \n\n3\n00:00:05,970 --> 00:00:07,460\nall right so Cupid is basically a\none-trick pony this will go really\n\n4\n00:00:07,460 --> 00:00:07,470\none-trick pony this will go really\n \n\n5\n00:00:07,470 --> 00:00:12,830\none-trick pony this will go really\nquickly I'm going to grab an image this\n\n6\n00:00:12,830 --> 00:00:12,840\nquickly I'm going to grab an image this\n \n\n7\n00:00:12,840 --> 00:00:17,689\nquickly I'm going to grab an image this\none will do I'll grab the thing and you\n\n8\n00:00:17,689 --> 00:00:17,699\none will do I'll grab the thing and you\n \n\n9\n00:00:17,699 --> 00:00:20,359\none will do I'll grab the thing and you\ncan see loads up and right and we're\n\n10\n00:00:20,359 --> 00:00:20,369\ncan see loads up and right and we're\n \n\n11\n00:00:20,369 --> 00:00:24,410\ncan see loads up and right and we're\ngoing to generate six images here I got\n\n12\n00:00:24,410 --> 00:00:24,420\ngoing to generate six images here I got\n \n\n13\n00:00:24,420 --> 00:00:28,970\ngoing to generate six images here I got\na first select my output directory\n\n14\n00:00:28,970 --> 00:00:28,980\n\n \n\n15\n00:00:28,980 --> 00:00:32,650\n\nI'm going to pick this empty qubit and\n\n16\n00:00:32,650 --> 00:00:32,660\nI'm going to pick this empty qubit and\n \n\n17\n00:00:32,660 --> 00:00:35,240\nI'm going to pick this empty qubit and\nquickly go over the options output\n\n18\n00:00:35,240 --> 00:00:35,250\nquickly go over the options output\n \n\n19\n00:00:35,250 --> 00:00:39,020\nquickly go over the options output\nnaming you get a choice\n\n20\n00:00:39,020 --> 00:00:39,030\nnaming you get a choice\n \n\n21\n00:00:39,030 --> 00:00:41,330\nnaming you get a choice\nthis may not cover every single base but\n\n22\n00:00:41,330 --> 00:00:41,340\nthis may not cover every single base but\n \n\n23\n00:00:41,340 --> 00:00:43,990\nthis may not cover every single base but\nhopefully it's close enough\n\n24\n00:00:43,990 --> 00:00:44,000\nhopefully it's close enough\n \n\n25\n00:00:44,000 --> 00:00:47,350\nhopefully it's close enough\nbut level one here is just going to take\n\n26\n00:00:47,350 --> 00:00:47,360\nbut level one here is just going to take\n \n\n27\n00:00:47,360 --> 00:00:53,310\nbut level one here is just going to take\nlevel select from the source image name\n\n28\n00:00:53,310 --> 00:00:53,320\n\n \n\n29\n00:00:53,320 --> 00:00:57,150\n\nyou're going to get your face a couple\n\n30\n00:00:57,150 --> 00:00:57,160\nyou're going to get your face a couple\n \n\n31\n00:00:57,160 --> 00:01:00,049\nyou're going to get your face a couple\noptions there and then the extension so\n\n32\n00:01:00,049 --> 00:01:00,059\noptions there and then the extension so\n \n\n33\n00:01:00,059 --> 00:01:03,200\noptions there and then the extension so\nwe'll just stick with the default\n\n34\n00:01:03,200 --> 00:01:03,210\nwe'll just stick with the default\n \n\n35\n00:01:03,210 --> 00:01:06,350\nwe'll just stick with the default\n85% of with that's going to be a good\n\n36\n00:01:06,350 --> 00:01:06,360\n85% of with that's going to be a good\n \n\n37\n00:01:06,360 --> 00:01:09,620\n85% of with that's going to be a good\ndefault as well there are options to to\n\n38\n00:01:09,620 --> 00:01:09,630\ndefault as well there are options to to\n \n\n39\n00:01:09,630 --> 00:01:13,340\ndefault as well there are options to to\ngo bigger or smaller if that's what\n\n40\n00:01:13,340 --> 00:01:13,350\ngo bigger or smaller if that's what\n \n\n41\n00:01:13,350 --> 00:01:16,630\ngo bigger or smaller if that's what\nyou're looking for out blend coding\n\n42\n00:01:16,630 --> 00:01:16,640\nyou're looking for out blend coding\n \n\n43\n00:01:16,640 --> 00:01:22,390\nyou're looking for out blend coding\nbasic options stick with ping\n\n44\n00:01:22,390 --> 00:01:22,400\n\n \n\n45\n00:01:22,400 --> 00:01:27,220\n\nlet's see here super sampling you can\n\n46\n00:01:27,220 --> 00:01:27,230\nlet's see here super sampling you can\n \n\n47\n00:01:27,230 --> 00:01:28,690\nlet's see here super sampling you can\nturn that on that's going to generate a\n\n48\n00:01:28,690 --> 00:01:28,700\nturn that on that's going to generate a\n \n\n49\n00:01:28,700 --> 00:01:32,020\nturn that on that's going to generate a\nbetter quality output however it's going\n\n50\n00:01:32,020 --> 00:01:32,030\nbetter quality output however it's going\n \n\n51\n00:01:32,030 --> 00:01:34,270\nbetter quality output however it's going\nto also take long we'll do both so you\n\n52\n00:01:34,270 --> 00:01:34,280\nto also take long we'll do both so you\n \n\n53\n00:01:34,280 --> 00:01:37,060\nto also take long we'll do both so you\ncan see the difference but we'll keep it\n\n54\n00:01:37,060 --> 00:01:37,070\ncan see the difference but we'll keep it\n \n\n55\n00:01:37,070 --> 00:01:40,270\ncan see the difference but we'll keep it\noff for the draft quality first and then\n\n56\n00:01:40,270 --> 00:01:40,280\noff for the draft quality first and then\n \n\n57\n00:01:40,280 --> 00:01:44,160\noff for the draft quality first and then\nswap left/right I found that with unity\n\n58\n00:01:44,160 --> 00:01:44,170\nswap left/right I found that with unity\n \n\n59\n00:01:44,170 --> 00:01:47,200\nswap left/right I found that with unity\nleft becomes right right becomes left so\n\n60\n00:01:47,200 --> 00:01:47,210\nleft becomes right right becomes left so\n \n\n61\n00:01:47,210 --> 00:01:49,660\nleft becomes right right becomes left so\nI threw an option in there so you don't\n\n62\n00:01:49,660 --> 00:01:49,670\nI threw an option in there so you don't\n \n\n63\n00:01:49,670 --> 00:01:52,920\nI threw an option in there so you don't\nhave to like go into Explorer and change\n\n64\n00:01:52,920 --> 00:01:52,930\nhave to like go into Explorer and change\n \n\n65\n00:01:52,930 --> 00:01:58,900\nhave to like go into Explorer and change\nthe filename so that's fine this time so\n\n66\n00:01:58,900 --> 00:01:58,910\nthe filename so that's fine this time so\n \n\n67\n00:01:58,910 --> 00:02:00,490\nthe filename so that's fine this time so\nthat's draft and that's going to be\n\n68\n00:02:00,490 --> 00:02:00,500\nthat's draft and that's going to be\n \n\n69\n00:02:00,500 --> 00:02:04,320\nthat's draft and that's going to be\nquick if you like working iteratively\n\n70\n00:02:04,320 --> 00:02:04,330\nquick if you like working iteratively\n \n\n71\n00:02:04,330 --> 00:02:06,820\nquick if you like working iteratively\nit's going to be your best bet because\n\n72\n00:02:06,820 --> 00:02:06,830\nit's going to be your best bet because\n \n\n73\n00:02:06,830 --> 00:02:10,840\nit's going to be your best bet because\nyou can just export them out in very\n\n74\n00:02:10,840 --> 00:02:10,850\nyou can just export them out in very\n \n\n75\n00:02:10,850 --> 00:02:15,340\nyou can just export them out in very\nquick time and shift over to your game\n\n76\n00:02:15,340 --> 00:02:15,350\nquick time and shift over to your game\n \n\n77\n00:02:15,350 --> 00:02:18,940\nquick time and shift over to your game\neditor and hopefully it just Auto loads\n\n78\n00:02:18,940 --> 00:02:18,950\neditor and hopefully it just Auto loads\n \n\n79\n00:02:18,950 --> 00:02:21,760\neditor and hopefully it just Auto loads\nthem and you can see what's going on\n\n80\n00:02:21,760 --> 00:02:21,770\nthem and you can see what's going on\n \n\n81\n00:02:21,770 --> 00:02:25,770\nthem and you can see what's going on\nanyway here's where my files are\n\n82\n00:02:25,770 --> 00:02:25,780\nanyway here's where my files are\n \n\n83\n00:02:25,780 --> 00:02:30,059\nanyway here's where my files are\nwe can just check these out\n\n84\n00:02:30,059 --> 00:02:30,069\n\n \n\n85\n00:02:30,069 --> 00:02:33,770\n\nI go through so that's it\n\n86\n00:02:33,770 --> 00:02:33,780\nI go through so that's it\n \n\n87\n00:02:33,780 --> 00:02:38,059\nI go through so that's it\nthat is cubit\n\n88\n00:02:38,059 --> 00:02:38,069\n\n \n\n89\n00:02:38,069 --> 00:02:40,520\n\njust so you get an idea let's let's get\n\n90\n00:02:40,520 --> 00:02:40,530\njust so you get an idea let's let's get\n \n\n91\n00:02:40,530 --> 00:02:43,640\njust so you get an idea let's let's get\nrid of these we don't need to if we\n\n92\n00:02:43,640 --> 00:02:43,650\nrid of these we don't need to if we\n \n\n93\n00:02:43,650 --> 00:02:45,080\nrid of these we don't need to if we\ndon't get rid of them it'll just be\n\n94\n00:02:45,080 --> 00:02:45,090\ndon't get rid of them it'll just be\n \n\n95\n00:02:45,090 --> 00:02:49,610\ndon't get rid of them it'll just be\noverwritten but\n\n96\n00:02:49,610 --> 00:02:49,620\n\n \n\n97\n00:02:49,620 --> 00:02:51,559\n\nlet's turn super sampling on and just\n\n98\n00:02:51,559 --> 00:02:51,569\nlet's turn super sampling on and just\n \n\n99\n00:02:51,569 --> 00:02:54,619\nlet's turn super sampling on and just\nget a feel for how long this takes what\n\n100\n00:02:54,619 --> 00:02:54,629\nget a feel for how long this takes what\n \n\n101\n00:02:54,629 --> 00:02:56,479\nget a feel for how long this takes what\nsuper sampling is doing under the hood\n\n102\n00:02:56,479 --> 00:02:56,489\nsuper sampling is doing under the hood\n \n\n103\n00:02:56,489 --> 00:03:00,740\nsuper sampling is doing under the hood\nis it's blowing out the image to 16384\n\n104\n00:03:00,740 --> 00:03:00,750\nis it's blowing out the image to 16384\n \n\n105\n00:03:00,750 --> 00:03:04,399\nis it's blowing out the image to 16384\npixels wide by the same height and then\n\n106\n00:03:04,399 --> 00:03:04,409\npixels wide by the same height and then\n \n\n107\n00:03:04,409 --> 00:03:07,399\npixels wide by the same height and then\nit's then it's going to generate and\n\n108\n00:03:07,399 --> 00:03:07,409\nit's then it's going to generate and\n \n\n109\n00:03:07,409 --> 00:03:11,630\nit's then it's going to generate and\nthen it's going to shrink it down using\n\n110\n00:03:11,630 --> 00:03:11,640\nthen it's going to shrink it down using\n \n\n111\n00:03:11,640 --> 00:03:19,479\nthen it's going to shrink it down using\na bicubic resize this is run this so I\n\n112\n00:03:19,479 --> 00:03:19,489\na bicubic resize this is run this so I\n \n\n113\n00:03:19,489 --> 00:03:31,720\na bicubic resize this is run this so I\nmight speed this up in the video\n\n114\n00:03:31,720 --> 00:03:31,730\n\n \n\n115\n00:03:31,730 --> 00:03:35,750\n\nbut yeah so hopefully this tool is\n\n116\n00:03:35,750 --> 00:03:35,760\nbut yeah so hopefully this tool is\n \n\n117\n00:03:35,760 --> 00:03:38,300\nbut yeah so hopefully this tool is\nuseful to you it is on the Windows Store\n\n118\n00:03:38,300 --> 00:03:38,310\nuseful to you it is on the Windows Store\n \n\n119\n00:03:38,310 --> 00:03:41,599\nuseful to you it is on the Windows Store\nfor $12.99 there is also a free version\n\n120\n00:03:41,599 --> 00:03:41,609\nfor $12.99 there is also a free version\n \n\n121\n00:03:41,609 --> 00:03:46,539\nfor $12.99 there is also a free version\nand the free version has no limitations\n\n122\n00:03:46,539 --> 00:03:46,549\nand the free version has no limitations\n \n\n123\n00:03:46,549 --> 00:03:49,520\nand the free version has no limitations\nit's yours to use for commercial reasons\n\n124\n00:03:49,520 --> 00:03:49,530\nit's yours to use for commercial reasons\n \n\n125\n00:03:49,530 --> 00:03:51,289\nit's yours to use for commercial reasons\nfor any reasons whatsoever\n\n126\n00:03:51,289 --> 00:03:51,299\nfor any reasons whatsoever\n \n\n127\n00:03:51,299 --> 00:03:53,780\nfor any reasons whatsoever\nwhatever you want to do it's cool and\n\n128\n00:03:53,780 --> 00:03:53,790\nwhatever you want to do it's cool and\n \n\n129\n00:03:53,790 --> 00:03:56,839\nwhatever you want to do it's cool and\nthere is no expiration so it's not a\n\n130\n00:03:56,839 --> 00:03:56,849\nthere is no expiration so it's not a\n \n\n131\n00:03:56,849 --> 00:04:00,440\nthere is no expiration so it's not a\ntrial it's a full product why would you\n\n132\n00:04:00,440 --> 00:04:00,450\ntrial it's a full product why would you\n \n\n133\n00:04:00,450 --> 00:04:02,990\ntrial it's a full product why would you\nbuy when there's a free one I don't know\n\n134\n00:04:02,990 --> 00:04:03,000\nbuy when there's a free one I don't know\n \n\n135\n00:04:03,000 --> 00:04:08,059\nbuy when there's a free one I don't know\nI just call me optimistic that's that's\n\n136\n00:04:08,059 --> 00:04:08,069\nI just call me optimistic that's that's\n \n\n137\n00:04:08,069 --> 00:04:11,979\nI just call me optimistic that's that's\nwhat's going on here\n\n138\n00:04:11,979 --> 00:04:11,989\n\n \n\n139\n00:04:11,989 --> 00:04:14,479\n\nlooks like we got a minute to share with\n\n140\n00:04:14,479 --> 00:04:14,489\nlooks like we got a minute to share with\n \n\n141\n00:04:14,489 --> 00:04:17,420\nlooks like we got a minute to share with\neach other as these things finish up\n\n142\n00:04:17,420 --> 00:04:17,430\neach other as these things finish up\n \n\n143\n00:04:17,430 --> 00:04:28,279\neach other as these things finish up\nhere what else can I talk about well\n\n144\n00:04:28,279 --> 00:04:28,289\nhere what else can I talk about well\n \n\n145\n00:04:28,289 --> 00:04:30,950\nhere what else can I talk about well\nmaybe I'll do another video and just\n\n146\n00:04:30,950 --> 00:04:30,960\nmaybe I'll do another video and just\n \n\n147\n00:04:30,960 --> 00:04:33,529\nmaybe I'll do another video and just\nshow me working in unity because that's\n\n148\n00:04:33,529 --> 00:04:33,539\nshow me working in unity because that's\n \n\n149\n00:04:33,539 --> 00:04:36,439\nshow me working in unity because that's\nactually much cooler so look for that\n\n150\n00:04:36,439 --> 00:04:36,449\nactually much cooler so look for that\n \n\n151\n00:04:36,449 --> 00:04:38,930\nactually much cooler so look for that\none I don't want to do here because I\n\n152\n00:04:38,930 --> 00:04:38,940\none I don't want to do here because I\n \n\n153\n00:04:38,940 --> 00:04:43,240\none I don't want to do here because I\nwant to keep this to the point and quick\n\n154\n00:04:43,240 --> 00:04:43,250\nwant to keep this to the point and quick\n \n\n155\n00:04:43,250 --> 00:04:46,250\nwant to keep this to the point and quick\njust so you get an idea this is a useful\n\n156\n00:04:46,250 --> 00:04:46,260\njust so you get an idea this is a useful\n \n\n157\n00:04:46,260 --> 00:04:53,330\njust so you get an idea this is a useful\ntool to you or not when this finishes\n\n158\n00:04:53,330 --> 00:04:53,340\ntool to you or not when this finishes\n \n\n159\n00:04:53,340 --> 00:04:55,670\ntool to you or not when this finishes\nI'll show you another quick little thing\n\n160\n00:04:55,670 --> 00:04:55,680\nI'll show you another quick little thing\n \n\n161\n00:04:55,680 --> 00:04:57,740\nI'll show you another quick little thing\nor maybe not maybe I'll just let it end\n\n162\n00:04:57,740 --> 00:04:57,750\nor maybe not maybe I'll just let it end\n \n\n163\n00:04:57,750 --> 00:05:00,040\nor maybe not maybe I'll just let it end\nyeah\n\n164\n00:05:00,040 --> 00:05:00,050\nyeah\n \n\n165\n00:05:00,050 --> 00:05:03,009\nyeah\nthat's probably the best"
+                ],
+                "output": "media",
+                "pwd": "/home/archivebox-data/pragmar/archive/1756357684.130151",
+                "schema": "ArchiveResult",
+                "start_ts": "2025-08-28T05:09:29.107981+00:00",
+                "status": "succeeded"
+            }
+        ],
+        "mercury": [
+            {
+                "cmd": [
+                    "postlight-parser",
+                    "https://pragmar.com/qbit/",
+                    "--format=text"
+                ],
+                "cmd_version": null,
+                "end_ts": "2025-08-28T05:09:29.098524+00:00",
+                "index_texts": null,
+                "output": "FileNotFoundError: [Errno 2] No such file or directory: 'postlight-parser'",
+                "pwd": "/home/archivebox-data/pragmar/archive/1756357684.130151",
+                "schema": "ArchiveResult",
+                "start_ts": "2025-08-28T05:09:29.097534+00:00",
+                "status": "failed"
+            }
+        ],
+        "pdf": [],
+        "readability": [
+            {
+                "cmd": [
+                    "readability-extractor",
+                    "./{singlefile,dom}.html"
+                ],
+                "cmd_version": null,
+                "end_ts": "2025-08-28T05:09:29.088486+00:00",
+                "index_texts": [],
+                "output": "FileNotFoundError: [Errno 2] No such file or directory: 'readability-extractor'",
+                "pwd": "/home/archivebox-data/pragmar/archive/1756357684.130151",
+                "schema": "ArchiveResult",
+                "start_ts": "2025-08-28T05:09:29.085765+00:00",
+                "status": "failed"
+            }
+        ],
+        "screenshot": [],
+        "singlefile": [],
+        "title": [
+            {
+                "cmd": [
+                    "curl",
+                    "--silent",
+                    "--location",
+                    "--compressed",
+                    "--max-time",
+                    "60",
+                    "--user-agent",
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 ArchiveBox/0.7.1 (+https://github.com/ArchiveBox/ArchiveBox/) curl/curl 8.5.0 (x86_64-pc-linux-gnu)",
+                    "https://pragmar.com/qbit/"
+                ],
+                "cmd_version": "curl 8.5.0 (x86_64-pc-linux-gnu)",
+                "end_ts": "2025-08-28T05:09:29.077361+00:00",
+                "index_texts": null,
+                "output": "Qbit | The Pragmatic Skybox Generator",
+                "pwd": "/home/archivebox-data/pragmar/archive/1756357684.130151",
+                "schema": "ArchiveResult",
+                "start_ts": "2025-08-28T05:09:29.070414+00:00",
+                "status": "succeeded"
+            }
+        ],
+        "wget": [
+            {
+                "cmd": [
+                    "wget",
+                    "--no-verbose",
+                    "--adjust-extension",
+                    "--convert-links",
+                    "--force-directories",
+                    "--backup-converted",
+                    "--span-hosts",
+                    "--no-parent",
+                    "-e",
+                    "robots=off",
+                    "--timeout=60",
+                    "--restrict-file-names=windows",
+                    "--warc-file=/home/archivebox-data/pragmar/archive/1756357684.130151/warc/1756357767",
+                    "--page-requisites",
+                    "--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 ArchiveBox/0.7.1 (+https://github.com/ArchiveBox/ArchiveBox/) wget/GNU Wget 1.21.4",
+                    "--compression=auto",
+                    "https://pragmar.com/qbit/"
+                ],
+                "cmd_version": "GNU Wget 1.21.4",
+                "end_ts": "2025-08-28T05:09:29.059834+00:00",
+                "index_texts": null,
+                "output": "pragmar.com/qbit/index.html",
+                "pwd": "/home/archivebox-data/pragmar/archive/1756357684.130151",
+                "schema": "ArchiveResult",
+                "start_ts": "2025-08-28T05:09:27.317239+00:00",
+                "status": "succeeded"
+            }
+        ]
+    },
+    "icons": null,
+    "is_archived": true,
+    "is_static": false,
+    "latest": {
+        "archive_org": "TimeoutExpired: Command '['curl', '--silent', '--location', '--compressed', '--head', '--max-time', '60', '--user-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 ArchiveBox/0.7.1 (+https://github.com/ArchiveBox/ArchiveBox/) curl/curl 8.5.0 (x86_64-pc-linux-gnu)', 'https://web.archive.org/save/https://pragmar.com/qbit/']' timed out after 60 seconds",
+        "dom": null,
+        "favicon": "favicon.ico",
+        "git": null,
+        "media": "media",
+        "pdf": null,
+        "screenshot": null,
+        "singlefile": null,
+        "title": "Qbit | The Pragmatic Skybox Generator",
+        "warc": null,
+        "wget": "pragmar.com/qbit/index.html"
+    },
+    "link_dir": "/home/archivebox-data/pragmar/archive/1756357684.130151",
+    "newest_archive_date": "2025-08-28T05:09:41.149734+00:00",
+    "num_failures": 3,
+    "num_outputs": 5,
+    "oldest_archive_date": "2025-08-28T05:09:26.868150+00:00",
+    "path": "/qbit/",
+    "schema": "Link",
+    "scheme": "https",
+    "snapshot_id": "83d9cf46-c6a4-4252-9097-08e977ffe9da",
+    "sources": [
+        "/home/archivebox-data/pragmar/sources/1756357684-import.txt"
+    ],
+    "tags": null,
+    "tags_str": "",
+    "timestamp": "1756357684.130151",
+    "title": "Qbit | The Pragmatic Skybox Generator",
+    "updated": "2025-08-28T05:09:26.865921+00:00",
+    "updated_date": "2025-08-28 05:09",
+    "url": "https://pragmar.com/qbit/"
+}

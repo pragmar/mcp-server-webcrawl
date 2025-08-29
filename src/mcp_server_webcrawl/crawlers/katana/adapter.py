@@ -82,8 +82,8 @@ class KatanaManager(IndexedManager):
                             batch_insert_resource_results.append(record)
                             if index_state is not None:
                                 index_state.increment_processed()
-                    except Exception as e:
-                        logger.error(f"Error processing file {file_path}: {e}")
+                    except Exception as ex:
+                        logger.error(f"Error processing file {file_path}: {ex}")
 
                 self._execute_batch_insert(connection, cursor, batch_insert_resource_results)
 
@@ -153,8 +153,8 @@ class KatanaManager(IndexedManager):
                 time=0  # time not available in file or Katana index
             )
 
-        except Exception as e:
-            logger.error(f"Error processing HTTP response in file {file_path}: {e}")
+        except Exception as ex:
+            logger.error(f"Error processing HTTP response in file {file_path}: {ex}")
             return None
 
 manager: KatanaManager = KatanaManager()

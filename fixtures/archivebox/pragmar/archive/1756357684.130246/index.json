@@ -1,0 +1,261 @@
+{
+    "archive_path": "archive/1756357684.130246",
+    "base_url": "pragmar.com/appstat/help",
+    "basename": "",
+    "bookmarked_date": "2025-08-28 05:08",
+    "canonical": {
+        "archive_org_path": "https://web.archive.org/web/pragmar.com/appstat/help",
+        "dom_path": "output.html",
+        "favicon_path": "favicon.ico",
+        "git_path": "git/",
+        "google_favicon_path": "https://www.google.com/s2/favicons?domain=pragmar.com",
+        "headers_path": "headers.json",
+        "index_path": "index.html",
+        "media_path": "media/",
+        "mercury_path": "mercury/content.html",
+        "pdf_path": "output.pdf",
+        "readability_path": "readability/content.html",
+        "screenshot_path": "screenshot.png",
+        "singlefile_path": "singlefile.html",
+        "warc_path": "warc/",
+        "wget_path": "pragmar.com/appstat/help/index.html"
+    },
+    "domain": "pragmar.com",
+    "extension": "",
+    "hash": "JXDNCWVSY3J83E3KW64N",
+    "history": {
+        "archive_org": [
+            {
+                "cmd": [
+                    "curl",
+                    "--silent",
+                    "--location",
+                    "--compressed",
+                    "--head",
+                    "--max-time",
+                    "60",
+                    "--user-agent",
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 ArchiveBox/0.7.1 (+https://github.com/ArchiveBox/ArchiveBox/) curl/curl 8.5.0 (x86_64-pc-linux-gnu)",
+                    "https://web.archive.org/save/https://pragmar.com/appstat/help/"
+                ],
+                "cmd_version": "curl 8.5.0 (x86_64-pc-linux-gnu)",
+                "end_ts": "2025-08-28T05:17:14.111790+00:00",
+                "index_texts": null,
+                "output": "https://web.archive.org/web/20250828051658/https://pragmar.com/appstat/help/",
+                "pwd": "/home/archivebox-data/pragmar/archive/1756357684.130246",
+                "schema": "ArchiveResult",
+                "start_ts": "2025-08-28T05:16:55.364265+00:00",
+                "status": "succeeded"
+            }
+        ],
+        "dom": [],
+        "favicon": [
+            {
+                "cmd": [
+                    "curl",
+                    "--silent",
+                    "--location",
+                    "--compressed",
+                    "--max-time",
+                    "60",
+                    "--output",
+                    "favicon.ico",
+                    "--user-agent",
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 ArchiveBox/0.7.1 (+https://github.com/ArchiveBox/ArchiveBox/) curl/curl 8.5.0 (x86_64-pc-linux-gnu)",
+                    "https://www.google.com/s2/favicons?domain=pragmar.com"
+                ],
+                "cmd_version": "curl 8.5.0 (x86_64-pc-linux-gnu)",
+                "end_ts": "2025-08-28T05:16:52.952125+00:00",
+                "index_texts": null,
+                "output": "favicon.ico",
+                "pwd": "/home/archivebox-data/pragmar/archive/1756357684.130246",
+                "schema": "ArchiveResult",
+                "start_ts": "2025-08-28T05:16:52.799407+00:00",
+                "status": "succeeded"
+            }
+        ],
+        "git": [],
+        "headers": [
+            {
+                "cmd": [
+                    "curl",
+                    "--silent",
+                    "--location",
+                    "--compressed",
+                    "--head",
+                    "--max-time",
+                    "60",
+                    "--user-agent",
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 ArchiveBox/0.7.1 (+https://github.com/ArchiveBox/ArchiveBox/) curl/curl 8.5.0 (x86_64-pc-linux-gnu)",
+                    "https://pragmar.com/appstat/help/"
+                ],
+                "cmd_version": "curl 8.5.0 (x86_64-pc-linux-gnu)",
+                "end_ts": "2025-08-28T05:16:53.086102+00:00",
+                "index_texts": null,
+                "output": "headers.json",
+                "pwd": "/home/archivebox-data/pragmar/archive/1756357684.130246",
+                "schema": "ArchiveResult",
+                "start_ts": "2025-08-28T05:16:52.964213+00:00",
+                "status": "succeeded"
+            }
+        ],
+        "media": [
+            {
+                "cmd": [
+                    "yt-dlp",
+                    "--write-description",
+                    "--write-info-json",
+                    "--write-annotations",
+                    "--write-thumbnail",
+                    "--no-call-home",
+                    "--write-sub",
+                    "--write-auto-subs",
+                    "--convert-subs=srt",
+                    "--yes-playlist",
+                    "--continue",
+                    "--no-abort-on-error",
+                    "--ignore-errors",
+                    "--geo-bypass",
+                    "--add-metadata",
+                    "--format=(bv*+ba/b)[filesize<=750m][filesize_approx<=?750m]/(bv*+ba/b)",
+                    "https://pragmar.com/appstat/help/"
+                ],
+                "cmd_version": "2025.08.27",
+                "end_ts": "2025-08-28T05:16:55.353702+00:00",
+                "index_texts": [
+                    "Support statement for appstat, a Windows process monitor."
+                ],
+                "output": "media",
+                "pwd": "/home/archivebox-data/pragmar/archive/1756357684.130246",
+                "schema": "ArchiveResult",
+                "start_ts": "2025-08-28T05:16:53.831253+00:00",
+                "status": "succeeded"
+            }
+        ],
+        "mercury": [
+            {
+                "cmd": [
+                    "postlight-parser",
+                    "https://pragmar.com/appstat/help/",
+                    "--format=text"
+                ],
+                "cmd_version": null,
+                "end_ts": "2025-08-28T05:16:53.823432+00:00",
+                "index_texts": null,
+                "output": "FileNotFoundError: [Errno 2] No such file or directory: 'postlight-parser'",
+                "pwd": "/home/archivebox-data/pragmar/archive/1756357684.130246",
+                "schema": "ArchiveResult",
+                "start_ts": "2025-08-28T05:16:53.822096+00:00",
+                "status": "failed"
+            }
+        ],
+        "pdf": [],
+        "readability": [
+            {
+                "cmd": [
+                    "readability-extractor",
+                    "./{singlefile,dom}.html"
+                ],
+                "cmd_version": null,
+                "end_ts": "2025-08-28T05:16:53.814484+00:00",
+                "index_texts": [],
+                "output": "FileNotFoundError: [Errno 2] No such file or directory: 'readability-extractor'",
+                "pwd": "/home/archivebox-data/pragmar/archive/1756357684.130246",
+                "schema": "ArchiveResult",
+                "start_ts": "2025-08-28T05:16:53.811373+00:00",
+                "status": "failed"
+            }
+        ],
+        "screenshot": [],
+        "singlefile": [],
+        "title": [
+            {
+                "cmd": [
+                    "curl",
+                    "--silent",
+                    "--location",
+                    "--compressed",
+                    "--max-time",
+                    "60",
+                    "--user-agent",
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 ArchiveBox/0.7.1 (+https://github.com/ArchiveBox/ArchiveBox/) curl/curl 8.5.0 (x86_64-pc-linux-gnu)",
+                    "https://pragmar.com/appstat/help/"
+                ],
+                "cmd_version": "curl 8.5.0 (x86_64-pc-linux-gnu)",
+                "end_ts": "2025-08-28T05:16:53.800573+00:00",
+                "index_texts": null,
+                "output": "appstat | Help",
+                "pwd": "/home/archivebox-data/pragmar/archive/1756357684.130246",
+                "schema": "ArchiveResult",
+                "start_ts": "2025-08-28T05:16:53.794356+00:00",
+                "status": "succeeded"
+            }
+        ],
+        "wget": [
+            {
+                "cmd": [
+                    "wget",
+                    "--no-verbose",
+                    "--adjust-extension",
+                    "--convert-links",
+                    "--force-directories",
+                    "--backup-converted",
+                    "--span-hosts",
+                    "--no-parent",
+                    "-e",
+                    "robots=off",
+                    "--timeout=60",
+                    "--restrict-file-names=windows",
+                    "--warc-file=/home/archivebox-data/pragmar/archive/1756357684.130246/warc/1756358213",
+                    "--page-requisites",
+                    "--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 ArchiveBox/0.7.1 (+https://github.com/ArchiveBox/ArchiveBox/) wget/GNU Wget 1.21.4",
+                    "--compression=auto",
+                    "https://pragmar.com/appstat/help/"
+                ],
+                "cmd_version": "GNU Wget 1.21.4",
+                "end_ts": "2025-08-28T05:16:53.784205+00:00",
+                "index_texts": null,
+                "output": "pragmar.com/appstat/help/index.html",
+                "pwd": "/home/archivebox-data/pragmar/archive/1756357684.130246",
+                "schema": "ArchiveResult",
+                "start_ts": "2025-08-28T05:16:53.096936+00:00",
+                "status": "succeeded"
+            }
+        ]
+    },
+    "icons": null,
+    "is_archived": true,
+    "is_static": false,
+    "latest": {
+        "archive_org": "https://web.archive.org/web/20250828051658/https://pragmar.com/appstat/help/",
+        "dom": null,
+        "favicon": "favicon.ico",
+        "git": null,
+        "media": "media",
+        "pdf": null,
+        "screenshot": null,
+        "singlefile": null,
+        "title": "appstat | Help",
+        "warc": null,
+        "wget": "pragmar.com/appstat/help/index.html"
+    },
+    "link_dir": "/home/archivebox-data/pragmar/archive/1756357684.130246",
+    "newest_archive_date": "2025-08-28T05:16:55.364265+00:00",
+    "num_failures": 2,
+    "num_outputs": 6,
+    "oldest_archive_date": "2025-08-28T05:16:52.799407+00:00",
+    "path": "/appstat/help/",
+    "schema": "Link",
+    "scheme": "https",
+    "snapshot_id": "4ee108c1-fafe-4972-9a04-eb1dd8f23163",
+    "sources": [
+        "/home/archivebox-data/pragmar/sources/1756357684-import.txt"
+    ],
+    "tags": null,
+    "tags_str": "",
+    "timestamp": "1756357684.130246",
+    "title": "appstat | Help",
+    "updated": "2025-08-28T05:16:52.797150+00:00",
+    "updated_date": "2025-08-28 05:16",
+    "url": "https://pragmar.com/appstat/help/"
+}

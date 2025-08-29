@@ -30,8 +30,8 @@ from mcp_server_webcrawl.utils.logger import get_logger
 
 logger = get_logger()
 
-# in the interest of sane imports (avoiding circulars), indexed constants live here,
-# happily, as denizens of adapterville
+# in the interest of sane imports (avoiding circulars), INDEXED_* constants
+# live here, happily, as denizens of adapterville
 INDEXED_BINARY_EXTENSIONS: Final[tuple[str, ...]] = (
     ".woff",".woff2",".ttf",".otf",".eot",
     ".jpeg",".jpg",".png",".webp",".gif",".bmp",".tiff",".tif",".svg",".ico",".heic",".heif",
@@ -44,8 +44,9 @@ INDEXED_BINARY_EXTENSIONS: Final[tuple[str, ...]] = (
 )
 
 # files on disk will need default for reassembly {proto}{dir}
-# these things are already approximations (perhaps) having passed through wget filtering (--adjust-extension)
-# representative of the file on disk, also https is what the LLM is going to guess in all cases
+# these things are already approximations (perhaps) having passed through wget
+# filtering (--adjust-extension) representative of the file on disk, also https
+# is what the LLM is going to guess in all cases
 INDEXED_RESOURCE_DEFAULT_PROTOCOL: Final[str] = "https://"
 INDEXED_BATCH_SIZE: Final[int] = 256
 INDEXED_MAX_WORKERS: Final[int] = min(8, os.cpu_count() or 4)
@@ -310,7 +311,7 @@ class BaseManager:
         except UnicodeDecodeError:
             logger.debug(f"Could not decode file as UTF-8: {file_path}")
             return null_result
-        except Exception as e:
+        except Exception as ex:
             logger.error(f"Error reading file {file_path}")
             return null_result
 
@@ -445,8 +446,8 @@ class BaseManager:
         if query.strip():
             try:
                 parsed_query = parser.parse(query.strip())
-            except Exception as e:
-                logger.error(f"Error parsing query: {e}")
+            except Exception as ex:
+                logger.error(f"Error parsing query: {ex}")
                 # fall back to simple text search
 
         parsed_query = parsed_query or []

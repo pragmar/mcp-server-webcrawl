@@ -1,0 +1,21 @@
+HTTrack3.49-2+htsswf+htsjava launched on Wed, 27 Aug 2025 11:49:16 at https://pragmar.com +*.png +*.gif +*.jpg +*.jpeg +*.css +*.js -ad.doubleclick.net/* -mime:application/foobar
+(winhttrack -qwC2%Ps2u1%s%uN0%I0p3DaK0H0%kf2A25000%f#f -F "Mozilla/4.5 (compatible; HTTrack 3.0x; Windows 98)" -%F "<!-- Mirrored from %s%s by HTTrack Website Copier/3.x [XR&CO'2014], %s -->" -%l "en, *" https://pragmar.com -O1 "C:\My Web Sites\pragmar" +*.png +*.gif +*.jpg +*.jpeg +*.css +*.js -ad.doubleclick.net/* -mime:application/foobar )
+
+Information, Warnings and Errors reported for this mirror:
+note:	the hts-log.txt file, and hts-cache folder, may contain sensitive information,
+	such as username/password authentication for websites mirrored in this project
+	do not share these files/folders if you want these information to remain private
+
+11:49:30	Warning: 	Found for https://pragmar.com/appstat/download/
+11:49:30	Warning: 	File has moved from https://pragmar.com/appstat/download/ to /media/uploads/bin/appstat.1.0.2.msixbundle
+11:49:31	Warning: 	Found for https://pragmar.com/qbit/download/
+11:49:31	Warning: 	File has moved from https://pragmar.com/qbit/download/ to /media/static/download/qbit_1.0.1.msixbundle
+11:49:34	Warning: 	Found for https://pragmar.com/moffitor/download/
+11:49:34	Warning: 	File has moved from https://pragmar.com/moffitor/download/ to /media/static/download/moffitor_1.0.0.msixbundle
+11:49:36	Error: 	"Not Found" (404) at link https://pragmar.com/media/static/images/appstat/D2C0D1AE.png (from https://pragmar.com/media/static/images/appstat/logo.svg?202508252215)
+11:49:36	Error: 	"Not Found" (404) at link https://pragmar.com/media/static/images/appstat/D2C0D1B2.png (from https://pragmar.com/media/static/images/appstat/logo.svg?202508252215)
+11:49:36	Error: 	"Not Found" (404) at link https://pragmar.com/media/static/images/appstat/D2C0D1B5.png (from https://pragmar.com/media/static/images/appstat/logo.svg?202508252215)
+11:49:48	Error: 	"Not Found" (404) at link https://pragmar.com/internal/this/page/does/not/exist/ (from https://pragmar.com/moffitor/support/)
+
+HTTrack Website Copier/3.49-2 mirror complete in 37 seconds : 78 links scanned, 70 files written (73290640 bytes overall) [73160344 bytes received at 1977306 bytes/sec], 290443 bytes transferred using HTTP compression in 40 files, ratio 34%, 19.5 requests per connection
+(4 errors, 6 warnings, 0 messages)

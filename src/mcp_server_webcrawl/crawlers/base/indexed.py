@@ -152,7 +152,7 @@ class IndexedManager(BaseManager):
                                 robots_content = response_parts[0]
                         else:
                             robots_content = content
-                except Exception as e:
+                except Exception as ex:
                     logger.error(f"Error reading robots.txt")
 
             site = SiteResult(
@@ -179,8 +179,8 @@ class IndexedManager(BaseManager):
         try:
             self._build_locks[group.cache_key] = (datetime.now(), "building")
             yield
-        except Exception as e:
-            self._build_locks[group.cache_key] = (self._build_locks[group.cache_key][0], f"failed: {str(e)}")
+        except Exception as ex:
+            self._build_locks[group.cache_key] = (self._build_locks[group.cache_key][0], f"failed: {ex}")
             raise # re-raise
         finally:
             # clean up the lock
@@ -271,9 +271,9 @@ class IndexedManager(BaseManager):
             """, resources_fts_records)
             connection.execute("COMMIT")
 
-        except Exception as e:
+        except Exception as ex:
             connection.execute("ROLLBACK")
-            logger.error(f"Error during batch insert: {e}\n{traceback.format_exc()}")
+            logger.error(f"Error during batch insert: {ex}\n{traceback.format_exc()}")
 
 class IndexedCrawler(BaseCrawler):
     """

@@ -94,8 +94,8 @@ class WgetManager(IndexedManager):
                             batch_insert_resource_results.append(result)
                             if index_state is not None:
                                 index_state.increment_processed()
-                    except Exception as e:
-                        logger.error(f"Error processing file {file_path}: {e}\n{traceback.format_exc()}")
+                    except Exception as ex:
+                        logger.error(f"Error processing file {file_path}: {ex}\n{traceback.format_exc()}")
 
                 self._execute_batch_insert(connection, cursor, batch_insert_resource_results)
 
@@ -149,8 +149,8 @@ class WgetManager(IndexedManager):
                 size=file_size,
                 time=0,
             )
-        except Exception as e:
-            logger.error(f"Error preparing record for file {file_path}: {e}")
+        except Exception as ex:
+            logger.error(f"Error preparing record for file {file_path}: {ex}")
             return None
 
 

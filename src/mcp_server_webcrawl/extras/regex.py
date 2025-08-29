@@ -29,8 +29,8 @@ def __get_compiled_hazard_patterns():
     for hazard in __REGEX_PATTERNS_REGEX_HAZARDS:
         try:
             compiled_patterns.append(re.compile(hazard))
-        except re.error as e:
-            logger.warning(f"Invalid hazard pattern {hazard}: {e}")
+        except re.error as ex:
+            logger.warning(f"Invalid hazard pattern {hazard}: {ex}")
             continue
     return compiled_patterns
 
@@ -47,8 +47,8 @@ def __regex_is_hazardous(pattern: str) -> bool:
             if hazard_pattern.search(pattern):
                 logger.error(f"hazardous regex discarded {pattern} matched {hazard_pattern.pattern}")
                 return True
-        except re.error as e:
-            logger.warning(f"Error checking hazard pattern {hazard_pattern.pattern}: {e}")
+        except re.error as ex:
+            logger.warning(f"Error checking hazard pattern {hazard_pattern.pattern}: {ex}")
             continue
 
     return False

@@ -119,8 +119,8 @@ class SiteOneManager(IndexedManager):
                     elif line.strip() == "Redirected URLs":
                         # stop processing we're through HTTP requests
                         break
-        except Exception as e:
-            logger.error(f"Error processing log file {log_latest}: {e}")
+        except Exception as ex:
+            logger.error(f"Error processing log file {log_latest}: {ex}")
 
         return log_data, log_http_error_data
 
@@ -172,8 +172,8 @@ class SiteOneManager(IndexedManager):
                             processed_urls.add(result.url)
                             if index_state is not None:
                                 index_state.increment_processed()
-                    except Exception as e:
-                        logger.error(f"Error processing file {file_path}: {e}")
+                    except Exception as ex:
+                        logger.error(f"Error processing file {file_path}: {ex}")
 
                 self._execute_batch_insert(connection, cursor, batch_insert_crawled)
 
@@ -318,8 +318,8 @@ class SiteOneManager(IndexedManager):
                 time=response_time  # possibly from log
             )
             return record
-        except Exception as e:
-            logger.error(f"Error preparing record for file {file_path}: {e}")
+        except Exception as ex:
+            logger.error(f"Error preparing record for file {file_path}: {ex}")
             return None
 
 manager: SiteOneManager = SiteOneManager()

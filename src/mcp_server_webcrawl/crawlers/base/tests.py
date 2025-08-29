@@ -43,6 +43,7 @@ class BaseCrawlerTests(unittest.TestCase):
             fields=["content", "headers"],
             limit=1,
         )
+
         self.assertTrue(primary_resources.total > 0, f"Keyword '{self.__PRAGMAR_PRIMARY_KEYWORD}' should return results")
 
         secondary_resources = crawler.get_resources_api(
@@ -176,18 +177,20 @@ class BaseCrawlerTests(unittest.TestCase):
             )
 
         # multi-site search, verify we got results from both sites
+        # limit 100 sees all the pages, otherwise ArchiveBox needs -url
+        # and everything else +url to float unique sites in a small result set
+        # limit 100 is slower but more resilient
         multisite_resources = crawler.get_resources_api(
             sites=[example_site_id, pragmar_site_id],
             query= f"type: {ResourceResultType.PAGE.value}",
             sort="+url",
-            limit=10,
+            limit=100,
         )
+
         found_sites = set()
         for resource in multisite_resources._results:
             found_sites.add(resource.site)
         self.assertEqual(len(found_sites), 2, "Should have results from both sites")
-
-
 
     def run_pragmar_tokenizer_tests(self, crawler: BaseCrawler, site_id:int):
         """
@@ -605,8 +608,7 @@ class BaseCrawlerTests(unittest.TestCase):
         appstat_any = crawler.get_resources_api(
             sites=[site_id],
             query="appstat",
-            extras=[],
-            limit=1,
+            limit=10,
         )
 
         appstat_script = crawler.get_resources_api(

@@ -19,10 +19,11 @@ Advanced search and retrieval for web crawler data. With **mcp-server-webcrawl**
 |----------------|-------------|-----------|-------------|
 | [**WARC**](https://en.wikipedia.org/wiki/WARC_(file_format)) | Standard web archive format          | varies by client    | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/warc.html) |
 | [**wget**](https://en.wikipedia.org/wiki/Wget)               | CLI website mirroring tool  | macOS/Linux         | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/wget.html) |
+| [**ArchiveBox**](https://archivebox.io)               | Web archiving tool | macOS/Linux         | Coming Soon |
+| [**HTTrack**](https://github.com/xroche/httrack)             | GUI mirroring tool | macOS/Windows/Linux | Coming Soon |
 | [**InterroBot**](https://interro.bot)                        | GUI crawler and analyzer             | macOS/Windows/Linux  | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/interrobot.html) |
 | [**Katana**](https://github.com/projectdiscovery/katana)     | CLI security-focused crawler             | macOS/Windows/Linux | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/katana.html) |
 | [**SiteOne**](https://crawler.siteone.io)                    | GUI crawler and analyzer             | macOS/Windows/Linux | [Setup Guide](https://pragmar.github.io/mcp-server-webcrawl/guides/siteone.html) |
-
 
 **mcp-server-webcrawl** is free and open source, and requires Claude Desktop and Python (>=3.10). It is installed on the command line, via pip install:
 
