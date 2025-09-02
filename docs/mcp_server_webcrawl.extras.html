@@ -18,7 +18,9 @@
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="mcp_server_webcrawl.models package" href="mcp_server_webcrawl.models.html" />
+    <link rel="prev" title="mcp_server_webcrawl.crawlers.siteone package" href="mcp_server_webcrawl.crawlers.siteone.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -41,12 +43,15 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="prompts.html">Prompt Routines</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">mcp_server_webcrawl</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">mcp_server_webcrawl</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="mcp_server_webcrawl.html">mcp_server_webcrawl package</a></li>
+</ul>
+</li>
 </ul>
 
         </div>
@@ -63,6 +68,8 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">mcp_server_webcrawl</a></li>
+          <li class="breadcrumb-item"><a href="mcp_server_webcrawl.html">mcp_server_webcrawl package</a></li>
       <li class="breadcrumb-item active">mcp_server_webcrawl.extras package</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/mcp_server_webcrawl.extras.rst.txt" rel="nofollow"> View page source</a>
@@ -80,15 +87,36 @@
 </section>
 <section id="module-mcp_server_webcrawl.extras.markdown">
 <span id="mcp-server-webcrawl-extras-markdown-module"></span><h2>mcp_server_webcrawl.extras.markdown module<a class="headerlink" href="#module-mcp_server_webcrawl.extras.markdown" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.extras.markdown.MarkdownTransformer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MarkdownTransformer</span></span><a class="reference internal" href="_modules/mcp_server_webcrawl/extras/markdown.html#MarkdownTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.extras.markdown.MarkdownTransformer" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Memoizes the XSLT transformer</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mcp_server_webcrawl.extras.markdown.MarkdownTransformer.get_xslt_transform">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_xslt_transform</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/extras/markdown.html#MarkdownTransformer.get_xslt_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.extras.markdown.MarkdownTransformer.get_xslt_transform" title="Link to this definition"></a></dt>
+<dd><p>Get the HTML to text markdown XSLT transformer</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="mcp_server_webcrawl.extras.markdown.get_markdown">
 <span class="sig-name descname"><span class="pre">get_markdown</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">content</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mcp_server_webcrawl/extras/markdown.html#get_markdown"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcp_server_webcrawl.extras.markdown.get_markdown" title="Link to this definition"></a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Transform HTML content to Markdown using XSLT.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>content</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p>
+<dd class="field-odd"><p><strong>content</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The HTML content to transform.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a> | None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>The transformed Markdown string, or None if the input is empty</dt><dd><p>or if transformation fails (e.g., due to invalid HTML or XSLT errors).</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a> | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -262,7 +290,10 @@ on each side of the match. Returns empty list if no matches found or invalid inp
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="mcp_server_webcrawl.crawlers.siteone.html" class="btn btn-neutral float-left" title="mcp_server_webcrawl.crawlers.siteone package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="mcp_server_webcrawl.models.html" class="btn btn-neutral float-right" title="mcp_server_webcrawl.models package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 

@@ -1,0 +1,272 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArchiveBox MCP Setup Guide &mdash; mcp-server-webcrawl  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=888ff710"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="HTTrack MCP Setup Guide" href="httrack.html" />
+    <link rel="prev" title="InterroBot MCP Setup Guide" href="interrobot.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            mcp-server-webcrawl
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../guides.html">Setup Guides</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="wget.html">wget MCP Setup Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="warc.html">WARC MCP Setup Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interrobot.html">InterroBot MCP Setup Guide</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">ArchiveBox MCP Setup Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="httrack.html">HTTrack MCP Setup Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="katana.html">Katana MCP Setup Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="siteone.html">SiteOne MCP Setup Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">mcp_server_webcrawl</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">mcp-server-webcrawl</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../guides.html">Setup Guides</a></li>
+      <li class="breadcrumb-item active">ArchiveBox MCP Setup Guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guides/archivebox.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="archivebox-mcp-setup-guide">
+<h1>ArchiveBox MCP Setup Guide<a class="headerlink" href="#archivebox-mcp-setup-guide" title="Link to this heading"></a></h1>
+<p>Instructions for setting up <a class="reference external" href="https://pragmar.com/mcp-server-webcrawl/">mcp-server-webcrawl</a> with <a class="reference external" href="https://archivebox.io/">ArchiveBox</a>.
+This allows your LLM (e.g. Claude Desktop) to search content and metadata from websites you’ve archived using ArchiveBox.</p>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<p>Before you begin, ensure you have:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://claude.ai/download">Claude Desktop</a> installed</p></li>
+<li><p><a class="reference external" href="https://python.org">Python</a> 3.10 or later installed</p></li>
+<li><p><a class="reference external" href="https://archivebox.io/">ArchiveBox</a> installed</p></li>
+<li><p>Basic familiarity with command line interfaces</p></li>
+</ul>
+</section>
+<section id="what-is-archivebox">
+<h2>What is ArchiveBox?<a class="headerlink" href="#what-is-archivebox" title="Link to this heading"></a></h2>
+<p>ArchiveBox is a powerful open-source web archiving solution that offers:</p>
+<ul class="simple">
+<li><p>Multiple output formats (HTML, PDF, screenshots, WARC, etc.)</p></li>
+<li><p>Comprehensive metadata</p></li>
+<li><p>CLI + webadmin for browsing and managing archives</p></li>
+<li><p>Support for various input sources (URLs, browser bookmarks, RSS feeds)</p></li>
+<li><p>Self-hosted solution for long-term web content preservation</p></li>
+</ul>
+</section>
+<section id="installation-steps">
+<h2>Installation Steps<a class="headerlink" href="#installation-steps" title="Link to this heading"></a></h2>
+<section id="install-mcp-server-web-crawl">
+<h3>1. Install MCP Server Web Crawl<a class="headerlink" href="#install-mcp-server-web-crawl" title="Link to this heading"></a></h3>
+<p>Open your terminal or command line and install the package:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">mcp</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">webcrawl</span>
+</pre></div>
+</div>
+<p>Verify installation was successful:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mcp</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">webcrawl</span> <span class="o">--</span><span class="n">help</span>
+</pre></div>
+</div>
+</section>
+<section id="install-and-set-up-archivebox">
+<h3>2. Install and Set Up ArchiveBox<a class="headerlink" href="#install-and-set-up-archivebox" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p>Install ArchiveBox following the official installation guide:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">archivebox</span>
+</pre></div>
+</div>
+</li>
+<li><p>Create ArchiveBox collections. Unlike other crawlers that focus on single websites, ArchiveBox uses a collection-based approach where each collection can contain multiple URLs. You can create separate collections for different projects or group related URLs together:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a directory structure for your collections</span>
+<span class="n">mkdir</span> <span class="o">~/</span><span class="n">archivebox</span><span class="o">-</span><span class="n">data</span>
+
+<span class="c1"># Create an &quot;example&quot; collection</span>
+<span class="n">mkdir</span> <span class="o">~/</span><span class="n">archivebox</span><span class="o">-</span><span class="n">data</span><span class="o">/</span><span class="n">example</span>
+<span class="n">cd</span> <span class="o">~/</span><span class="n">archivebox</span><span class="o">-</span><span class="n">data</span><span class="o">/</span><span class="n">example</span>
+<span class="n">archivebox</span> <span class="n">init</span>
+<span class="n">archivebox</span> <span class="n">add</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+
+<span class="c1"># Create a &quot;pragmar&quot; collection</span>
+<span class="n">mkdir</span> <span class="o">~/</span><span class="n">archivebox</span><span class="o">-</span><span class="n">data</span><span class="o">/</span><span class="n">pragmar</span>
+<span class="n">cd</span> <span class="o">~/</span><span class="n">archivebox</span><span class="o">-</span><span class="n">data</span><span class="o">/</span><span class="n">pragmar</span>
+<span class="n">archivebox</span> <span class="n">init</span>
+<span class="n">archivebox</span> <span class="n">add</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">pragmar</span><span class="o">.</span><span class="n">com</span>
+</pre></div>
+</div>
+</li>
+<li><p>Each <code class="docutils literal notranslate"><span class="pre">archivebox</span> <span class="pre">init</span></code> creates a complete ArchiveBox instance with its own database and archive directory structure. The typical structure includes:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>collection-name/
+├── archive/          # Archived content organized by timestamp
+├── logs/            # ArchiveBox operation logs
+├── sources/         # Source URL lists and metadata
+└── index.sqlite3    # Database containing all metadata
+</pre></div>
+</div>
+</li>
+<li><p>Wait for the archiving process to complete.</p></li>
+<li><p>Optionally, you can use the web interface to manage your archives:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Navigate to a collection directory first</span>
+<span class="n">cd</span> <span class="o">~/</span><span class="n">archivebox</span><span class="o">-</span><span class="n">data</span><span class="o">/</span><span class="n">example</span>
+<span class="n">archivebox</span> <span class="n">server</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="configure-claude-desktop">
+<h3>3. Configure Claude Desktop<a class="headerlink" href="#configure-claude-desktop" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p>Open Claude Desktop</p></li>
+<li><p>Go to <strong>File → Settings → Developer → Edit Config</strong></p></li>
+<li><p>Add the following configuration (modify paths as needed):</p></li>
+</ol>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;webcrawl&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/mcp-server-webcrawl&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--crawler&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;archivebox&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--datasrc&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;/path/to/archivebox-data/&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>On Windows, use <code class="docutils literal notranslate"><span class="pre">&quot;mcp-server-webcrawl&quot;</span></code> as the command</p></li>
+<li><p>On macOS/Linux, use the absolute path (output of <code class="docutils literal notranslate"><span class="pre">which</span> <span class="pre">mcp-server-webcrawl</span></code>)</p></li>
+<li><p>The datasrc path should point to the parent directory containing your ArchiveBox collections (e.g., <code class="docutils literal notranslate"><span class="pre">~/archivebox-data/</span></code>), not to individual collection directories</p></li>
+<li><p>Each collection directory (example, pragmar, etc.) will appear as a separate “site” in MCP</p></li>
+</ul>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>Save the file and <strong>completely exit</strong> Claude Desktop (not just close the window)</p></li>
+<li><p>Restart Claude Desktop</p></li>
+</ol>
+</section>
+<section id="verify-and-use">
+<h3>4. Verify and Use<a class="headerlink" href="#verify-and-use" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p>In Claude Desktop, you should now see MCP tools available under Search and Tools</p></li>
+<li><p>Ask Claude to list your archived sites:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Can you list the crawled sites available?
+</pre></div>
+</div>
+</li>
+<li><p>Try searching content from your archives:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Can you find information about [topic] on [archived site]?
+</pre></div>
+</div>
+</li>
+<li><p>Use the rich metadata for content discovery:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Can you find all the archived pages related to [keyword] from [archive]?
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>If Claude doesn’t show MCP tools after restart, verify your configuration file is correctly formatted</p></li>
+<li><p>Ensure Python and mcp-server-webcrawl are properly installed</p></li>
+<li><p>Check that your ArchiveBox archive directory path in the configuration is correct</p></li>
+<li><p>Make sure ArchiveBox has successfully archived the websites and created the database</p></li>
+<li><p>Verify that the <code class="docutils literal notranslate"><span class="pre">index.sqlite3</span></code> file exists in your archive directory</p></li>
+<li><p>Remember that the first time you use a function, Claude will ask for permission</p></li>
+<li><p>For large archives, initial indexing may take some time during the first search</p></li>
+</ul>
+<p>ArchiveBox’s comprehensive archiving capabilities combined with MCP Server Web Crawl provide powerful tools for content preservation, research, and analysis across your archived web content.</p>
+<p>For more details, including API documentation and other crawler options, visit the <a class="reference external" href="https://github.com/pragmar/mcp-server-webcrawl">mcp-server-webcrawl documentation</a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="interrobot.html" class="btn btn-neutral float-left" title="InterroBot MCP Setup Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="httrack.html" class="btn btn-neutral float-right" title="HTTrack MCP Setup Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, pragmar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

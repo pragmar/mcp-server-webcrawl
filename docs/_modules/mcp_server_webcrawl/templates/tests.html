@@ -1,0 +1,209 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mcp_server_webcrawl.templates.tests &mdash; mcp-server-webcrawl  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=888ff710"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            mcp-server-webcrawl
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guides.html">Setup Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">mcp_server_webcrawl</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">mcp-server-webcrawl</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">mcp_server_webcrawl.templates.tests</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mcp_server_webcrawl.templates.tests</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">unittest</span>
+
+<span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">resources</span>
+<span class="kn">from</span> <span class="nn">urllib.request</span> <span class="kn">import</span> <span class="n">urlopen</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.extras.markdown</span> <span class="kn">import</span> <span class="n">get_markdown</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
+
+<div class="viewcode-block" id="TemplateTests">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.templates.html#mcp_server_webcrawl.templates.tests.TemplateTests">[docs]</a>
+<span class="k">class</span> <span class="nc">TemplateTests</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test suite for the custom HTML to markdown converter.</span>
+<span class="sd">    Why custom? It&#39;s a bit faster, that is the only reason.</span>
+<span class="sd">    Maximum load is 100 transforms (1 per result for a max result </span>
+<span class="sd">    of 100), so speed matters. A default set is 20.</span>
+<span class="sd">    This converter does a few things differently to tailor to LLM</span>
+<span class="sd">    interaction.</span>
+<span class="sd">    * aggressively removes images (html2text selectively renders)</span>
+<span class="sd">    * links with block decendents will render like a &lt;p&gt; </span>
+<span class="sd">        (html2text treats as &lt;a&gt;&lt;br&gt;)    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TemplateTests.setUp">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.templates.html#mcp_server_webcrawl.templates.tests.TemplateTests.setUp">[docs]</a>
+    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set up the test environment with fixture data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">setUp</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="TemplateTests.test_core_html">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.templates.html#mcp_server_webcrawl.templates.tests.TemplateTests.test_core_html">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_core_html</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">core_html</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">resources</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="s2">&quot;mcp_server_webcrawl.templates&quot;</span><span class="p">,</span> <span class="s2">&quot;tests_core.html&quot;</span><span class="p">)</span>
+        <span class="n">markdown</span> <span class="o">=</span> <span class="n">get_markdown</span><span class="p">(</span><span class="n">core_html</span><span class="p">)</span>
+
+        <span class="c1"># h1-6</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;# Lorem Ipsum Dolor Sit Amet&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;## Consectetur Adipiscing Elit&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;### Nemo Enim Ipsam Voluptatem&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;#### Sed Quia Non Numquam&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;##### Nisi Ut Aliquid Ex Ea&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;###### At Vero Eos Et Accusamus&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+
+        <span class="c1"># no content loss - key phrases should be preserved</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;Lorem ipsum dolor sit amet&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;Definition List Example&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;More Text Elements&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+
+        <span class="c1"># inline formatting (proper spacing)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;amet, **consectetur adipiscing elit**. Sed&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;laborum. **Sed ut perspiciatis** unde&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;consequat. *Duis aute irure dolor* in&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;laudantium. *Totam rem aperiam*, eaque&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+
+        <span class="c1"># link formatting (proper spacing)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;veniam, quis nostrud exercitation ullamco&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>  <span class="c1"># Fragment links as plain text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;and a link back to top. Nam&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+
+        <span class="c1"># list formatting</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;* Similique sunt in culpa&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;1. Temporibus autem quibusdam&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+
+        <span class="c1"># dl/dt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;**Lorem Ipsum**&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;    Dolor sit amet, consectetur adipiscing elit&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;**Ut Enim**&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;    Ad minim veniam, quis nostrud exercitation&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;**Duis Aute**&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;    Irure dolor in reprehenderit in voluptate&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+
+        <span class="c1"># table structure</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;| Lorem | Ipsum | Dolor | Sit |&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;|---|---|---|---|&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;| Consectetur | Adipiscing | Elit | Sed |&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+
+        <span class="c1"># code formatting</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;Here we have some `inline code` and&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;```</span><span class="se">\n</span><span class="s2">function lorem() {</span><span class="se">\n</span><span class="s2">    return </span><span class="se">\&quot;</span><span class="s2">ipsum dolor sit amet</span><span class="se">\&quot;</span><span class="s2">;</span><span class="se">\n</span><span class="s2">}</span><span class="se">\n</span><span class="s2">```&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+
+        <span class="c1"># blockquotes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;&gt; </span><span class="se">\&quot;</span><span class="s2">Sed ut perspiciatis unde omnis iste natus&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+
+        <span class="c1"># horizontal rule</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;---&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>
+
+        <span class="c1"># no double spacing for inline elements</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertNotIn</span><span class="p">(</span><span class="s2">&quot;**  &quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>  <span class="c1"># No double spaces after bold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertNotIn</span><span class="p">(</span><span class="s2">&quot;  **&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>  <span class="c1"># No double spaces before bold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertNotIn</span><span class="p">(</span><span class="s2">&quot;*  &quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>   <span class="c1"># No double spaces after emphasis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertNotIn</span><span class="p">(</span><span class="s2">&quot;  *&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">)</span>   <span class="c1"># No double spaces before emphasis</span>
+
+        <span class="c1"># structural integrity - count major elements</span>
+        <span class="n">heading_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^#{1,6} &quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">heading_count</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="s2">&quot;Should have exactly 6 headings&quot;</span><span class="p">)</span>
+        <span class="n">table_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\|.*\|$&quot;</span><span class="p">,</span> <span class="n">markdown</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">table_count</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;Should have multiple table rows&quot;</span><span class="p">)</span></div>
+</div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, pragmar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -90,7 +90,7 @@
 <h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
 <p>To use mcp-server-webcrawl effectively, you need:</p>
 <ul class="simple">
-<li><p>An MCP-capable LLM client such as <a class="reference external" href="https://claude.ai">Claude Desktop</a></p></li>
+<li><p>An MCP-capable LLM host such as <a class="reference external" href="https://claude.ai">Claude Desktop</a></p></li>
 <li><p><a class="reference external" href="https://python.org">Python</a> installed on your command line interface</p></li>
 <li><p>Basic familiarity with running Python packages</p></li>
 </ul>
@@ -98,7 +98,7 @@
 </section>
 <section id="mcp-configuration">
 <h2>MCP Configuration<a class="headerlink" href="#mcp-configuration" title="Link to this heading"></a></h2>
-<p>To enable your LLM client to access your web crawl data, you’ll need to add an MCP server configuration. From Claude’s developer settings, locate the MCP configuration section and add the appropriate configuration for your crawler type.</p>
+<p>To enable your LLM host to access your web crawl data, you’ll need to add an MCP server configuration. From Claude’s developer settings, locate the MCP configuration section and add the appropriate configuration for your crawler type.</p>
 <p>Below are configurations for each supported crawler type. Choose the one that matches your crawler and modify the <code class="docutils literal notranslate"><span class="pre">--datasrc</span></code> path to point to your specific data location.</p>
 <section id="wget">
 <h3>wget<a class="headerlink" href="#wget" title="Link to this heading"></a></h3>
@@ -222,7 +222,7 @@ $<span class="w"> </span>katana<span class="w"> </span>-u<span class="w"> </span
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>After adding the configuration, save the file and restart your LLM client to apply the changes.</p>
+<p>After adding the configuration, save the file and restart your LLM host to apply the changes.</p>
 </section>
 </section>
 

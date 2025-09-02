@@ -1,0 +1,602 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mcp_server_webcrawl.crawlers.archivebox.adapter &mdash; mcp-server-webcrawl  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=888ff710"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            mcp-server-webcrawl
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">mcp-server-webcrawl</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../crawlers.html">mcp_server_webcrawl.crawlers</a></li>
+      <li class="breadcrumb-item active">mcp_server_webcrawl.crawlers.archivebox.adapter</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mcp_server_webcrawl.crawlers.archivebox.adapter</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sqlite3</span>
+
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">closing</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.adapter</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseManager</span><span class="p">,</span>
+    <span class="n">IndexState</span><span class="p">,</span>
+    <span class="n">IndexStatus</span><span class="p">,</span>
+    <span class="n">SitesGroup</span><span class="p">,</span>
+    <span class="n">INDEXED_BATCH_SIZE</span><span class="p">,</span>
+    <span class="n">INDEXED_TYPE_MAPPING</span><span class="p">,</span>
+    <span class="n">INDEXED_IGNORE_DIRECTORIES</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.indexed</span> <span class="kn">import</span> <span class="n">IndexedManager</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResourceResult</span><span class="p">,</span>
+    <span class="n">ResourceResultType</span><span class="p">,</span>
+    <span class="n">RESOURCES_LIMIT_DEFAULT</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SiteResult</span><span class="p">,</span>
+    <span class="n">SITES_FIELDS_BASE</span><span class="p">,</span>
+    <span class="n">SITES_FIELDS_DEFAULT</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ArchiveBoxManager">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.archivebox.html#mcp_server_webcrawl.crawlers.archivebox.adapter.ArchiveBoxManager">[docs]</a>
+<span class="k">class</span> <span class="nc">ArchiveBoxManager</span><span class="p">(</span><span class="n">IndexedManager</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Manages ArchiveBox in-memory SQLite databases for session-level reuse.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ArchiveBoxManager.__init__">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.archivebox.html#mcp_server_webcrawl.crawlers.archivebox.adapter.ArchiveBoxManager.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the ArchiveBox manager with empty cache and statistics.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_load_site_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">site_directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+                       <span class="n">site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">index_state</span><span class="p">:</span> <span class="n">IndexState</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load ArchiveBox site data into the database.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            connection: SQLite connection</span>
+<span class="sd">            site_directory: path to the ArchiveBox site directory (e.g., &quot;example&quot; or &quot;pragmar&quot;)</span>
+<span class="sd">            site_id: ID for the site</span>
+<span class="sd">            index_state: IndexState object for tracking progress</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># The site_directory should be something like &quot;example&quot; or &quot;pragmar&quot;</span>
+        <span class="c1"># We need to look for the &quot;archive&quot; subdirectory within it</span>
+        <span class="n">archive_directory</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">site_directory</span> <span class="o">/</span> <span class="s2">&quot;archive&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">archive_directory</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">archive_directory</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Archive directory not found in site: </span><span class="si">{</span><span class="n">archive_directory</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">INDEXING</span><span class="p">)</span>
+
+        <span class="c1"># page directories are timestamped (e.g. example/archive/1756357684.13023)</span>
+        <span class="c1"># these contiain page data/media</span>
+        <span class="n">page_directories</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_page_directories</span><span class="p">(</span><span class="n">archive_directory</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">page_directories</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No timestamped entries found in archive: </span><span class="si">{</span><span class="n">archive_directory</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">all_resources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># process each timestamped entry</span>
+        <span class="k">for</span> <span class="n">page_directory</span> <span class="ow">in</span> <span class="n">page_directories</span><span class="p">:</span>
+
+            <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">index_state</span><span class="o">.</span><span class="n">is_timeout</span><span class="p">():</span>
+                <span class="n">index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">PARTIAL</span><span class="p">)</span>
+                <span class="k">break</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_page_metadata</span><span class="p">(</span><span class="n">page_directory</span><span class="p">)</span>
+                <span class="n">main_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;url&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;url&quot;</span> <span class="ow">in</span> <span class="n">metadata</span> <span class="k">else</span> \
+                    <span class="sa">f</span><span class="s2">&quot;archivebox://unknown/</span><span class="si">{</span><span class="n">page_directory</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+
+                <span class="c1"># primary resource</span>
+                <span class="n">main_resource</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_page_resource</span><span class="p">(</span><span class="n">page_directory</span><span class="p">,</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">main_url</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">main_resource</span><span class="p">:</span>
+                    <span class="n">all_resources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">main_resource</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">index_state</span><span class="o">.</span><span class="n">increment_processed</span><span class="p">()</span>
+
+                <span class="c1"># collect assets (external js/css/fonts/whatever)</span>
+                <span class="n">domain_assets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_page_domain_assets</span><span class="p">(</span><span class="n">page_directory</span><span class="p">,</span> <span class="n">main_url</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">asset_url</span> <span class="ow">in</span> <span class="n">domain_assets</span><span class="p">:</span>
+                    <span class="n">asset_resource</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_asset_resource</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">asset_url</span><span class="p">,</span> <span class="n">page_directory</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">asset_resource</span><span class="p">:</span>
+                        <span class="n">all_resources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">asset_resource</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="n">index_state</span><span class="o">.</span><span class="n">increment_processed</span><span class="p">()</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing entry </span><span class="si">{</span><span class="n">page_directory</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">deduplicated_resources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dedupe_resources</span><span class="p">(</span><span class="n">all_resources</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">())</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">deduplicated_resources</span><span class="p">),</span> <span class="n">INDEXED_BATCH_SIZE</span><span class="p">):</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="n">deduplicated_resources</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">INDEXED_BATCH_SIZE</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_execute_batch_insert</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">cursor</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">index_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">index_state</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">IndexStatus</span><span class="o">.</span><span class="n">INDEXING</span><span class="p">:</span>
+            <span class="n">index_state</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">IndexStatus</span><span class="o">.</span><span class="n">COMPLETE</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_create_page_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource_directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResourceResult</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create ResourceResult for the main captured page.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+
+            <span class="c1"># created/modified is directory stat</span>
+            <span class="n">resource_stat</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">stat_result</span> <span class="o">=</span> <span class="n">resource_directory</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span>
+            <span class="n">created</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">resource_stat</span><span class="o">.</span><span class="n">st_ctime</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+            <span class="n">modified</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">resource_stat</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+
+            <span class="c1"># read content</span>
+            <span class="n">html_file</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">resource_directory</span> <span class="o">/</span> <span class="s2">&quot;index.html&quot;</span>
+            <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">file_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="n">html_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">html_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                        <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                    <span class="n">file_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">html_file</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not read HTML from </span><span class="si">{</span><span class="n">html_file</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># assemble metadata</span>
+            <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span>
+            <span class="n">headers_reconstructed</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">if</span> <span class="s2">&quot;http_headers&quot;</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">:</span>
+                <span class="n">http_headers</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;http_headers&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="s2">&quot;status&quot;</span> <span class="ow">in</span> <span class="n">http_headers</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">status_code</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">http_headers</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">):</span>
+                        <span class="k">pass</span>
+                <span class="n">headers_reconstructed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_http_headers_string</span><span class="p">(</span><span class="n">http_headers</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">headers_reconstructed</span><span class="p">:</span>
+                <span class="n">headers_reconstructed</span> <span class="o">=</span> <span class="n">BaseManager</span><span class="o">.</span><span class="n">get_basic_headers</span><span class="p">(</span>
+                        <span class="n">file_size</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">ResourceResult</span><span class="p">(</span>
+                <span class="nb">id</span><span class="o">=</span><span class="n">BaseManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="n">url</span><span class="p">),</span>
+                <span class="n">site</span><span class="o">=</span><span class="n">site_id</span><span class="p">,</span>
+                <span class="n">created</span><span class="o">=</span><span class="n">created</span><span class="p">,</span>
+                <span class="n">modified</span><span class="o">=</span><span class="n">modified</span><span class="p">,</span>
+                <span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span>
+                <span class="nb">type</span><span class="o">=</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="n">status_code</span><span class="p">,</span>
+                <span class="n">headers</span><span class="o">=</span><span class="n">headers_reconstructed</span><span class="p">,</span>
+                <span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span>
+                <span class="n">size</span><span class="o">=</span><span class="n">file_size</span><span class="p">,</span>
+                <span class="n">time</span><span class="o">=</span><span class="mi">0</span>
+            <span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error creating main resource for </span><span class="si">{</span><span class="n">resource_directory</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_create_asset_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">site_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">entry_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResourceResult</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create ResourceResult for a domain asset file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># get file info</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">return</span> <span class="kc">None</span>
+
+            <span class="n">file_stat</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span>
+            <span class="n">created</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">file_stat</span><span class="o">.</span><span class="n">st_ctime</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+            <span class="n">modified</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">file_stat</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+            <span class="n">file_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">file_stat</span><span class="o">.</span><span class="n">st_size</span>
+            <span class="n">extension</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+            <span class="c1"># ArchiveBox will stuff URL args into @... in the filename</span>
+            <span class="c1"># sometimes it&#39;s the filename, sometimes the extension</span>
+            <span class="c1"># both need cleaning</span>
+            <span class="n">clean_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;@&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">clean_extension</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">extension</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;@&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">resource_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">INDEXED_TYPE_MAPPING</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">clean_extension</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">)</span>
+
+            <span class="c1"># read content for text files</span>
+            <span class="n">content</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">BaseManager</span><span class="o">.</span><span class="n">read_file_contents</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">resource_type</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">ResourceResult</span><span class="p">(</span>
+                <span class="nb">id</span><span class="o">=</span><span class="n">BaseManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="n">clean_url</span><span class="p">),</span>
+                <span class="n">site</span><span class="o">=</span><span class="n">site_id</span><span class="p">,</span>
+                <span class="n">created</span><span class="o">=</span><span class="n">created</span><span class="p">,</span>
+                <span class="n">modified</span><span class="o">=</span><span class="n">modified</span><span class="p">,</span>
+                <span class="n">url</span><span class="o">=</span><span class="n">clean_url</span><span class="p">,</span>
+                <span class="nb">type</span><span class="o">=</span><span class="n">resource_type</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>  <span class="c1"># assume assets successful</span>
+                <span class="n">headers</span><span class="o">=</span><span class="n">BaseManager</span><span class="o">.</span><span class="n">get_basic_headers2</span><span class="p">(</span><span class="n">file_size</span><span class="p">,</span> <span class="n">resource_type</span><span class="p">,</span> <span class="n">file_path</span><span class="p">),</span>
+                <span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span>
+                <span class="n">size</span><span class="o">=</span><span class="n">file_size</span><span class="p">,</span>
+                <span class="n">time</span><span class="o">=</span><span class="mi">0</span>
+            <span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error creating asset resource for </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_get_page_directories</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">archive_directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get webpage directories within ArchiveBox archive.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            archive_directory: path to the ArchiveBox archive directory</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of timestamped entry directory paths</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># page_directories are the timestamped directories,</span>
+        <span class="c1"># e.g. archive/1756342555.086082</span>
+        <span class="n">page_directories</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">archive_directory</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">page_directories</span>
+
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">archive_directory</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
+            <span class="c1"># 1756342555.086082.replace(&quot;.&quot;, &quot;&quot;) is numeric</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="n">item</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()):</span>
+                <span class="n">data_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="p">(</span><span class="n">item</span> <span class="o">/</span> <span class="s2">&quot;index.json&quot;</span><span class="p">),</span>
+                    <span class="p">(</span><span class="n">item</span> <span class="o">/</span> <span class="s2">&quot;headers.json&quot;</span><span class="p">),</span>
+                    <span class="p">(</span><span class="n">item</span> <span class="o">/</span> <span class="s2">&quot;index.html&quot;</span><span class="p">),</span>
+                <span class="p">]</span>
+                <span class="k">for</span> <span class="n">data_file</span> <span class="ow">in</span> <span class="n">data_files</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">data_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                        <span class="n">page_directories</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                        <span class="k">break</span>
+
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">page_directories</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_page_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry_directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract metadata from ArchiveBox entry files.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            entry_directory: path to the timestamped entry directory</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary containing extracted metadata</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">page_metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># read index.json for primary URL and metadata</span>
+        <span class="n">index_json_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">entry_directory</span> <span class="o">/</span> <span class="s2">&quot;index.json&quot;</span>
+        <span class="k">if</span> <span class="n">index_json_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">index_json_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">index_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                    <span class="n">page_metadata</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">index_data</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">UnicodeDecodeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not parse index.json from </span><span class="si">{</span><span class="n">entry_directory</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error reading index.json from </span><span class="si">{</span><span class="n">entry_directory</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># read headers.json for HTTP headers</span>
+        <span class="n">headers_json_path</span> <span class="o">=</span> <span class="n">entry_directory</span> <span class="o">/</span> <span class="s2">&quot;headers.json&quot;</span>
+        <span class="k">if</span> <span class="n">headers_json_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">headers_json_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">http_headers</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                    <span class="n">page_metadata</span><span class="p">[</span><span class="s2">&quot;http_headers&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">http_headers</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">UnicodeDecodeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not parse headers.json from </span><span class="si">{</span><span class="n">entry_directory</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error reading headers.json from </span><span class="si">{</span><span class="n">entry_directory</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">page_metadata</span>
+
+    <span class="k">def</span> <span class="nf">_get_page_domain_assets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">main_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Collect all domain asset files within an entry.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            entry_dir: path to the timestamped entry</span>
+<span class="sd">            main_url: the main captured URL</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of (file_path, reconstructed_url) tuples</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">assets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># skip metadata directories</span>
+        <span class="n">skip_directories</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;media&quot;</span><span class="p">,</span> <span class="s2">&quot;mercury&quot;</span><span class="p">}</span>
+        <span class="n">collapse_filenames</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;/index.html&quot;</span><span class="p">,</span> <span class="s2">&quot;/index.htm&quot;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">entry_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="n">item</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">skip_directories</span><span class="p">:</span>
+                <span class="c1"># this is an archivebox domain directory</span>
+                <span class="n">domain_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">name</span>
+
+                <span class="c1"># walk domain directories for assets</span>
+                <span class="c1"># (e.g. example/archive/1756357684.13023/example.com)</span>
+                <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+
+                        <span class="c1"># *orig$ are dupes, not reliably in fileext form</span>
+                        <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;orig&quot;</span><span class="p">):</span>
+                            <span class="k">continue</span>
+
+                        <span class="n">file_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="n">filename</span>
+
+                        <span class="c1"># clean up ArchiveBox&#39;s @timestamp suffixes for URL construction</span>
+                        <span class="n">clean_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;@&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="n">clean_file_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="n">clean_filename</span>
+                        <span class="n">relative_path</span> <span class="o">=</span> <span class="n">clean_file_path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;https://</span><span class="si">{</span><span class="n">domain_name</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">relative_path</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;/&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="k">for</span> <span class="n">collapse_filename</span> <span class="ow">in</span> <span class="n">collapse_filenames</span><span class="p">:</span>
+                            <span class="c1"># turn ./index.html and variants into ./ (dir index) to help the indexer</span>
+                            <span class="k">if</span> <span class="n">url</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">collapse_filename</span><span class="p">):</span>
+                                <span class="n">url</span> <span class="o">=</span> <span class="n">url</span><span class="p">[:</span><span class="o">-</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">collapse_filename</span><span class="p">))]</span>
+                                <span class="k">break</span>
+
+                        <span class="c1"># Use original file_path for reading, clean url for storage</span>
+                        <span class="n">assets</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">file_path</span><span class="p">,</span> <span class="n">url</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">assets</span>
+
+    <span class="k">def</span> <span class="nf">_dedupe_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Deduplicate resources based on URL and metadata</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            resources: list of ResourceResult objects</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Deduplicated list of ResourceResult objects</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">seen_urls</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ResourceResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">deduplicated</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">resource</span><span class="p">:</span> <span class="n">ResourceResult</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">resource</span><span class="o">.</span><span class="n">url</span> <span class="ow">in</span> <span class="n">seen_urls</span><span class="p">:</span>
+                <span class="c1"># url collision, check if content differs, prefer newer</span>
+                <span class="n">existing</span> <span class="o">=</span> <span class="n">seen_urls</span><span class="p">[</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">resource</span><span class="o">.</span><span class="n">modified</span> <span class="ow">and</span> <span class="n">existing</span><span class="o">.</span><span class="n">modified</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">resource</span><span class="o">.</span><span class="n">modified</span> <span class="o">&gt;</span> <span class="n">existing</span><span class="o">.</span><span class="n">modified</span><span class="p">:</span>
+                        <span class="n">deduplicated</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">deduplicated</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">url</span> <span class="o">!=</span> <span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">]</span>
+                        <span class="n">deduplicated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
+                        <span class="n">seen_urls</span><span class="p">[</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">]</span> <span class="o">=</span> <span class="n">resource</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># keep existing</span>
+                <span class="n">seen_urls</span><span class="p">[</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">]</span> <span class="o">=</span> <span class="n">resource</span>
+                <span class="n">deduplicated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">deduplicated</span>
+
+    <span class="k">def</span> <span class="nf">_get_http_headers_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">http_headers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Format headers dictionary as HTTP headers string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">http_headers</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="n">headers_lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">status</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">http_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Status-Code&quot;</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+        <span class="n">headers_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HTTP/1.0 </span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">http_headers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;status-code&quot;</span><span class="p">]:</span>
+                <span class="n">headers_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">headers_lines</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\r\n\r\n</span><span class="s2">&quot;</span></div>
+
+
+
+<span class="n">manager</span><span class="p">:</span> <span class="n">ArchiveBoxManager</span> <span class="o">=</span> <span class="n">ArchiveBoxManager</span><span class="p">()</span>
+
+<div class="viewcode-block" id="get_sites">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.archivebox.html#mcp_server_webcrawl.crawlers.archivebox.adapter.get_sites">[docs]</a>
+<span class="k">def</span> <span class="nf">get_sites</span><span class="p">(</span>
+    <span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SiteResult</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    List ArchiveBox instances as separate sites.</span>
+<span class="sd">    Each subdirectory of datasrc that contains an &quot;archive&quot; folder is treated as a separate ArchiveBox instance.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        datasrc: path to the directory containing ArchiveBox instance directories</span>
+<span class="sd">        ids: optional list of site IDs to filter by</span>
+<span class="sd">        fields: optional list of fields to include in the response</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of SiteResult objects, one for each ArchiveBox instance</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">datasrc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;datasrc not provided (</span><span class="si">{</span><span class="n">datasrc</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">datasrc</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Directory not found (</span><span class="si">{</span><span class="n">datasrc</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="c1"># determine which fields to include</span>
+    <span class="n">selected_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">SITES_FIELDS_BASE</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fields</span><span class="p">:</span>
+        <span class="n">valid_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">SITES_FIELDS_DEFAULT</span><span class="p">)</span>
+        <span class="n">selected_fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">valid_fields</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">selected_fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">SITES_FIELDS_DEFAULT</span><span class="p">)</span>
+
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SiteResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># get all directories that contain an &quot;archive&quot; subdirectory</span>
+    <span class="n">site_directories</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">datasrc_item</span> <span class="ow">in</span> <span class="n">datasrc</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
+        <span class="k">if</span> <span class="p">(</span>
+                <span class="n">datasrc_item</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span>
+                <span class="ow">not</span> <span class="n">datasrc_item</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="n">datasrc_item</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">INDEXED_IGNORE_DIRECTORIES</span> <span class="ow">and</span>
+                <span class="p">(</span><span class="n">datasrc_item</span> <span class="o">/</span> <span class="s2">&quot;archive&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span>
+            <span class="p">):</span>
+            <span class="n">site_directories</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">datasrc_item</span><span class="p">)</span>
+
+    <span class="c1"># map directory IDs to paths for filtering</span>
+    <span class="n">site_directories_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">BaseManager</span><span class="o">.</span><span class="n">string_to_id</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="p">):</span> <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">site_directories</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">ids</span><span class="p">:</span>
+        <span class="n">site_directories_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">id_val</span><span class="p">:</span> <span class="n">path</span> <span class="k">for</span> <span class="n">id_val</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">site_directories_map</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">id_val</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">}</span>
+
+    <span class="c1"># process each ArchiveBox instance directory</span>
+    <span class="k">for</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">site_directory</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">site_directories_map</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="n">site_directory_stat</span> <span class="o">=</span> <span class="n">site_directory</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span>
+        <span class="n">created_time</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">site_directory_stat</span><span class="o">.</span><span class="n">st_ctime</span><span class="p">)</span>
+        <span class="n">modified_time</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">site_directory_stat</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">)</span>
+
+        <span class="n">site</span> <span class="o">=</span> <span class="n">SiteResult</span><span class="p">(</span>
+            <span class="n">path</span><span class="o">=</span><span class="n">site_directory</span><span class="p">,</span>
+            <span class="nb">id</span><span class="o">=</span><span class="n">site_id</span><span class="p">,</span>
+            <span class="n">url</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;archivebox://</span><span class="si">{</span><span class="n">site_directory</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">,</span>
+            <span class="n">created</span><span class="o">=</span><span class="n">created_time</span> <span class="k">if</span> <span class="s2">&quot;created&quot;</span> <span class="ow">in</span> <span class="n">selected_fields</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">modified</span><span class="o">=</span><span class="n">modified_time</span> <span class="k">if</span> <span class="s2">&quot;modified&quot;</span> <span class="ow">in</span> <span class="n">selected_fields</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">site</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">results</span></div>
+
+
+<div class="viewcode-block" id="get_resources">
+<a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.archivebox.html#mcp_server_webcrawl.crawlers.archivebox.adapter.get_resources">[docs]</a>
+<span class="k">def</span> <span class="nf">get_resources</span><span class="p">(</span>
+    <span class="n">datasrc</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">sites</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sort</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">RESOURCES_LIMIT_DEFAULT</span><span class="p">,</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ResourceResult</span><span class="p">],</span> <span class="nb">int</span><span class="p">,</span> <span class="n">IndexState</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get resources from ArchiveBox instances using in-memory SQLite.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        datasrc: path to the directory containing ArchiveBox instance directories</span>
+<span class="sd">        sites: optional list of site IDs to filter by</span>
+<span class="sd">        query: search query string</span>
+<span class="sd">        fields: optional list of fields to include in response</span>
+<span class="sd">        sort: sort order for results</span>
+<span class="sd">        limit: maximum number of results to return</span>
+<span class="sd">        offset: number of results to skip for pagination</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple of (list of ResourceResult objects, total count, IndexState)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sites_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SiteResult</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_sites</span><span class="p">(</span><span class="n">datasrc</span><span class="o">=</span><span class="n">datasrc</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="n">sites</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">sites_results</span><span class="p">,</span> <span class="s2">&quot;At least one site is required to search&quot;</span>
+
+    <span class="c1"># use the actual site directories as paths (e.g., &quot;example&quot;, &quot;pragmar&quot;)</span>
+    <span class="n">site_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">site</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">sites_results</span><span class="p">]</span>
+    <span class="n">sites_group</span> <span class="o">=</span> <span class="n">SitesGroup</span><span class="p">(</span><span class="n">datasrc</span><span class="p">,</span> <span class="n">sites</span> <span class="ow">or</span> <span class="p">[</span><span class="n">site</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">sites_results</span><span class="p">],</span> <span class="n">site_paths</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">manager</span><span class="o">.</span><span class="n">get_resources_for_sites_group</span><span class="p">(</span><span class="n">sites_group</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">sort</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, pragmar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

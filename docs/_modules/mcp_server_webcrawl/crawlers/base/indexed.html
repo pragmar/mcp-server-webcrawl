@@ -238,7 +238,7 @@
                                 <span class="n">robots_content</span> <span class="o">=</span> <span class="n">response_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                         <span class="k">else</span><span class="p">:</span>
                             <span class="n">robots_content</span> <span class="o">=</span> <span class="n">content</span>
-                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error reading robots.txt&quot;</span><span class="p">)</span>
 
             <span class="n">site</span> <span class="o">=</span> <span class="n">SiteResult</span><span class="p">(</span>
@@ -266,8 +266,8 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="s2">&quot;building&quot;</span><span class="p">)</span>
             <span class="k">yield</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;failed: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_locks</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">cache_key</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;failed: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">raise</span> <span class="c1"># re-raise</span>
         <span class="k">finally</span><span class="p">:</span>
             <span class="c1"># clean up the lock</span>
@@ -358,9 +358,9 @@
 <span class="s2">            &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">resources_fts_records</span><span class="p">)</span>
             <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;COMMIT&quot;</span><span class="p">)</span>
 
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
             <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;ROLLBACK&quot;</span><span class="p">)</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error during batch insert: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error during batch insert: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="IndexedCrawler">

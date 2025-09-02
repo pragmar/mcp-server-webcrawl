@@ -12,7 +12,7 @@ Requirements
 
 To use mcp-server-webcrawl effectively, you need:
 
-* An MCP-capable LLM client such as `Claude Desktop`_
+* An MCP-capable LLM host such as `Claude Desktop`_
 * `Python`_ installed on your command line interface
 * Basic familiarity with running Python packages
 
@@ -21,7 +21,7 @@ After ensuring these prerequisites are met, run the pip install command above to
 MCP Configuration
 -----------------
 
-To enable your LLM client to access your web crawl data, you'll need to add an MCP server configuration. From Claude's developer settings, locate the MCP configuration section and add the appropriate configuration for your crawler type.
+To enable your LLM host to access your web crawl data, you'll need to add an MCP server configuration. From Claude's developer settings, locate the MCP configuration section and add the appropriate configuration for your crawler type.
 
 Below are configurations for each supported crawler type. Choose the one that matches your crawler and modify the ``--datasrc`` path to point to your specific data location.
 
@@ -164,7 +164,7 @@ You can set up multiple **mcp-server-webcrawl** connections under the ``mcpServe
      }
    }
 
-After adding the configuration, save the file and restart your LLM client to apply the changes.
+After adding the configuration, save the file and restart your LLM host to apply the changes.
 
 
 
