@@ -290,8 +290,8 @@ class BaseCrawlerTests(unittest.TestCase):
         self.assertTrue(sites_json.total >= 2)
 
         # single site
-        site_one_json = crawler.get_sites_api(ids=[site_id])
-        self.assertTrue(site_one_json.total == 1)
+        site_json = crawler.get_sites_api(ids=[site_id])
+        self.assertTrue(site_json.total == 1)
 
         # site with fields
         site_field_json = crawler.get_sites_api(ids=[site_id], fields=["created", "modified"])

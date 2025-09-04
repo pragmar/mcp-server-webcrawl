@@ -188,7 +188,7 @@ class SiteOneManager(IndexedManager):
                         url=url,
                         type=ResourceResultType.OTHER,
                         status=meta["status"],
-                        headers=BaseManager.get_basic_headers(size, ResourceResultType.OTHER),
+                        headers=BaseManager.get_basic_headers(size, ResourceResultType.OTHER, file_path),
                         content="",     # no content
                         size=size,      # size from log
                         time=meta["time"]
@@ -312,7 +312,7 @@ class SiteOneManager(IndexedManager):
                 url=url,
                 type=resource_type,
                 status=status_code,
-                headers=BaseManager.get_basic_headers(file_size, resource_type),
+                headers=BaseManager.get_basic_headers(file_size, resource_type, file_path),
                 content=file_content,
                 size=file_size,
                 time=response_time  # possibly from log

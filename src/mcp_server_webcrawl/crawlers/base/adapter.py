@@ -92,6 +92,55 @@ INDEXED_TYPE_MAPPING: Final[dict[str, ResourceResultType]] = {
     ".ogg": ResourceResultType.AUDIO,
 }
 
+INDEXED_EXTENSION_MAPPING = {
+    # image/*
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+    ".svg": "image/svg+xml",
+    ".bmp": "image/bmp",
+    ".ico": "image/x-icon",
+    ".tiff": "image/tiff",
+    ".tif": "image/tiff",
+    ".heic": "image/heic",
+    ".heif": "image/heif",
+    # text/*
+    ".html": "text/html",
+    ".htm": "text/html",
+    ".css": "text/css",
+    ".js": "application/javascript",
+    ".json": "application/json",
+    ".xml": "application/xml",
+    ".txt": "text/plain",
+    # application/*
+    ".pdf": "application/pdf",
+    ".doc": "application/msword",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xls": "application/vnd.ms-excel",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    # audio/*
+    ".mp3": "audio/mpeg",
+    ".wav": "audio/wav",
+    ".ogg": "audio/ogg",
+    ".flac": "audio/flac",
+    ".aac": "audio/aac",
+    ".m4a": "audio/mp4",
+    # video/*
+    ".mp4": "video/mp4",
+    ".webm": "video/webm",
+    ".avi": "video/x-msvideo",
+    ".mov": "video/quicktime",
+    ".mkv": "video/x-matroska",
+    # font/*
+    ".woff": "font/woff",
+    ".woff2": "font/woff2",
+    ".ttf": "font/ttf",
+    ".otf": "font/otf",
+    ".eot": "application/vnd.ms-fontobject",
+}
+
 class IndexStatus(Enum):
     UNDEFINED = ""
     IDLE = "idle"
@@ -232,27 +281,47 @@ class BaseManager:
         return int(hash_obj.hexdigest()[:12], 16)
 
     @staticmethod
-    def get_basic_headers(file_size: int, resource_type: ResourceResultType) -> str:
+    def get_basic_headers(file_size: int, resource_type: ResourceResultType, path: Path) -> str:
         """
         Generate basic HTTP headers for a resource.
-
+        
         Args:
             file_size: size of the file in bytes
             resource_type: type of resource to generate headers for
-
+            path: file path used for MIME type detection
+            
         Returns:
             HTTP headers string with content type and length
         """
-        content_type = {
+
+        type_fallbacks: dict[ResourceResultType, str] = {
             ResourceResultType.PAGE: "text/html",
             ResourceResultType.CSS: "text/css",
             ResourceResultType.SCRIPT: "application/javascript",
-            ResourceResultType.IMAGE: "image/jpeg",  # default image type
+            ResourceResultType.IMAGE: "image/jpeg", # default for type, override
             ResourceResultType.PDF: "application/pdf",
             ResourceResultType.TEXT: "text/plain",
             ResourceResultType.DOC: "application/msword",
+            ResourceResultType.AUDIO: "audio/mpeg", # default for type, override
+            ResourceResultType.VIDEO: "video/mp4", # default for type, override
             ResourceResultType.OTHER: "application/octet-stream"
-        }.get(resource_type, "application/octet-stream")
+        }
+        fallback_mime_default = "application/octet-stream"
+
+        if resource_type in (ResourceResultType.IMAGE, ResourceResultType.AUDIO, ResourceResultType.VIDEO):
+            # get file mime if type/ext not one-to-one
+            extension = path.suffix.lower()
+            content_type = INDEXED_EXTENSION_MAPPING.get(extension)
+            if not content_type:
+                content_type = type_fallbacks.get(resource_type, fallback_mime_default)
+        elif resource_type == ResourceResultType.OTHER:
+            # aquire from file if unknown
+            mime_type, _ = mimetypes.guess_type(str(path))
+            content_type = mime_type if mime_type is not None else fallback_mime_default
+        else:
+            # normal one-to-one mapping
+            content_type = type_fallbacks.get(resource_type, fallback_mime_default)
+
         return f"HTTP/1.0 200 OK\r\nContent-Type: {content_type}\r\nContent-Length: {file_size}\r\n\r\n"
 
     @staticmethod

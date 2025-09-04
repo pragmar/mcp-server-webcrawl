@@ -133,7 +133,7 @@ class HtTrackManager(IndexedManager):
             ResourceResult object ready for insertion, or None if processing fails
         """
         try:
-            relative_path = file_path.relative_to(domain_directory)
+            relative_path: Path = file_path.relative_to(domain_directory)
             url = base_url + str(relative_path).replace(os.sep, "/")
 
             # Handle homepage index.html like wget does
@@ -176,7 +176,7 @@ class HtTrackManager(IndexedManager):
                 url=url,
                 type=resource_type,
                 status=status_code,
-                headers=BaseManager.get_basic_headers(file_size, resource_type),
+                headers=BaseManager.get_basic_headers(file_size, resource_type, file_path),
                 content=file_content,
                 size=file_size,
                 time=0  # data unavailable (HTTrack)

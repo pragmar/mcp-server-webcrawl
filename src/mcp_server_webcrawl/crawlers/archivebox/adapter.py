@@ -124,8 +124,22 @@ class ArchiveBoxManager(IndexedManager):
             created: datetime = datetime.fromtimestamp(resource_stat.st_ctime, tz=timezone.utc)
             modified: datetime = datetime.fromtimestamp(resource_stat.st_mtime, tz=timezone.utc)
 
-            # read content
+            # select best content, with appropriate fallbacks
+            # outer fallback is ArchiveBox index file (always generated)
+            # barely useful, but dependable
             html_file: Path = resource_directory / "index.html"
+            if "canonical" in metadata:
+                # dom first, wget second, ignore singlefile (datauris generate too much storage)
+                canonical: dict[str, str] = metadata["canonical"]
+                prioritized_paths = ["dom_path", "wget_path"]
+                for path_key in prioritized_paths:
+                    if path_key in canonical and canonical[path_key] is not None:
+                        candidate_file = resource_directory / canonical[path_key]
+                        if candidate_file.resolve().is_relative_to(resource_directory.resolve()) and candidate_file.exists():
+                            html_file = candidate_file
+                            break
+
+            # read content
             content: str|None = None
             file_size: int = 0
             if html_file.exists():
@@ -203,7 +217,7 @@ class ArchiveBoxManager(IndexedManager):
                 url=clean_url,
                 type=resource_type,
                 status=200,  # assume assets successful
-                headers=BaseManager.get_basic_headers(file_size, resource_type),
+                headers=BaseManager.get_basic_headers(file_size, resource_type, file_path),
                 content=content,
                 size=file_size,
                 time=0
@@ -325,7 +339,7 @@ class ArchiveBoxManager(IndexedManager):
                         for collapse_filename in collapse_filenames:
                             # turn ./index.html and variants into ./ (dir index) to help the indexer
                             if url.endswith(collapse_filename):
-                                url = url[:-(len(collapse_filename))]
+                                url = url[:-(len(collapse_filename))] + "/"
                                 break
 
                         # Use original file_path for reading, clean url for storage

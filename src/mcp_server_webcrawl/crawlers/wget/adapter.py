@@ -144,7 +144,7 @@ class WgetManager(IndexedManager):
                 url=url,
                 type=resource_type,
                 status=200,
-                headers=BaseManager.get_basic_headers(file_size, resource_type),
+                headers=BaseManager.get_basic_headers(file_size, resource_type, file_path),
                 content=file_content,
                 size=file_size,
                 time=0,
