@@ -125,9 +125,7 @@ class ArchiveBoxManager(IndexedManager):
             modified: datetime = datetime.fromtimestamp(resource_stat.st_mtime, tz=timezone.utc)
 
             # select best content, with appropriate fallbacks
-            # outer fallback is ArchiveBox index file (always generated)
-            # barely useful, but dependable
-            html_file: Path = resource_directory / "index.html"
+            html_file: Path = None
             if "canonical" in metadata:
                 # dom first, wget second, ignore singlefile (datauris generate too much storage)
                 canonical: dict[str, str] = metadata["canonical"]
@@ -138,6 +136,10 @@ class ArchiveBoxManager(IndexedManager):
                         if candidate_file.resolve().is_relative_to(resource_directory.resolve()) and candidate_file.exists():
                             html_file = candidate_file
                             break
+
+            # fallback to ArchiveBox index file (metadata file - barely useful, but dependable)
+            if html_file is None:
+                html_file = resource_directory / "index.html"
 
             # read content
             content: str|None = None

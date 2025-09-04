@@ -13,7 +13,7 @@ from mcp_server_webcrawl.settings import DEBUG, DATA_DIRECTORY
 
 VALID_CRAWLER_CHOICES: list[str] = ["wget",  "warc", "archivebox", "httrack", "interrobot", "katana", "siteone"]
 
-__version__: str = "0.13.1"
+__version__: str = "0.13.2"
 __name__: str = "mcp-server-webcrawl"
 
 if DEBUG:
