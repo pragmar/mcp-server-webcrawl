@@ -1,8 +1,14 @@
 ArchiveBox MCP Setup Guide
-=========================
+==========================
 
 Instructions for setting up `mcp-server-webcrawl <https://pragmar.com/mcp-server-webcrawl/>`_ with `ArchiveBox <https://archivebox.io/>`_.
 This allows your LLM (e.g. Claude Desktop) to search content and metadata from websites you've archived using ArchiveBox.
+
+.. raw:: html
+
+   <iframe width="560" height="315" src="https://www.youtube.com/embed/fQkw97eDtiI" frameborder="0" allowfullscreen></iframe>
+
+Follow along with the video, or the step-action guide below.
 
 Requirements
 ------------
@@ -42,11 +48,17 @@ Verify installation was successful::
 2. Install and Set Up ArchiveBox
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Install ArchiveBox following the official installation guide::
+macOS/Linux only, Windows may work under Docker but is untested.
+
+1. Install ArchiveBox (macOS/Linux)::
 
     pip install archivebox
 
-2. Create ArchiveBox collections. Unlike other crawlers that focus on single websites, ArchiveBox uses a collection-based approach where each collection can contain multiple URLs. You can create separate collections for different projects or group related URLs together::
+2. macOS only, install brew and wget::
+
+    brew install wget
+
+3. Create ArchiveBox collections. Unlike other crawlers that focus on single websites, ArchiveBox uses a collection-based approach where each collection can contain multiple URLs. You can create separate content for different projects or group related URLs together::
 
     # Create a directory structure for your collections
     mkdir ~/archivebox-data
@@ -63,21 +75,13 @@ Verify installation was successful::
     archivebox init
     archivebox add https://pragmar.com
 
-3. Each ``archivebox init`` creates a complete ArchiveBox instance with its own database and archive directory structure. The typical structure includes::
+4. Each ``archivebox init`` creates a complete ArchiveBox instance with its own database and archive directory structure. The typical structure includes::
 
     collection-name/
     ├── archive/          # Archived content organized by timestamp
     ├── logs/            # ArchiveBox operation logs
     ├── sources/         # Source URL lists and metadata
     └── index.sqlite3    # Database containing all metadata
-
-4. Wait for the archiving process to complete.
-
-5. Optionally, you can use the web interface to manage your archives::
-
-    # Navigate to a collection directory first
-    cd ~/archivebox-data/example
-    archivebox server
 
 3. Configure Claude Desktop
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

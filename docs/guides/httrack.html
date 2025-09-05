@@ -134,7 +134,7 @@ This allows your LLM (e.g. Claude Desktop) to search content and metadata from w
 <li><p>Start the mirroring process and wait for completion</p></li>
 <li><p>Repeat for additional sites as needed (e.g., create another project for pragmar.com)</p></li>
 </ol>
-<p>HTTrack will create organized project directories under your specified location (typically “My Websites” on Windows or “websites” on macOS/Linux). Each project contains the complete website mirror with all HTML files, images, CSS, and other assets properly organized.</p>
+<p>HTTrack will create organized project directories under your specified location (typically “My Web Sites” on Windows or “websites” on macOS/Linux). Each project contains the complete website mirror with all HTML files, images, CSS, and other assets properly organized.</p>
 </section>
 <section id="configure-claude-desktop">
 <h3>3. Configure Claude Desktop<a class="headerlink" href="#configure-claude-desktop" title="Link to this heading"></a></h3>
@@ -157,7 +157,6 @@ This allows your LLM (e.g. Claude Desktop) to search content and metadata from w
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <ul class="simple">
-<li><p>On Windows, use <code class="docutils literal notranslate"><span class="pre">&quot;mcp-server-webcrawl&quot;</span></code> as the command, and the default path is typically <code class="docutils literal notranslate"><span class="pre">&quot;C:/My</span> <span class="pre">Websites&quot;</span></code></p></li>
 <li><p>On macOS/Linux, use the absolute path (output of <code class="docutils literal notranslate"><span class="pre">which</span> <span class="pre">mcp-server-webcrawl</span></code>), and the default path is typically <code class="docutils literal notranslate"><span class="pre">&quot;~/websites&quot;</span></code></p></li>
 <li><p>The datasrc path should point to your HTTrack project directory containing all your mirrored sites</p></li>
 </ul>
@@ -199,7 +198,7 @@ This allows your LLM (e.g. Claude Desktop) to search content and metadata from w
 <li><p>Remember that the first time you use a function, Claude will ask for permission</p></li>
 <li><p>For large websites, initial indexing may take some time during the first search</p></li>
 </ul>
-<p>HTTrack’s organized project structure makes it easy to manage multiple site mirrors, and when combined with MCP Server Web Crawl, provides powerful capabilities for content analysis, SEO audits, and maintaining searchable archives of web content.</p>
+<p>HTTrack’s project structure makes it easy to manage multiple site mirrors, and when combined with mcp-server-webcrawl, provides for content analysis, SEO audits, and searchable archives.</p>
 <p>For more details, including API documentation and other crawler options, visit the <a class="reference external" href="https://github.com/pragmar/mcp-server-webcrawl">mcp-server-webcrawl documentation</a>.</p>
 </section>
 </section>

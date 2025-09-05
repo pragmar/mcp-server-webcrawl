@@ -55,7 +55,7 @@ Verify installation was successful::
 5. Start the mirroring process and wait for completion
 6. Repeat for additional sites as needed (e.g., create another project for pragmar.com)
 
-HTTrack will create organized project directories under your specified location (typically "My Websites" on Windows or "websites" on macOS/Linux). Each project contains the complete website mirror with all HTML files, images, CSS, and other assets properly organized.
+HTTrack will create organized project directories under your specified location (typically "My Web Sites" on Windows or "websites" on macOS/Linux). Each project contains the complete website mirror with all HTML files, images, CSS, and other assets properly organized.
 
 3. Configure Claude Desktop
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -77,7 +77,6 @@ HTTrack will create organized project directories under your specified location 
     }
 
 .. note::
-   - On Windows, use ``"mcp-server-webcrawl"`` as the command, and the default path is typically ``"C:/My Websites"``
    - On macOS/Linux, use the absolute path (output of ``which mcp-server-webcrawl``), and the default path is typically ``"~/websites"``
    - The datasrc path should point to your HTTrack project directory containing all your mirrored sites
 
@@ -110,6 +109,6 @@ Troubleshooting
 - Remember that the first time you use a function, Claude will ask for permission
 - For large websites, initial indexing may take some time during the first search
 
-HTTrack's organized project structure makes it easy to manage multiple site mirrors, and when combined with MCP Server Web Crawl, provides powerful capabilities for content analysis, SEO audits, and maintaining searchable archives of web content.
+HTTrack's project structure makes it easy to manage multiple site mirrors, and when combined with mcp-server-webcrawl, provides for content analysis, SEO audits, and searchable archives.
 
 For more details, including API documentation and other crawler options, visit the `mcp-server-webcrawl documentation <https://github.com/pragmar/mcp-server-webcrawl>`_.

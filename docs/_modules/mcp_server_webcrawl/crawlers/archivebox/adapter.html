@@ -205,8 +205,24 @@
             <span class="n">created</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">resource_stat</span><span class="o">.</span><span class="n">st_ctime</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
             <span class="n">modified</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">resource_stat</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
 
+            <span class="c1"># select best content, with appropriate fallbacks</span>
+            <span class="n">html_file</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="s2">&quot;canonical&quot;</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">:</span>
+                <span class="c1"># dom first, wget second, ignore singlefile (datauris generate too much storage)</span>
+                <span class="n">canonical</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;canonical&quot;</span><span class="p">]</span>
+                <span class="n">prioritized_paths</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;dom_path&quot;</span><span class="p">,</span> <span class="s2">&quot;wget_path&quot;</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">path_key</span> <span class="ow">in</span> <span class="n">prioritized_paths</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">path_key</span> <span class="ow">in</span> <span class="n">canonical</span> <span class="ow">and</span> <span class="n">canonical</span><span class="p">[</span><span class="n">path_key</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">candidate_file</span> <span class="o">=</span> <span class="n">resource_directory</span> <span class="o">/</span> <span class="n">canonical</span><span class="p">[</span><span class="n">path_key</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">candidate_file</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">is_relative_to</span><span class="p">(</span><span class="n">resource_directory</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span> <span class="ow">and</span> <span class="n">candidate_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                            <span class="n">html_file</span> <span class="o">=</span> <span class="n">candidate_file</span>
+                            <span class="k">break</span>
+
+            <span class="c1"># fallback to ArchiveBox index file (metadata file - barely useful, but dependable)</span>
+            <span class="k">if</span> <span class="n">html_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">html_file</span> <span class="o">=</span> <span class="n">resource_directory</span> <span class="o">/</span> <span class="s2">&quot;index.html&quot;</span>
+
             <span class="c1"># read content</span>
-            <span class="n">html_file</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">resource_directory</span> <span class="o">/</span> <span class="s2">&quot;index.html&quot;</span>
             <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="n">file_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="k">if</span> <span class="n">html_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -284,7 +300,7 @@
                 <span class="n">url</span><span class="o">=</span><span class="n">clean_url</span><span class="p">,</span>
                 <span class="nb">type</span><span class="o">=</span><span class="n">resource_type</span><span class="p">,</span>
                 <span class="n">status</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>  <span class="c1"># assume assets successful</span>
-                <span class="n">headers</span><span class="o">=</span><span class="n">BaseManager</span><span class="o">.</span><span class="n">get_basic_headers2</span><span class="p">(</span><span class="n">file_size</span><span class="p">,</span> <span class="n">resource_type</span><span class="p">,</span> <span class="n">file_path</span><span class="p">),</span>
+                <span class="n">headers</span><span class="o">=</span><span class="n">BaseManager</span><span class="o">.</span><span class="n">get_basic_headers</span><span class="p">(</span><span class="n">file_size</span><span class="p">,</span> <span class="n">resource_type</span><span class="p">,</span> <span class="n">file_path</span><span class="p">),</span>
                 <span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span>
                 <span class="n">size</span><span class="o">=</span><span class="n">file_size</span><span class="p">,</span>
                 <span class="n">time</span><span class="o">=</span><span class="mi">0</span>
@@ -406,7 +422,7 @@
                         <span class="k">for</span> <span class="n">collapse_filename</span> <span class="ow">in</span> <span class="n">collapse_filenames</span><span class="p">:</span>
                             <span class="c1"># turn ./index.html and variants into ./ (dir index) to help the indexer</span>
                             <span class="k">if</span> <span class="n">url</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">collapse_filename</span><span class="p">):</span>
-                                <span class="n">url</span> <span class="o">=</span> <span class="n">url</span><span class="p">[:</span><span class="o">-</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">collapse_filename</span><span class="p">))]</span>
+                                <span class="n">url</span> <span class="o">=</span> <span class="n">url</span><span class="p">[:</span><span class="o">-</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">collapse_filename</span><span class="p">))]</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span>
                                 <span class="k">break</span>
 
                         <span class="c1"># Use original file_path for reading, clean url for storage</span>

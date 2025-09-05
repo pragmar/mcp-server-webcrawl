@@ -8,11 +8,13 @@ Subpackages
    :maxdepth: 2
 
    mcp_server_webcrawl.crawlers.base
+   mcp_server_webcrawl.crawlers.archivebox
+   mcp_server_webcrawl.crawlers.httrack
    mcp_server_webcrawl.crawlers.interrobot
    mcp_server_webcrawl.crawlers.katana
+   mcp_server_webcrawl.crawlers.siteone
    mcp_server_webcrawl.crawlers.warc
    mcp_server_webcrawl.crawlers.wget
-   mcp_server_webcrawl.crawlers.siteone
 
 Module contents
 ---------------

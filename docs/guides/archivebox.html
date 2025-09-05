@@ -89,6 +89,7 @@
 <h1>ArchiveBox MCP Setup Guide<a class="headerlink" href="#archivebox-mcp-setup-guide" title="Link to this heading"></a></h1>
 <p>Instructions for setting up <a class="reference external" href="https://pragmar.com/mcp-server-webcrawl/">mcp-server-webcrawl</a> with <a class="reference external" href="https://archivebox.io/">ArchiveBox</a>.
 This allows your LLM (e.g. Claude Desktop) to search content and metadata from websites you’ve archived using ArchiveBox.</p>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/fQkw97eDtiI" frameborder="0" allowfullscreen></iframe><p>Follow along with the video, or the step-action guide below.</p>
 <section id="requirements">
 <h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
 <p>Before you begin, ensure you have:</p>
@@ -125,13 +126,19 @@ This allows your LLM (e.g. Claude Desktop) to search content and metadata from w
 </section>
 <section id="install-and-set-up-archivebox">
 <h3>2. Install and Set Up ArchiveBox<a class="headerlink" href="#install-and-set-up-archivebox" title="Link to this heading"></a></h3>
+<p>macOS/Linux only, Windows may work under Docker but is untested.</p>
 <ol class="arabic">
-<li><p>Install ArchiveBox following the official installation guide:</p>
+<li><p>Install ArchiveBox (macOS/Linux):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">archivebox</span>
 </pre></div>
 </div>
 </li>
-<li><p>Create ArchiveBox collections. Unlike other crawlers that focus on single websites, ArchiveBox uses a collection-based approach where each collection can contain multiple URLs. You can create separate collections for different projects or group related URLs together:</p>
+<li><p>macOS only, install brew and wget:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">brew</span> <span class="n">install</span> <span class="n">wget</span>
+</pre></div>
+</div>
+</li>
+<li><p>Create ArchiveBox collections. Unlike other crawlers that focus on single websites, ArchiveBox uses a collection-based approach where each collection can contain multiple URLs. You can create separate content for different projects or group related URLs together:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a directory structure for your collections</span>
 <span class="n">mkdir</span> <span class="o">~/</span><span class="n">archivebox</span><span class="o">-</span><span class="n">data</span>
 
@@ -155,14 +162,6 @@ This allows your LLM (e.g. Claude Desktop) to search content and metadata from w
 ├── logs/            # ArchiveBox operation logs
 ├── sources/         # Source URL lists and metadata
 └── index.sqlite3    # Database containing all metadata
-</pre></div>
-</div>
-</li>
-<li><p>Wait for the archiving process to complete.</p></li>
-<li><p>Optionally, you can use the web interface to manage your archives:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Navigate to a collection directory first</span>
-<span class="n">cd</span> <span class="o">~/</span><span class="n">archivebox</span><span class="o">-</span><span class="n">data</span><span class="o">/</span><span class="n">example</span>
-<span class="n">archivebox</span> <span class="n">server</span>
 </pre></div>
 </div>
 </li>
