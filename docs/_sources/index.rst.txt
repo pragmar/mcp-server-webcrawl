@@ -30,27 +30,27 @@ a variety of web crawlers:
    * - Crawler/Format
      - Description
      - Setup Guide
-   * - `WARC <https://en.wikipedia.org/wiki/WARC_(file_format)>`_
-     - Standard web archive format
-     - `Setup Guide <https://pragmar.github.io/mcp-server-webcrawl/guides/warc.html>`_
-   * - `wget <https://en.wikipedia.org/wiki/Wget>`_
-     - CLI website mirroring tool
-     - `Setup Guide <https://pragmar.github.io/mcp-server-webcrawl/guides/wget.html>`_
-   * - `InterroBot <https://interro.bot>`_
-     - GUI crawler and analyzer
-     - `Setup Guide <https://pragmar.github.io/mcp-server-webcrawl/guides/interrobot.html>`_
-   * - `HTTrack <https://www.httrack.com>`_
-     - GUI/CLI website mirroring tool
-     - `Setup Guide <https://pragmar.github.io/mcp-server-webcrawl/guides/httrack.html>`_
    * - `ArchiveBox <https://archivebox.io>`_
      - Self-hosted web archiving tool
      - `Setup Guide <https://pragmar.github.io/mcp-server-webcrawl/guides/archivebox.html>`_
+   * - `HTTrack <https://www.httrack.com>`_
+     - GUI/CLI website mirroring tool
+     - `Setup Guide <https://pragmar.github.io/mcp-server-webcrawl/guides/httrack.html>`_
+   * - `InterroBot <https://interro.bot>`_
+     - GUI crawler and analyzer
+     - `Setup Guide <https://pragmar.github.io/mcp-server-webcrawl/guides/interrobot.html>`_
    * - `Katana <https://github.com/projectdiscovery/katana>`_
      - CLI security-focused crawler
      - `Setup Guide <https://pragmar.github.io/mcp-server-webcrawl/guides/katana.html>`_
    * - `SiteOne <https://crawler.siteone.io>`_
      - GUI crawler and analyzer
      - `Setup Guide <https://pragmar.github.io/mcp-server-webcrawl/guides/siteone.html>`_
+   * - `WARC <https://en.wikipedia.org/wiki/WARC_(file_format)>`_
+     - Standard web archive format
+     - `Setup Guide <https://pragmar.github.io/mcp-server-webcrawl/guides/warc.html>`_
+   * - `wget <https://en.wikipedia.org/wiki/Wget>`_
+     - CLI website mirroring tool
+     - `Setup Guide <https://pragmar.github.io/mcp-server-webcrawl/guides/wget.html>`_
 
 **mcp-server-webcrawl** is free and open source, and requires Claude Desktop, Python (>=3.10). It is installed on the command line, via pip install:
 

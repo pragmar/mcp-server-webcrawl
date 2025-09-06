@@ -7,10 +7,10 @@ This section contains detailed setup guides for mcp-server-webcrawl in various e
    :maxdepth: 1
    :caption: Available Guides:
 
-   guides/wget
-   guides/warc
-   guides/interrobot
    guides/archivebox
    guides/httrack
+   guides/interrobot
    guides/katana
    guides/siteone
+   guides/warc
+   guides/wget
