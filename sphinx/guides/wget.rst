@@ -1,15 +1,15 @@
 wget MCP Setup Guide
 ====================
 
-Instructions for setting up `mcp-server-webcrawl <https://pragmar.com/mcp-server-webcrawl/>`_ with 
-`wget <https://en.wikipedia.org/wiki/Wget>`_. 
+Instructions for setting up `mcp-server-webcrawl <https://pragmar.com/mcp-server-webcrawl/>`_ with
+`wget <https://en.wikipedia.org/wiki/Wget>`_.
 This allows your LLM (e.g. Claude Desktop) to search content and metadata from websites you've crawled.
 
 .. raw:: html
 
    <iframe width="560" height="315" src="https://www.youtube.com/embed/uqEEqVsofhc" frameborder="0" allowfullscreen></iframe>
 
-Follow along with the video, or the step-action guide. 
+Follow along with the video, or the step-action guide.
 
 Requirements
 ------------
@@ -24,7 +24,7 @@ Before you begin, ensure you have:
 Installation Steps
 ------------------
 
-1. Install MCP Server Web Crawl
+1. Install mcp-server-webcrawl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Open your terminal or command line and install the package:
@@ -53,7 +53,7 @@ Verify installation was successful by checking the version:
       "mcpServers": {
         "webcrawl": {
           "command": "/path/to/mcp-server-webcrawl",
-          "args": ["--crawler", "wget", "--datasrc", 
+          "args": ["--crawler", "wget", "--datasrc",
             "/path/to/wget/archives/"]
         }
       }

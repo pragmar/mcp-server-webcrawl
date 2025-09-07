@@ -35,7 +35,7 @@ Katana is an open-source web crawler from Project Discovery that offers:
 Installation Steps
 ------------------
 
-1. Install MCP Server Web Crawl
+1. Install mcp-server-webcrawl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Open your terminal or command line and install the package::

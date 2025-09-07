@@ -34,7 +34,7 @@ HTTrack is a well-established open source website mirror tool that offers:
 Installation Steps
 ------------------
 
-1. Install MCP Server Web Crawl
+1. Install mcp-server-webcrawl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Open your terminal or command line and install the package::

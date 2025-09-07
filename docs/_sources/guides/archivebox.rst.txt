@@ -34,7 +34,7 @@ ArchiveBox is a powerful open-source web archiving solution that offers:
 Installation Steps
 ------------------
 
-1. Install MCP Server Web Crawl
+1. Install mcp-server-webcrawl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Open your terminal or command line and install the package::
@@ -134,10 +134,10 @@ Troubleshooting
 - Ensure Python and mcp-server-webcrawl are properly installed
 - Check that your ArchiveBox archive directory path in the configuration is correct
 - Make sure ArchiveBox has successfully archived the websites and created the database
-- Verify that the ``index.sqlite3`` file exists in your archive directory
+- Verify that files exist in your archive/[timestamp] directories
 - Remember that the first time you use a function, Claude will ask for permission
 - For large archives, initial indexing may take some time during the first search
 
-ArchiveBox's comprehensive archiving capabilities combined with MCP Server Web Crawl provide powerful tools for content preservation, research, and analysis across your archived web content.
+ArchiveBox's comprehensive archiving capabilities combined with mcp-server-webcrawl provide powerful tools for content preservation, research, and analysis across your archived web content.
 
 For more details, including API documentation and other crawler options, visit the `mcp-server-webcrawl documentation <https://github.com/pragmar/mcp-server-webcrawl>`_.

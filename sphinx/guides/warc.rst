@@ -38,7 +38,7 @@ Compared to wget running in mirror mode:
 Installation Steps
 ------------------
 
-1. Install MCP Server Web Crawl
+1. Install mcp-server-webcrawl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Open your terminal or command line and install the package::

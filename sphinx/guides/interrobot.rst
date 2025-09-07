@@ -23,7 +23,7 @@ Before you begin, ensure you have:
 What is InterroBot?
 -------------------
 
-InterroBot is a commercial web crawler and analyzer that works seamlessly with MCP Server Web Crawl, providing several advantages:
+InterroBot is a commercial web crawler and analyzer that works seamlessly with mcp-server-webcrawl, providing several advantages:
 
 - User-friendly graphical interface for managing crawls
 - Comprehensive data collection including page content and metadata
@@ -33,7 +33,7 @@ InterroBot is a commercial web crawler and analyzer that works seamlessly with M
 Installation Steps
 ------------------
 
-1. Install MCP Server Web Crawl
+1. Install mcp-server-webcrawl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Open your terminal or command line and install the package::
