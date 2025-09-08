@@ -114,7 +114,8 @@ class SearchLexer:
 
     # precedence matters
     def t_URL_FIELD(self, token: lex.LexToken) -> lex.LexToken:
-        r"url\s*:\s*((?:https?://)?[^\s]+)"
+        # this field must terminate not only on url end, but on parens
+        r"url\s*:\s*((?:https?://)?[^\s()]+)"
         token.type = "URL_FIELD"
         url_value = token.value[token.value.find(':')+1:].strip()
         token.value = ("url", url_value)

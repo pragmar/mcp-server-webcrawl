@@ -845,6 +845,18 @@ class BaseCrawlerTests(unittest.TestCase):
         self.assertTrue(grouped_or.total <= primary_or_secondary_resources.total,
                 "Adding AND conditions to OR should not increase results")
 
+        # URL OR parsing, url is a special case, an fts5 field searched with SQL LIKE
+        url_or_simple = crawler.get_resources_api(
+            sites=[site_id], query="url: pragmar.com OR url: example.com", limit=1)
+        url_or_with_type = crawler.get_resources_api(
+            sites=[site_id], query="type: html AND (url: pragmar.com OR url: example.com)", limit=1)
+        html_total = crawler.get_resources_api(
+            sites=[site_id], query="type: html", limit=1)
+        self.assertTrue(url_or_with_type.total <= url_or_simple.total,
+            f"AND constraint should not increase results: {url_or_with_type.total} <= {url_or_simple.total}")
+        self.assertTrue(url_or_with_type.total <= html_total.total,
+            f"URL filter should not exceed HTML total: {url_or_with_type.total} <= {html_total.total}")
+
     def __run_pragmar_search_tests_extras(
             self,
             crawler: BaseCrawler,
@@ -885,6 +897,7 @@ class BaseCrawlerTests(unittest.TestCase):
         self.assertEqual(len(xpath_count_resources._results[0].to_dict()["extras"]["xpath"]),
                 1, "Should be exactly one H1 hit in xpath extras")
 
+        # this test inadvertently also covers t_URL_FIELD parser testing
         xpath_h1_text_resources = crawler.get_resources_api(
             sites=[site_id],
             query="url: https://pragmar.com AND status: 200",
