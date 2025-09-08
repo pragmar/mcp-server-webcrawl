@@ -21,14 +21,14 @@ Options:
   -h, --help     Show this help message and exit
 
 Where is my DATASRC?
-  warc           Directory containing WARC files
-  wget           Directory containing the webroot archives
   archivebox     Directory above one or more archivebox init'ed dirs
   httrack        Projects directory (~/websites/, /My Websites/)
   interrobot     Path to */interrobot.v2.db
   katana         Directory containing the webroot archives
   siteone        Directory containing the webroot archives
                    (requires archive option)
+  warc           Directory containing WARC files
+  wget           Directory containing the webroot archives
 
                         [DATASRC]
            ╭─────────────────────────────────╮

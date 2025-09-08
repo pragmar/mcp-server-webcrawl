@@ -11,7 +11,7 @@ from argparse import ArgumentParser
 from mcp_server_webcrawl.utils.cli import get_help_short_message, get_help_long_message
 from mcp_server_webcrawl.settings import DEBUG, DATA_DIRECTORY
 
-VALID_CRAWLER_CHOICES: list[str] = ["wget",  "warc", "archivebox", "httrack", "interrobot", "katana", "siteone"]
+VALID_CRAWLER_CHOICES: list[str] = ["archivebox", "httrack", "interrobot", "katana", "siteone", "warc", "wget"]
 
 __version__: str = "0.13.2"
 __name__: str = "mcp-server-webcrawl"
@@ -66,27 +66,27 @@ def main() -> None:
         lazy load crawler, some classes have additional package dependencies
         """
         crawler_name = crawler_name.lower()
-        if crawler_name == "wget":
-            from mcp_server_webcrawl.crawlers.wget.crawler import WgetCrawler
-            return WgetCrawler
-        elif crawler_name == "warc":
-            from mcp_server_webcrawl.crawlers.warc.crawler import WarcCrawler
-            return WarcCrawler
-        elif crawler_name == "archivebox":
+        if crawler_name == "archivebox":
             from mcp_server_webcrawl.crawlers.archivebox.crawler import ArchiveBoxCrawler
             return ArchiveBoxCrawler
-        elif crawler_name == "interrobot":
-            from mcp_server_webcrawl.crawlers.interrobot.crawler import InterroBotCrawler
-            return InterroBotCrawler
         elif crawler_name == "httrack":
             from mcp_server_webcrawl.crawlers.httrack.crawler import HtTrackCrawler
             return HtTrackCrawler
+        elif crawler_name == "interrobot":
+            from mcp_server_webcrawl.crawlers.interrobot.crawler import InterroBotCrawler
+            return InterroBotCrawler
         elif crawler_name == "katana":
             from mcp_server_webcrawl.crawlers.katana.crawler import KatanaCrawler
             return KatanaCrawler
         elif crawler_name == "siteone":
             from mcp_server_webcrawl.crawlers.siteone.crawler import SiteOneCrawler
             return SiteOneCrawler
+        elif crawler_name == "warc":
+            from mcp_server_webcrawl.crawlers.warc.crawler import WarcCrawler
+            return WarcCrawler
+        elif crawler_name == "wget":
+            from mcp_server_webcrawl.crawlers.wget.crawler import WgetCrawler
+            return WgetCrawler
         else:
             valid_choices = ", ".join(VALID_CRAWLER_CHOICES)
             raise ValueError(f"unsupported crawler '{crawler_name}' ({valid_choices})")

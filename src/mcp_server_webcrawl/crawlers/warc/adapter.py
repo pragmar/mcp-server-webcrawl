@@ -14,6 +14,7 @@ from mcp_server_webcrawl.crawlers.base.adapter import (
     IndexStatus,
     SitesGroup,
     INDEXED_BATCH_SIZE,
+    INDEXED_WARC_EXTENSIONS,
 )
 from mcp_server_webcrawl.crawlers.base.indexed import IndexedManager
 from mcp_server_webcrawl.models.resources import (
@@ -29,8 +30,6 @@ from mcp_server_webcrawl.models.sites import (
 from mcp_server_webcrawl.utils.logger import get_logger
 
 logger = get_logger()
-
-WARC_FILE_EXTENSIONS: Final[list[str]] = [".warc", ".warc.gz", ".txt"]
 
 
 class WarcManager(IndexedManager):
@@ -195,7 +194,7 @@ def get_sites(
     results: list[SiteResult] = []
 
     files_to_check: list[Path] = []
-    for ext in WARC_FILE_EXTENSIONS:
+    for ext in INDEXED_WARC_EXTENSIONS:
         files_to_check.extend(datasrc.glob(f"*{ext}"))
 
     # map of file_id -> file_path for filtering

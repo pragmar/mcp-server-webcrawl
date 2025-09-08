@@ -43,6 +43,8 @@ INDEXED_BINARY_EXTENSIONS: Final[tuple[str, ...]] = (
     ".swf",".svgz",".dat",".db",".sqlite",".class",".pyc",".o"
 )
 
+INDEXED_WARC_EXTENSIONS: Final[list[str]] = [".warc", ".warc.gz", ".txt"]
+
 # files on disk will need default for reassembly {proto}{dir}
 # these things are already approximations (perhaps) having passed through wget
 # filtering (--adjust-extension) representative of the file on disk, also https
