@@ -184,6 +184,13 @@ class ResourceResult:
         assert extra_name in RESOURCE_EXTRAS_ALLOWED, f"Unexpected extra requested. {extra_name}"
         self.__extras[extra_name] = extra_value
 
+    def get_extra(self, extra_name: str) -> str | None | list[str] | list[dict[str, str | int | float]]:
+        assert extra_name in RESOURCE_EXTRAS_ALLOWED, f"Unexpected extra requested. {extra_name}"
+        if extra_name in self.__extras:
+            return self.__extras[extra_name]
+        else:
+            return None
+
     def to_forcefield_dict(self, forcefields=None) -> dict[str, METADATA_VALUE_TYPE]:
         """
         Create a dictionary with forced fields set to None if not present in the object.

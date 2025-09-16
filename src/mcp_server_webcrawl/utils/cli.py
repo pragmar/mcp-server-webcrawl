@@ -16,19 +16,20 @@ def get_help_long_message(version: str) -> str:
 Usage: {__cli_gold('mcp-server-webcrawl')} [-c {{wget,warc,interrobot,katana,siteone}}] [-d DATASRC]
 
 Options:
-  -c, --crawler  Specify which crawler to use
-  -d, --datasrc  Path to datasrc (required unless testing)
-  -h, --help     Show this help message and exit
+  -c, --crawler       Specify which crawler to use
+  -d, --datasrc       Path to datasrc (required unless testing)
+  -h, --help          Show this help message and exit
+  -i, --interactive   Run interactive terminal search
 
 Where is my DATASRC?
-  archivebox     Directory above one or more archivebox init'ed dirs
-  httrack        Projects directory (~/websites/, /My Websites/)
-  interrobot     Path to */interrobot.v2.db
-  katana         Directory containing the webroot archives
-  siteone        Directory containing the webroot archives
-                   (requires archive option)
-  warc           Directory containing WARC files
-  wget           Directory containing the webroot archives
+  archivebox    Directory above one or more archivebox init'ed dirs
+  httrack       Projects directory (~/websites/, /My Websites/)
+  interrobot    Path to */interrobot.v2.db
+  katana        Directory containing the webroot archives
+  siteone       Directory containing the webroot archives
+                  (requires archive option)
+  warc          Directory containing WARC files
+  wget          Directory containing the webroot archives
 
                         [DATASRC]
            ╭─────────────────────────────────╮
@@ -39,13 +40,9 @@ Where is my DATASRC?
 MCP Configuration Example:
 {{"mcpServers": {{
   "wget": {{
-    "command": "mcp-server-webcrawl",
+    "command": "/path/to/mcp-server-webcrawl",
       "args": ["--crawler", "wget", "--datasrc",
-        "/path/to/archived/hosts/"]}},
-  "interrobot": {{
-    "command": "mcp-server-webcrawl",
-      "args": ["--crawler", "interrobot", "--datasrc",
-        "/path/to/interrobot.v2.db"]}}
+        "/path/to/archived/hosts/"]}}
   }}
 }}
 

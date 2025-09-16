@@ -166,3 +166,14 @@ Extras provide a means of producing token-efficient HTTP content responses. Mark
 
 The idea, of course, is that the LLM takes care of this for you. If you notice your LLM developing an affinity to the "content" field (full HTML), a nudge in chat to budget tokens using the extras feature should be all that is needed.
 
+## --interactive Mode
+
+mcp-server-webcrawl can double as a terminal search for your web archvies. No AI, just classic Boolean search in a terminal. Launch with --crawler and --datasource to load into search immediately, or use setup datasrc and crawler in-app.
+
+```bash
+mcp-server-webcrawl --crawler wget --datasrc /path/to/datasrc --interactive
+# or manually enter crawler and datasrc in the UI
+mcp-server-webcrawl --interactive
+```
+
+Interactive mode is a way to search through tranches of crawled data, whenever, whereever... in a terminal.

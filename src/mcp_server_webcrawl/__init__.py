@@ -10,10 +10,10 @@ from argparse import ArgumentParser
 
 from mcp_server_webcrawl.utils.cli import get_help_short_message, get_help_long_message
 from mcp_server_webcrawl.settings import DEBUG, DATA_DIRECTORY
+from mcp_server_webcrawl.crawlers import get_crawler, VALID_CRAWLER_CHOICES
 
-VALID_CRAWLER_CHOICES: list[str] = ["archivebox", "httrack", "interrobot", "katana", "siteone", "warc", "wget"]
 
-__version__: str = "0.13.2"
+__version__: str = "0.14.0"
 __name__: str = "mcp-server-webcrawl"
 
 if DEBUG:
@@ -36,6 +36,7 @@ def main() -> None:
     parser.add_argument("-c", "--crawler", type=str, choices=VALID_CRAWLER_CHOICES,
             help="Specify which crawler to use (default: interrobot)")
     parser.add_argument("--run-tests", action="store_true", help="Run tests instead of server")
+    parser.add_argument("-i", "--interactive", action="store_true", help="Run interactive terminal search mode")
     parser.add_argument("-d", "--datasrc", type=str, help="Path to datasrc (required unless testing)")
     args = parser.parse_args()
 
@@ -52,6 +53,12 @@ def main() -> None:
             file_directory = os.path.dirname(os.path.abspath(__file__))
             sys.exit(unittest.main(module=None, argv=["", "discover", "-s", file_directory, "-p", "*test*.py"]))
 
+    if args.interactive:
+        from mcp_server_webcrawl.interactive.session import InteractiveSession
+        intersession = InteractiveSession(args.crawler, args.datasrc)
+        intersession.run()
+        sys.exit()
+
     if not args.datasrc:
         parser.error("the -d/--datasrc argument is required when not in test mode")
 
@@ -59,38 +66,10 @@ def main() -> None:
         valid_crawlers = ", ".join(VALID_CRAWLER_CHOICES)
         parser.error(f"the -c/--crawler argument must be one of: {valid_crawlers}")
 
+
+
     # cli interaction prior to loading the server
     from mcp_server_webcrawl.main import main as mcp_main
-    def get_crawler(crawler_name: str):
-        """
-        lazy load crawler, some classes have additional package dependencies
-        """
-        crawler_name = crawler_name.lower()
-        if crawler_name == "archivebox":
-            from mcp_server_webcrawl.crawlers.archivebox.crawler import ArchiveBoxCrawler
-            return ArchiveBoxCrawler
-        elif crawler_name == "httrack":
-            from mcp_server_webcrawl.crawlers.httrack.crawler import HtTrackCrawler
-            return HtTrackCrawler
-        elif crawler_name == "interrobot":
-            from mcp_server_webcrawl.crawlers.interrobot.crawler import InterroBotCrawler
-            return InterroBotCrawler
-        elif crawler_name == "katana":
-            from mcp_server_webcrawl.crawlers.katana.crawler import KatanaCrawler
-            return KatanaCrawler
-        elif crawler_name == "siteone":
-            from mcp_server_webcrawl.crawlers.siteone.crawler import SiteOneCrawler
-            return SiteOneCrawler
-        elif crawler_name == "warc":
-            from mcp_server_webcrawl.crawlers.warc.crawler import WarcCrawler
-            return WarcCrawler
-        elif crawler_name == "wget":
-            from mcp_server_webcrawl.crawlers.wget.crawler import WgetCrawler
-            return WgetCrawler
-        else:
-            valid_choices = ", ".join(VALID_CRAWLER_CHOICES)
-            raise ValueError(f"unsupported crawler '{crawler_name}' ({valid_choices})")
-
     crawler = get_crawler(args.crawler)
     asyncio.run(mcp_main(crawler, Path(args.datasrc)))
 

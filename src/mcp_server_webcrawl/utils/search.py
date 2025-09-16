@@ -14,7 +14,7 @@ class ParameterManager:
     """
     Helper class to manage SQL parameter naming and counting.
     """
-    def __init__(self) -> None:
+    def __init__(self):
         self.params: dict[str, str | int | float] = {}
         self.counter: int = 0
 
@@ -39,7 +39,7 @@ class SearchQueryParser:
     Implementation of ply lexer to capture field-expanded boolean queries.
     """
 
-    def __init__(self) -> None:
+    def __init__(self):
         self.lexer: SearchLexer = SearchLexer()
         self.parser: SearchParser = SearchParser(self.lexer)
 
