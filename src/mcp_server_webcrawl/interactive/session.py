@@ -317,10 +317,11 @@ class InteractiveSession:
             stdscr.timeout(CURSES_TIMEOUT_MS)
 
             while True:
-                self.searchman.check_pending_results()
+                self.searchman.check_pending()
 
                 stdscr.clear()
                 height, width = stdscr.getmaxyx()
+                selected_sites = self.__view__searchform.get_selected_sites()
 
                 if self.__ui_state == UiState.REQUIREMENTS or self.__view__requirements.validated == False:
 
@@ -341,24 +342,11 @@ class InteractiveSession:
                     self.__view__help.render(stdscr)
                     self.__view__help.draw_inner_footer(stdscr, inner_screen, f"ESC to Exit Help")
 
-                elif self.__ui_state == UiState.SEARCH_INIT:
-
-                    inner_screen = self.__get_inner_screen(width, height)
-                    self.__view__searchform.draw_inner_header(stdscr, inner_screen, "Search:")
-                    selected_sites = self.__view__searchform.get_selected_sites()
-                    first_hit = selected_sites[0] if selected_sites else None
-                    url: str = first_hit.url if first_hit is not None else ""
-                    display_url: str = BaseCursesView.url_for_display(url)
-                    self.__view__searchform.set_bounds(inner_screen)
-                    self.__view__searchform.render(stdscr)
-                    self.__view__searchform.draw_inner_footer(stdscr, inner_screen, f"Searching {display_url}")
-
-                elif self.__ui_state == UiState.SEARCH_RESULTS:
+                elif self.__ui_state == UiState.SEARCH_RESULTS and selected_sites:
 
                     inner_screen_split_top = self.__get_split_top(width, height)
                     inner_screen_split_bottom = self.__get_split_bottom(width, height)
-
-                    url: str = self.__view__searchform.get_selected_sites()[0].url
+                    url: str = selected_sites[0].url if selected_sites else ""
                     display_url: str = BaseCursesView.url_for_display(url)
                     self.__view__searchform.draw_inner_header(stdscr, inner_screen_split_top, "Search:")
                     self.__view__searchform.set_bounds(inner_screen_split_top)
@@ -381,7 +369,17 @@ class InteractiveSession:
                     self.__view__document.draw_inner_footer(stdscr, inner_screen, f"")
 
                 else:
-                    pass
+
+                    # aka self.__ui_state == UiState.SEARCH_INIT
+                    inner_screen = self.__get_inner_screen(width, height)
+                    self.__view__searchform.draw_inner_header(stdscr, inner_screen, "Search:")
+                    selected_sites = self.__view__searchform.get_selected_sites()
+                    first_hit = selected_sites[0] if selected_sites else None
+                    url: str = first_hit.url if first_hit is not None else ""
+                    display_url: str = BaseCursesView.url_for_display(url)
+                    self.__view__searchform.set_bounds(inner_screen)
+                    self.__view__searchform.render(stdscr)
+                    self.__view__searchform.draw_inner_footer(stdscr, inner_screen, f"Searching {display_url}")
 
                 if height > LAYOUT_MIN_HEIGHT_FOR_HELP:
                     help_text = self.__get_help_text()

@@ -60,8 +60,6 @@ class InterroBotCrawler(BaseCrawler):
         default_sites_tool: Tool
         default_resources_tool: Tool
         default_sites_tool, default_resources_tool = default_tools
-
-        # this adds InterroBot specific Robots field
         sites_field_options: list[str] = list(set(INTERROBOT_SITE_FIELD_MAPPING.keys()) - set(INTERROBOT_SITE_FIELD_REQUIRED))
         dst_props: dict = default_sites_tool.inputSchema["properties"]
         dst_props["fields"]["items"]["enum"] = sites_field_options
@@ -73,7 +71,7 @@ class InterroBotCrawler(BaseCrawler):
         drt_props: dict = default_resources_tool.inputSchema["properties"]
         drt_props["fields"]["items"]["enum"] = resources_field_options
         drt_props["sort"]["enum"] = resources_sort_options
-        drt_props["sites"]["enum"] = all_sites_ids
+        drt_props["sites"]["items"]["enum"] = all_sites_ids
         drt_props["sites"]["description"] = ("Optional "
                 "list of project ID to filter search results to a specific site. In 95% "
                 "of scenarios, you'd filter to only one site, but many site filtering is offered "

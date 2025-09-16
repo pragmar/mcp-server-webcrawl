@@ -33,6 +33,7 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
     resources_type_options = list(ResourceResultType.values())
     resources_sort_options = list(RESOURCES_DEFAULT_SORT_MAPPING.keys())
     sites_display = ", ".join([f"{s.url} (site: {s.id})" for s in sites]) if sites is not None else ""
+    sites_ids = [s.id for s in sites]
 
     tools = [
         Tool(
@@ -98,7 +99,9 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                     },
                     "sites": {
                         "type": "array",
-                        "items": {"type": "integer"},
+                        "items": {
+                            "enum": sites_ids
+                        },
                         "description": ("List of crawl site IDs to filter search results to a specific site. In most "
                             "scenarios, you should filter to only one site, but multiple site filtering is offered for "
                             f"advanced search scenarios. Available sites include {sites_display}.")

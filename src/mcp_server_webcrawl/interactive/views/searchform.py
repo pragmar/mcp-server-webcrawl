@@ -2,7 +2,10 @@ import curses
 
 from typing import TYPE_CHECKING
 
-from mcp_server_webcrawl.interactive.ui import UiState, InputRadio, InputRadioGroup, InputText, NavigationDirection, safe_addstr
+from mcp_server_webcrawl.interactive.ui import (
+    UiState, InputRadio, InputRadioGroup, InputText,
+    ThemeDefinition, NavigationDirection, safe_addstr
+)
 from mcp_server_webcrawl.interactive.views.base import BaseCursesView
 from mcp_server_webcrawl.models.sites import SiteResult
 from mcp_server_webcrawl.interactive.ui import safe_addstr
@@ -200,6 +203,9 @@ class SearchFormView(BaseCursesView):
         safe_addstr(stdscr, y_current, xb + sort_start_x, self.__sort_group.label)
         if sites_start_x + LAYOUT_SITES_MIN_WIDTH_REQUIREMENT < self.bounds.width:
             safe_addstr(stdscr, y_current, xb + sites_start_x, self.__sites_group.label)
+            if not self.__sites:
+                error_style = self.session.get_theme_color_pair(ThemeDefinition.UI_ERROR)
+                safe_addstr(stdscr, y_current + 1, xb + sites_start_x, "No sites available", error_style)
 
         y_current += 1
 
@@ -294,7 +300,7 @@ class SearchFormView(BaseCursesView):
         else:  # radios
             self.__handle_radio_toggle()
             if self.session.ui_state != UiState.SEARCH_INIT:
-                self.session.searchman.autosearch()
+                self.session.searchman.autosearch(immediate=True)
 
 
     def __handle_radio_toggle(self) -> None:

@@ -66,6 +66,7 @@ class SearchResultsView(BaseCursesView):
         super().__init__(session)
         self.__results: list[ResourceResult] = []
         self.__results_total: int = 0
+        self.__results_indexer_status: str = ""
         self.__results_indexer_processed: int = 0
         self.__results_indexer_duration: float = 0
         self.__scroll_offset: int = 0
@@ -153,7 +154,7 @@ class SearchResultsView(BaseCursesView):
         safe_addstr(stdscr, header_y, bounds.x, self._get_bounded_line(), self._get_inner_header_style())
 
         # results count
-        if self.__results and not (self.session.searchman.search_in_progress() or self.session.searchman.has_pending_search()):
+        if self.__results and not (self.session.searchman.is_searching()):
             left_text: str = f"Results ({self.__results_total:,} Found)"
         else:
             left_text = "Results:"
@@ -234,21 +235,23 @@ class SearchResultsView(BaseCursesView):
             return
 
         # check if search is in progress
-        is_searching: bool = (self.session.searchman.search_in_progress() or
-               self.session.searchman.has_pending_search())
+        is_searching: bool = self.session.searchman.is_searching()
 
         message: str = ""
         if is_searching:
             message = "Searching…"
         elif not self.__results:
-            message = "Indexing…" if self.__results_indexer_processed == 0 else "No results found."
+            if self.__results_indexer_status in ("idle", "indexing", ""):
+                message = "Indexing…"
+            else:
+                message = "No results found."
 
         if message != "":
             safe_addstr(stdscr, y_current, LAYOUT_STATUS_MESSAGE_X_OFFSET, message, curses.A_DIM)
         else:
             self.__render_results_list(stdscr, y_current, 0)
 
-    def update(self, results: list[ResourceResult], total: int, indexer_processed: int, indexer_duration: float) -> None:
+    def update(self, results: list[ResourceResult], total: int, indexer_status: str, indexer_processed: int, indexer_duration: float) -> None:
         """
         Update the search results view with new data and reset selection.
         
@@ -260,6 +263,7 @@ class SearchResultsView(BaseCursesView):
         """
         self.__results = results
         self.__results_total = total
+        self.__results_indexer_status = indexer_status
         self.__results_indexer_processed = indexer_processed
         self.__results_indexer_duration = indexer_duration
         self._selected_index = 0
