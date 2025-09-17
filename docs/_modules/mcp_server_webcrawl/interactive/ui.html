@@ -1,0 +1,899 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mcp_server_webcrawl.interactive.ui &mdash; mcp-server-webcrawl  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=888ff710"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            mcp-server-webcrawl
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guides.html">Setup Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">mcp_server_webcrawl</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">mcp-server-webcrawl</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">mcp_server_webcrawl.interactive.ui</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mcp_server_webcrawl.interactive.ui</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">curses</span>
+
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers</span> <span class="kn">import</span> <span class="n">VALID_CRAWLER_CHOICES</span>
+
+<span class="n">SITE_COLUMN_WIDTH</span> <span class="o">=</span> <span class="mi">18</span>
+
+<span class="n">LAYOUT_GRID_COLUMN_SPACING</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">LAYOUT_CONSTRAINED_SITES_PER_COLUMN</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">LAYOUT_SITES_GRID_OFFSET</span> <span class="o">=</span> <span class="mi">6</span>
+
+<span class="n">DEFAULT_GROUP_WIDTH</span> <span class="o">=</span> <span class="mi">12</span>
+
+<span class="n">INPUT_BOX_BRACKET_WIDTH</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">CURSOR_SCROLL_THRESHOLD</span> <span class="o">=</span> <span class="mi">5</span>
+
+<div class="viewcode-block" id="DocumentMode">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.DocumentMode">[docs]</a>
+<span class="k">class</span> <span class="nc">DocumentMode</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">MARKDOWN</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">RAW</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">HEADERS</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="NavigationDirection">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.NavigationDirection">[docs]</a>
+<span class="k">class</span> <span class="nc">NavigationDirection</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">UP</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">DOWN</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">LEFT</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">RIGHT</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ScrollDirection">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.ScrollDirection">[docs]</a>
+<span class="k">class</span> <span class="nc">ScrollDirection</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">UP</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">DOWN</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="SearchFilterType">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.SearchFilterType">[docs]</a>
+<span class="k">class</span> <span class="nc">SearchFilterType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">ANY</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">PAGES</span> <span class="o">=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="ThemeDefinition">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.ThemeDefinition">[docs]</a>
+<span class="k">class</span> <span class="nc">ThemeDefinition</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="c1"># https://www.ditig.com/256-colors-cheat-sheet</span>
+    <span class="n">DOCUMENT_MODE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">curses</span><span class="o">.</span><span class="n">COLOR_BLUE</span><span class="p">,</span> <span class="mi">51</span><span class="p">)</span>
+    <span class="n">HEADER_ACTIVE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">curses</span><span class="o">.</span><span class="n">COLOR_WHITE</span><span class="p">,</span> <span class="mi">17</span><span class="p">)</span>
+    <span class="n">HEADER_INACTIVE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">curses</span><span class="o">.</span><span class="n">COLOR_WHITE</span><span class="p">,</span> <span class="mi">233</span><span class="p">)</span>
+    <span class="n">HEADER_OUTER</span> <span class="o">=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">curses</span><span class="o">.</span><span class="n">COLOR_WHITE</span><span class="p">,</span> <span class="mi">235</span><span class="p">)</span>
+    <span class="n">HELP_LINK</span> <span class="o">=</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">curses</span><span class="o">.</span><span class="n">COLOR_WHITE</span><span class="p">,</span> <span class="mi">27</span><span class="p">)</span>
+    <span class="n">HTTP_ERROR</span> <span class="o">=</span> <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">curses</span><span class="o">.</span><span class="n">COLOR_WHITE</span><span class="p">,</span> <span class="mi">88</span><span class="p">)</span>
+    <span class="n">HTTP_WARN</span> <span class="o">=</span> <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">curses</span><span class="o">.</span><span class="n">COLOR_WHITE</span><span class="p">,</span> <span class="mi">130</span><span class="p">)</span>
+    <span class="n">INACTIVE_QUERY</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">245</span><span class="p">,</span> <span class="mi">237</span><span class="p">)</span>
+    <span class="n">SNIPPET_DEFAULT</span> <span class="o">=</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">243</span><span class="p">,</span> <span class="n">curses</span><span class="o">.</span><span class="n">A_DIM</span><span class="p">)</span>
+    <span class="n">SNIPPET_HIGHLIGHT</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">232</span><span class="p">,</span> <span class="mi">51</span><span class="p">)</span>
+    <span class="n">UI_ERROR</span> <span class="o">=</span> <span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="n">curses</span><span class="o">.</span><span class="n">COLOR_WHITE</span><span class="p">,</span> <span class="mi">88</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="UiFocusable">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.UiFocusable">[docs]</a>
+<span class="k">class</span> <span class="nc">UiFocusable</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">UNDEFINED</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">SEARCH_FORM</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">SEARCH_RESULTS</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="UiState">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.UiState">[docs]</a>
+<span class="k">class</span> <span class="nc">UiState</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">UNDEFINED</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">REQUIREMENTS</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">SEARCH_INIT</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">SEARCH_RESULTS</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">DOCUMENT</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">HELP</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="safe_addstr">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.safe_addstr">[docs]</a>
+<span class="k">def</span> <span class="nf">safe_addstr</span><span class="p">(</span><span class="n">stdscr</span><span class="p">:</span> <span class="n">curses</span><span class="o">.</span><span class="n">window</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">curses</span><span class="o">.</span><span class="n">A_NORMAL</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Safe addstr that handles screen edge errors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">stdscr</span><span class="o">.</span><span class="n">addstr</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">style</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">curses</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="InputRadio">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadio">[docs]</a>
+<span class="k">class</span> <span class="nc">InputRadio</span><span class="p">:</span>
+<div class="viewcode-block" id="InputRadio.__init__">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadio.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">states</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Radio input with 2-3 possible states (e.g., on/off or state1/state2/off)</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            group: The InputRadioGroup this radio belongs to</span>
+<span class="sd">            name: The form radio group name</span>
+<span class="sd">            label: The form radio label  </span>
+<span class="sd">            index: The current state index</span>
+<span class="sd">            states: List of InputRadioState objects defining each possible state            </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># used like so states_radio = InputRadio(groupname, label, index, states=InputRadioGroup.get_filters())</span>
+        <span class="k">if</span> <span class="n">states</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">states</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">assert</span> <span class="n">states</span><span class="p">,</span> <span class="s2">&quot;states must be provided and non-empty&quot;</span>
+        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">states</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;index </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> out of range for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s2"> states&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">label</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_states</span> <span class="o">=</span> <span class="n">states</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_group</span> <span class="o">=</span> <span class="n">group</span></div>
+
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">current_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the current state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_states</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">display_label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the current display label</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">label</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the current value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">value</span>
+
+<div class="viewcode-block" id="InputRadio.next_state">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadio.next_state">[docs]</a>
+    <span class="k">def</span> <span class="nf">next_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Cycle to the next state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># clear group for single-selection radios</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;filter&quot;</span><span class="p">,</span> <span class="s2">&quot;site&quot;</span><span class="p">,</span> <span class="s2">&quot;crawler&quot;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_group</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;sort&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>         <span class="c1"># inactive &quot; &quot; -&gt; active ascending &quot;+&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_group</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>       <span class="c1"># ascending &quot;+&quot; -&gt; descending &quot;-&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="mi">2</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>       <span class="c1"># descending &quot;-&quot; -&gt; ascending &quot;+&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># standard cycling for other radios</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_states</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InputRadio.render">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadio.render">[docs]</a>
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stdscr</span><span class="p">:</span> <span class="n">curses</span><span class="o">.</span><span class="n">window</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">field_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">focused</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Render a single radio option.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">radio_symbol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_label</span>
+        <span class="n">display_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span>
+        <span class="k">if</span> <span class="n">max_width</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">display_text</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_width</span><span class="p">:</span>
+            <span class="n">display_text</span> <span class="o">=</span> <span class="n">display_text</span><span class="p">[:</span><span class="n">max_width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;…&quot;</span>
+
+        <span class="n">line</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">radio_symbol</span><span class="si">}</span><span class="s2">) </span><span class="si">{</span><span class="n">display_text</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">style</span> <span class="o">=</span> <span class="n">curses</span><span class="o">.</span><span class="n">A_REVERSE</span> <span class="k">if</span> <span class="n">focused</span> <span class="k">else</span> <span class="n">curses</span><span class="o">.</span><span class="n">A_NORMAL</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">safe_addstr</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">style</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">curses</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+            <span class="k">pass</span>  <span class="c1"># screen edge</span></div>
+
+
+<div class="viewcode-block" id="InputRadio.set_state">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadio.set_state">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the current state by index</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_states</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;State index </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> out of range&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InputRadio.set_states">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadio.set_states">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">states</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the current state by index</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_states</span> <span class="o">=</span> <span class="n">states</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">display_label</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+
+
+<div class="viewcode-block" id="InputRadioGroup">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadioGroup">[docs]</a>
+<span class="k">class</span> <span class="nc">InputRadioGroup</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Radio group with navigation and layout management capabilities.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="InputRadioGroup.__init__">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadioGroup.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sites</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Radio input group with layout and navigation support.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            name: The form radio group name (&quot;filter&quot;, &quot;sort&quot;, &quot;site&quot;, or &quot;crawler&quot;)</span>
+<span class="sd">            sites: List of SiteResult objects, required only for &quot;site&quot; group type</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sites</span> <span class="o">=</span> <span class="n">sites</span> <span class="k">if</span> <span class="n">sites</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__selected_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># layout configuration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__available_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__available_height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__is_constrained</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__sites_per_column</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__max_columns</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">radios</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InputRadio</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">group_config</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__load_filters</span><span class="p">,</span> <span class="s2">&quot;Filter:&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;site&quot;</span><span class="p">:</span> <span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__load_sites</span><span class="p">(</span><span class="n">sites</span><span class="p">),</span> <span class="s2">&quot;Sites:&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;sort&quot;</span><span class="p">:</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__load_sorts</span><span class="p">,</span> <span class="s2">&quot;Sorts:&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;crawler&quot;</span><span class="p">:</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__load_crawlers</span><span class="p">,</span> <span class="s2">&quot;Crawlers:&quot;</span><span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">group_config</span><span class="p">:</span>
+            <span class="n">data_loader</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="n">group_config</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">label</span>
+            <span class="n">data_loader</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported radio option: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">radios</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">radios</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">next_state</span><span class="p">()</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">radio</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">radios</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">radio</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s2">&quot;on&quot;</span> <span class="ow">or</span> <span class="n">radio</span><span class="o">.</span><span class="n">display_label</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">]:</span>  <span class="c1"># selected state</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;filter&quot;</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="s2">&quot;html&quot;</span> <span class="k">if</span> <span class="n">radio</span><span class="o">.</span><span class="n">label</span> <span class="o">==</span> <span class="s2">&quot;HTML&quot;</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;sort&quot;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">radio</span><span class="o">.</span><span class="n">display_label</span> <span class="o">==</span> <span class="s2">&quot;+&quot;</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;+</span><span class="si">{</span><span class="n">radio</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="k">elif</span> <span class="n">radio</span><span class="o">.</span><span class="n">display_label</span> <span class="o">==</span> <span class="s2">&quot;-&quot;</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;-</span><span class="si">{</span><span class="n">radio</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;site&quot;</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">radio</span><span class="o">.</span><span class="n">label</span>  <span class="c1"># or site ID/URL however you want to identify it</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;crawler&quot;</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">radio</span><span class="o">.</span><span class="n">label</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+<div class="viewcode-block" id="InputRadioGroup.calculate_group_width">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadioGroup.calculate_group_width">[docs]</a>
+    <span class="k">def</span> <span class="nf">calculate_group_width</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the display width needed for a radio group.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">radios</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">DEFAULT_GROUP_WIDTH</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">radio</span><span class="o">.</span><span class="n">label</span><span class="p">)</span> <span class="k">for</span> <span class="n">radio</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">radios</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InputRadioGroup.clear">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadioGroup.clear">[docs]</a>
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">radios</span><span class="p">:</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="InputRadioGroup.set_layout_constraints">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadioGroup.set_layout_constraints">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_layout_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">available_width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">available_height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">is_constrained</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set layout constraints for grid-based groups (like sites).</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            available_width: Available horizontal space</span>
+<span class="sd">            available_height: Available vertical space  </span>
+<span class="sd">            is_constrained: Whether layout is constrained (affects sites per column)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__available_width</span> <span class="o">=</span> <span class="n">available_width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__available_height</span> <span class="o">=</span> <span class="n">available_height</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__is_constrained</span> <span class="o">=</span> <span class="n">is_constrained</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;site&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__calculate_grid_layout</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="InputRadioGroup.get_grid_position">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadioGroup.get_grid_position">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_grid_position</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">radio_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert linear radio index to grid position.</span>
+<span class="sd">        Only applies to site groups; other groups return (radio_index, 0).</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            radio_index: Linear index in radios list</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple: (row, column) position in grid layout</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;site&quot;</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sites_per_column</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">radio_index</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">row</span> <span class="o">=</span> <span class="n">radio_index</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sites_per_column</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="n">radio_index</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sites_per_column</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InputRadioGroup.get_index_from_grid">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadioGroup.get_index_from_grid">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_index_from_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">col</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert grid position to linear radio index.</span>
+<span class="sd">        Only works for site groups; returns None for other group types.</span>
+<span class="sd">    </span>
+<span class="sd">        Args:</span>
+<span class="sd">            row: Row in grid (0-based)</span>
+<span class="sd">            col: Column in grid (0-based)</span>
+<span class="sd">    </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Linear index if position exists within grid bounds, None otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;site&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">row</span> <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">row</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">radios</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+<span class="c1">#</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sites_per_column</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+<span class="c1">#</span>
+        <span class="n">radio_index</span> <span class="o">=</span> <span class="n">col</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sites_per_column</span> <span class="o">+</span> <span class="n">row</span>
+        <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">radio_index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">radios</span><span class="p">)</span> <span class="ow">and</span>
+            <span class="n">radio_index</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sites_per_column</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">__max_columns</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">radio_index</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="InputRadioGroup.navigate_left">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadioGroup.navigate_left">[docs]</a>
+    <span class="k">def</span> <span class="nf">navigate_left</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_radio_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Navigate left within this group&#39;s layout.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            current_radio_index: Current position in radios list</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            New radio index if navigation successful, None if should exit group</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;site&quot;</span><span class="p">:</span>
+            <span class="c1"># don&#39;t support horizontal navigation</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">current_row</span><span class="p">,</span> <span class="n">current_col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_grid_position</span><span class="p">(</span><span class="n">current_radio_index</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">current_col</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># to previous column, same row</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_index_from_grid</span><span class="p">(</span><span class="n">current_row</span><span class="p">,</span> <span class="n">current_col</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># at leftmost column, signal exit to parent</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="InputRadioGroup.navigate_right">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadioGroup.navigate_right">[docs]</a>
+    <span class="k">def</span> <span class="nf">navigate_right</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_radio_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Navigate right within this group&#39;s layout.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            current_radio_index: Current position in radios list</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            New radio index if navigation successful, None if should exit group</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;site&quot;</span><span class="p">:</span>
+            <span class="c1"># don&#39;t support horizontal navigation</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">current_row</span><span class="p">,</span> <span class="n">current_col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_grid_position</span><span class="p">(</span><span class="n">current_radio_index</span><span class="p">)</span>
+        <span class="n">new_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_index_from_grid</span><span class="p">(</span><span class="n">current_row</span><span class="p">,</span> <span class="n">current_col</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_index</span>  <span class="c1"># if invalid/out of bounds</span></div>
+
+
+<div class="viewcode-block" id="InputRadioGroup.navigate_to_row">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadioGroup.navigate_to_row">[docs]</a>
+    <span class="k">def</span> <span class="nf">navigate_to_row</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_row</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">from_column</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Navigate to a specific row from an external column position.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;site&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">target_row</span> <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">target_row</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">radios</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sites_per_column</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">target_row</span> <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">target_row</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">radios</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_index_from_grid</span><span class="p">(</span><span class="n">target_row</span><span class="p">,</span> <span class="n">from_column</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InputRadioGroup.get_row_from_index">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadioGroup.get_row_from_index">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_row_from_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">radio_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the row number for navigation between groups.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            radio_index: Linear index in radios list</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Row number for inter-group navigation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;site&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">radio_index</span>
+
+        <span class="n">row</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_grid_position</span><span class="p">(</span><span class="n">radio_index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">row</span></div>
+
+
+    <span class="k">def</span> <span class="nf">__calculate_grid_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate grid layout parameters for sites group.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;site&quot;</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__sites_per_column</span> <span class="o">=</span> <span class="p">(</span><span class="n">LAYOUT_CONSTRAINED_SITES_PER_COLUMN</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__is_constrained</span>
+                                 <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__available_height</span> <span class="o">-</span> <span class="n">LAYOUT_SITES_GRID_OFFSET</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">radios</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__available_width</span> <span class="o">&gt;</span> <span class="n">SITE_COLUMN_WIDTH</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__max_columns</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__available_width</span> <span class="o">//</span> <span class="p">(</span><span class="n">SITE_COLUMN_WIDTH</span> <span class="o">+</span> <span class="n">LAYOUT_GRID_COLUMN_SPACING</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__max_columns</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">__display_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;://&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__get_on_off_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">InputRadioState</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+            <span class="n">InputRadioState</span><span class="p">(</span><span class="s2">&quot;●&quot;</span><span class="p">,</span> <span class="s2">&quot;on&quot;</span><span class="p">)</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__load_crawlers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># &quot;archivebox&quot;, &quot;httrack&quot;, &quot;interrobot&quot;, &quot;katana&quot;, &quot;siteone&quot;, &quot;warc&quot;, &quot;wget&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radios</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">InputRadio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;crawler&quot;</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_on_off_state</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">VALID_CRAWLER_CHOICES</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__load_filters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radios</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">InputRadio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;filter&quot;</span><span class="p">,</span> <span class="s2">&quot;HTML&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_on_off_state</span><span class="p">()),</span>
+            <span class="n">InputRadio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;filter&quot;</span><span class="p">,</span> <span class="s2">&quot;any&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_on_off_state</span><span class="p">())</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__load_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sites</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">site_labels</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__display_url</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">url</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">sites</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radios</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">InputRadio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;site&quot;</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_on_off_state</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">site_labels</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__load_sorts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sort_states</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">InputRadioState</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+            <span class="n">InputRadioState</span><span class="p">(</span><span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="s2">&quot;+&quot;</span><span class="p">),</span>
+            <span class="n">InputRadioState</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="n">sort_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;URL&quot;</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;size&quot;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">radios</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">InputRadio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;sort&quot;</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sort_states</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">sort_labels</span>
+        <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="InputRadioState">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputRadioState">[docs]</a>
+<span class="k">class</span> <span class="nc">InputRadioState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;●&quot;, &quot; &quot;, &quot;-&quot;, &quot;+&quot;</span>
+    <span class="n">value</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;&quot;, &quot;+url&quot;, &quot;-sort&quot;</span></div>
+
+
+<div class="viewcode-block" id="InputText">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputText">[docs]</a>
+<span class="k">class</span> <span class="nc">InputText</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A reusable text input field with cursor management, rendering, and input handling.</span>
+<span class="sd">    Consolidates the common text input functionality used across the application.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="InputText.__init__">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputText.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">max_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the text input field.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            initial_value: Starting text value</span>
+<span class="sd">            max_length: Maximum allowed text length (None for unlimited)</span>
+<span class="sd">            label: Display label for the field</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">initial_value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">initial_value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">max_length</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">label</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_display_cache</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_value_hash</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="InputText.backspace">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputText.backspace">[docs]</a>
+    <span class="k">def</span> <span class="nf">backspace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove the character before the cursor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span><span class="p">:]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span> <span class="o">-=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="InputText.clear">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputText.clear">[docs]</a>
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Clear all text and reset cursor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="InputText.delete">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputText.delete">[docs]</a>
+    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove the character at the cursor position.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span></div>
+
+
+<div class="viewcode-block" id="InputText.end">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputText.end">[docs]</a>
+    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Move cursor to the end of the text.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InputText.handle_input">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputText.handle_input">[docs]</a>
+    <span class="k">def</span> <span class="nf">handle_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handle keyboard input for the text field.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            key: The curses key code</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True if the input was handled, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">handlers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">curses</span><span class="o">.</span><span class="n">KEY_LEFT</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">move_cursor_left</span><span class="p">,</span>
+            <span class="n">curses</span><span class="o">.</span><span class="n">KEY_RIGHT</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">move_cursor_right</span><span class="p">,</span>
+            <span class="n">curses</span><span class="o">.</span><span class="n">KEY_HOME</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">home</span><span class="p">,</span>
+            <span class="n">curses</span><span class="o">.</span><span class="n">KEY_END</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">,</span>
+            <span class="n">curses</span><span class="o">.</span><span class="n">KEY_BACKSPACE</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">backspace</span><span class="p">,</span>
+            <span class="mi">127</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">backspace</span><span class="p">,</span>  <span class="c1"># alternative backspace</span>
+            <span class="mi">8</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">backspace</span><span class="p">,</span>    <span class="c1"># alternative backspace</span>
+            <span class="n">curses</span><span class="o">.</span><span class="n">KEY_DC</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">delete</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="n">handler</span> <span class="o">=</span> <span class="n">handlers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">handler</span><span class="p">:</span>
+            <span class="n">handler</span><span class="p">()</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="mi">32</span> <span class="o">&lt;=</span> <span class="n">key</span> <span class="o">&lt;=</span> <span class="mi">126</span><span class="p">:</span>  <span class="c1"># printable characters</span>
+            <span class="n">char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">insert_char</span><span class="p">(</span><span class="n">char</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="InputText.home">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputText.home">[docs]</a>
+    <span class="k">def</span> <span class="nf">home</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Move cursor to the beginning of the text.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="InputText.insert_char">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputText.insert_char">[docs]</a>
+    <span class="k">def</span> <span class="nf">insert_char</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Insert a character at the current cursor position.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sanitized</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sanitize_input</span><span class="p">(</span><span class="n">char</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sanitized</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span><span class="p">]</span> <span class="o">+</span> <span class="n">char</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span><span class="p">:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="InputText.is_empty">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputText.is_empty">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_empty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if the text field is empty.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="InputText.move_cursor_left">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputText.move_cursor_left">[docs]</a>
+    <span class="k">def</span> <span class="nf">move_cursor_left</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Move cursor one position to the left.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span> <span class="o">-=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="InputText.move_cursor_right">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputText.move_cursor_right">[docs]</a>
+    <span class="k">def</span> <span class="nf">move_cursor_right</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Move cursor one position to the right.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="InputText.render">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputText.render">[docs]</a>
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stdscr</span><span class="p">:</span> <span class="n">curses</span><span class="o">.</span><span class="n">window</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+               <span class="n">focused</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Render the text input field with box, text, and cursor.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            stdscr: The curses window</span>
+<span class="sd">            y: Y position to render at</span>
+<span class="sd">            x: X position to render at  </span>
+<span class="sd">            width: Total width of the input box</span>
+<span class="sd">            focused: Whether this field has focus (shows cursor)</span>
+<span class="sd">            style: Curses style attributes to apply</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># account for [ ] brackets</span>
+        <span class="n">inner_width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">width</span> <span class="o">-</span> <span class="n">INPUT_BOX_BRACKET_WIDTH</span><span class="p">)</span>
+        <span class="n">display_text</span><span class="p">,</span> <span class="n">display_cursor_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__calculate_display_text_and_cursor</span><span class="p">(</span><span class="n">inner_width</span><span class="p">)</span>
+        <span class="n">box_content</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">display_text</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">inner_width</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span>
+        <span class="k">if</span> <span class="n">style</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">style</span> <span class="o">=</span> <span class="n">curses</span><span class="o">.</span><span class="n">A_REVERSE</span> <span class="k">if</span> <span class="n">focused</span> <span class="k">else</span> <span class="n">curses</span><span class="o">.</span><span class="n">A_NORMAL</span>
+
+        <span class="n">safe_addstr</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">box_content</span><span class="p">,</span> <span class="n">style</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">focused</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__render_cursor</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">display_text</span><span class="p">,</span> <span class="n">display_cursor_pos</span><span class="p">,</span> <span class="n">inner_width</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InputText.set_value">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.InputText.set_value">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the text value and adjust cursor if needed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">new_value</span>
+        <span class="c1"># cursor doesn&#39;t go beyond text length</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">))</span></div>
+
+
+    <span class="k">def</span> <span class="nf">__sanitize_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sanitize input character, return None if should be rejected</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># strip control characters</span>
+        <span class="k">if</span> <span class="nb">ord</span><span class="p">(</span><span class="n">char</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">32</span> <span class="ow">or</span> <span class="nb">ord</span><span class="p">(</span><span class="n">char</span><span class="p">)</span> <span class="o">==</span> <span class="mi">127</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="c1"># add more checks here as needed</span>
+        <span class="k">return</span> <span class="n">char</span>
+
+    <span class="k">def</span> <span class="nf">__render_cursor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stdscr</span><span class="p">:</span> <span class="n">curses</span><span class="o">.</span><span class="n">window</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                      <span class="n">display_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">display_cursor_pos</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">inner_width</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Render the cursor at the appropriate position.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            stdscr: The curses window</span>
+<span class="sd">            y: Y position of the input box</span>
+<span class="sd">            x: X position of the input box</span>
+<span class="sd">            display_text: The currently displayed text</span>
+<span class="sd">            display_cursor_pos: Where the cursor appears in the displayed text</span>
+<span class="sd">            inner_width: Available width inside the box</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">display_cursor_pos</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">display_text</span><span class="p">)</span> <span class="ow">and</span> <span class="n">display_cursor_pos</span> <span class="o">&lt;</span> <span class="n">inner_width</span><span class="p">:</span>
+                <span class="n">cursor_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">display_cursor_pos</span>
+                <span class="c1"># highlight the character under cursor instead of just reversing</span>
+                <span class="n">char_under_cursor</span> <span class="o">=</span> <span class="n">display_text</span><span class="p">[</span><span class="n">display_cursor_pos</span><span class="p">]</span>
+                <span class="n">safe_addstr</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">cursor_x</span><span class="p">,</span> <span class="n">char_under_cursor</span><span class="p">,</span> <span class="n">curses</span><span class="o">.</span><span class="n">A_REVERSE</span> <span class="o">|</span> <span class="n">curses</span><span class="o">.</span><span class="n">A_BOLD</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">display_cursor_pos</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">display_cursor_pos</span> <span class="o">&lt;</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">inner_width</span><span class="p">:</span>
+                <span class="c1"># cursor at end - underscore</span>
+                <span class="n">cursor_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">display_cursor_pos</span>
+                <span class="n">safe_addstr</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">cursor_x</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="n">curses</span><span class="o">.</span><span class="n">A_REVERSE</span> <span class="o">|</span> <span class="n">curses</span><span class="o">.</span><span class="n">A_BOLD</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">curses</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+
+    <span class="k">def</span> <span class="nf">__calculate_display_text_and_cursor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inner_width</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate what portion of text to display and where the cursor should appear.</span>
+<span class="sd">        Handles horizontal scrolling for long text.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            inner_width: Available width inside the input box</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple: (display_text, display_cursor_position)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">current_hash</span> <span class="o">=</span> <span class="nb">hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span><span class="p">,</span> <span class="n">inner_width</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">current_hash</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_value_hash</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_display_cache</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_display_cache</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">inner_width</span><span class="p">:</span>
+            <span class="c1"># text fits entirely</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span>
+
+        <span class="c1"># text is longer than available space, scroll</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span> <span class="o">&gt;=</span> <span class="n">inner_width</span> <span class="o">-</span> <span class="n">CURSOR_SCROLL_THRESHOLD</span><span class="p">:</span>
+            <span class="n">start_pos</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="o">-</span> <span class="n">inner_width</span><span class="p">)</span>
+            <span class="n">display_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">start_pos</span><span class="p">:]</span>
+            <span class="n">display_cursor_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span> <span class="o">-</span> <span class="n">start_pos</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">display_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">[:</span><span class="n">inner_width</span><span class="p">]</span>
+            <span class="n">display_cursor_pos</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursor_pos</span><span class="p">,</span> <span class="n">inner_width</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">display_text</span><span class="p">,</span> <span class="n">display_cursor_pos</span></div>
+
+
+<div class="viewcode-block" id="ViewBounds">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.ViewBounds">[docs]</a>
+<span class="k">class</span> <span class="nc">ViewBounds</span><span class="p">:</span>
+<div class="viewcode-block" id="ViewBounds.__init__">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.ui.ViewBounds.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="n">height</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, pragmar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

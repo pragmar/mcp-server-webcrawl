@@ -1,0 +1,600 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mcp_server_webcrawl.interactive.session &mdash; mcp-server-webcrawl  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=888ff710"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            mcp-server-webcrawl
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guides.html">Setup Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">mcp_server_webcrawl</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">mcp-server-webcrawl</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">mcp_server_webcrawl.interactive.session</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mcp_server_webcrawl.interactive.session</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">curses</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers</span> <span class="kn">import</span> <span class="n">get_crawler</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.crawler</span> <span class="kn">import</span> <span class="n">BaseCrawler</span><span class="p">,</span> <span class="n">BaseJsonApi</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.interactive.search</span> <span class="kn">import</span> <span class="n">SearchManager</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.interactive.ui</span> <span class="kn">import</span> <span class="n">ThemeDefinition</span><span class="p">,</span> <span class="n">UiState</span><span class="p">,</span> <span class="n">DocumentMode</span><span class="p">,</span> <span class="n">UiFocusable</span><span class="p">,</span> <span class="n">ViewBounds</span><span class="p">,</span> <span class="n">safe_addstr</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.interactive.views.base</span> <span class="kn">import</span> <span class="n">BaseCursesView</span><span class="p">,</span> <span class="n">OUTER_WIDTH_RIGHT_MARGIN</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.interactive.views.document</span> <span class="kn">import</span> <span class="n">SearchDocumentView</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.interactive.views.requirements</span> <span class="kn">import</span> <span class="n">RequirementsView</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.interactive.views.results</span> <span class="kn">import</span> <span class="n">SearchResultsView</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.interactive.views.searchform</span> <span class="kn">import</span> <span class="n">SearchFormView</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.interactive.views.help</span> <span class="kn">import</span> <span class="n">HelpView</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="n">SiteResult</span>
+
+<span class="c1"># can be as low as 1, 50 feels a little laggy</span>
+<span class="n">CURSES_TIMEOUT_MS</span> <span class="o">=</span> <span class="mi">25</span>
+
+<span class="n">LAYOUT_CONTENT_START_Y_OFFSET</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">LAYOUT_CONTENT_END_Y_OFFSET</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">LAYOUT_SPLIT_PANE_MAX_HEIGHT</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">LAYOUT_MIN_HEIGHT_FOR_HELP</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="n">DEBUG_MAX_LINES</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">DEBUG_COMPACT_WIDTH_RATIO</span> <span class="o">=</span> <span class="mf">0.4</span>
+<span class="n">DEBUG_MIN_COMPACT_WIDTH</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="n">DEBUG_COMPACT_THRESHOLD</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">DEBUG_EXPANDED_MARGIN</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">DEBUG_EXPANDED_START_X</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">DEBUG_EXPANDED_BOTTOM_MARGIN</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">DEBUG_COMPACT_BOTTOM_MARGIN</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">DEBUG_MIN_START_Y</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">DEBUG_MIN_START_Y_EXPANDED</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="n">SEARCH_DOCUMENT_NEXT_MODE</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">DocumentMode</span><span class="p">,</span> <span class="n">DocumentMode</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">DocumentMode</span><span class="o">.</span><span class="n">MARKDOWN</span><span class="p">:</span> <span class="n">DocumentMode</span><span class="o">.</span><span class="n">RAW</span><span class="p">,</span>
+    <span class="n">DocumentMode</span><span class="o">.</span><span class="n">RAW</span><span class="p">:</span> <span class="n">DocumentMode</span><span class="o">.</span><span class="n">HEADERS</span><span class="p">,</span>
+    <span class="n">DocumentMode</span><span class="o">.</span><span class="n">HEADERS</span><span class="p">:</span> <span class="n">DocumentMode</span><span class="o">.</span><span class="n">MARKDOWN</span>
+<span class="p">}</span>
+
+<span class="n">SEARCH_RESULT_LIMIT</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">TERMINAL_MIN_HEIGHT</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">TERMINAL_MIN_WIDTH</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">40</span>
+
+<div class="viewcode-block" id="InteractiveSession">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.session.InteractiveSession">[docs]</a>
+<span class="k">class</span> <span class="nc">InteractiveSession</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Main session coordinator that manages the interactive terminal application.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="InteractiveSession.__init__">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.session.InteractiveSession.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crawler</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">datasrc</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the interactive session with crawler and data source.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__input_crawler</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">crawler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__input_datasrc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">datasrc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__theme_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__searchman</span><span class="p">:</span> <span class="n">SearchManager</span> <span class="o">=</span> <span class="n">SearchManager</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span><span class="p">:</span> <span class="n">UiState</span> <span class="o">=</span> <span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_INIT</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__ui_focused</span><span class="p">:</span> <span class="n">UiFocusable</span> <span class="o">=</span> <span class="n">UiFocusable</span><span class="o">.</span><span class="n">SEARCH_FORM</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__debug</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__view__requirements</span> <span class="o">=</span> <span class="n">RequirementsView</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crawler</span><span class="p">,</span> <span class="n">datasrc</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__requirements</span><span class="o">.</span><span class="n">validated</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">crawl_model</span> <span class="o">=</span> <span class="n">get_crawler</span><span class="p">(</span><span class="n">crawler</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">crawl_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__crawler</span><span class="p">:</span> <span class="n">BaseCrawler</span> <span class="o">=</span> <span class="n">crawl_model</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">datasrc</span><span class="p">))</span>
+                <span class="n">sites_api</span><span class="p">:</span> <span class="n">BaseJsonApi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__sites</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SiteResult</span><span class="p">]</span> <span class="o">=</span> <span class="n">sites_api</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__crawler</span><span class="p">:</span> <span class="n">BaseCrawler</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">sites_api</span><span class="p">:</span> <span class="n">BaseJsonApi</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__sites</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SiteResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">crawl_model</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__crawler</span><span class="p">:</span> <span class="n">BaseCrawler</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">sites_api</span><span class="p">:</span> <span class="n">BaseJsonApi</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__sites</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SiteResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__view__results</span> <span class="o">=</span> <span class="n">SearchResultsView</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__view__document</span> <span class="o">=</span> <span class="n">SearchDocumentView</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span> <span class="o">=</span> <span class="n">SearchFormView</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sites</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__view__help</span> <span class="o">=</span> <span class="n">HelpView</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_ui_state</span><span class="p">(</span><span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_INIT</span><span class="p">,</span> <span class="n">UiFocusable</span><span class="o">.</span><span class="n">SEARCH_FORM</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ui_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span>  <span class="n">UiState</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ui_focused</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span>  <span class="n">UiFocusable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_focused</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">crawler</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span>  <span class="n">BaseCrawler</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__crawler</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">document</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SearchDocumentView</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__document</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SearchResultsView</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__results</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">searchform</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SearchFormView</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">searchman</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SearchManager</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__searchman</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sites</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span>  <span class="nb">list</span><span class="p">[</span><span class="n">SiteResult</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sites</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+<div class="viewcode-block" id="InteractiveSession.debug_add">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.session.InteractiveSession.debug_add">[docs]</a>
+    <span class="k">def</span> <span class="nf">debug_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add line of debug.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__debug</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InteractiveSession.debug_clear">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.session.InteractiveSession.debug_clear">[docs]</a>
+    <span class="k">def</span> <span class="nf">debug_clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Clear debug statements.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__debug</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="InteractiveSession.run">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.session.InteractiveSession.run">[docs]</a>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Public interface to launch the interactive terminal application.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">curses</span><span class="o">.</span><span class="n">wrapper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__curses_main</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+            <span class="k">pass</span>  <span class="c1"># clean exit, ctrl+c</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;--interactive failure: </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">searchman</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+            <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="InteractiveSession.set_ui_state">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.session.InteractiveSession.set_ui_state">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_ui_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">UiState</span><span class="p">,</span> <span class="n">focus</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">UiFocusable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Transition between UI states cleanly.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span> <span class="o">=</span> <span class="n">state</span>
+        <span class="k">if</span> <span class="n">focus</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__ui_focused</span> <span class="o">=</span> <span class="n">focus</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__view__results</span><span class="o">.</span><span class="n">set_focused</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">set_focused</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_INIT</span> <span class="ow">or</span> <span class="p">(</span><span class="n">state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_RESULTS</span> <span class="ow">and</span> <span class="n">focus</span> <span class="o">==</span> <span class="n">UiFocusable</span><span class="o">.</span><span class="n">SEARCH_FORM</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">set_focused</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_RESULTS</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__view__results</span><span class="o">.</span><span class="n">set_focused</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+    <span class="c1"># used in requirements view to reset with user inputs over cmd args</span>
+<div class="viewcode-block" id="InteractiveSession.set_init_input_args">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.session.InteractiveSession.set_init_input_args">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_init_input_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crawler</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">datasrc</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__input_crawler</span> <span class="o">=</span> <span class="n">crawler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__input_datasrc</span> <span class="o">=</span> <span class="n">datasrc</span></div>
+
+
+<div class="viewcode-block" id="InteractiveSession.set_init_crawler">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.session.InteractiveSession.set_init_crawler">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_init_crawler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crawler</span><span class="p">:</span> <span class="n">BaseCrawler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__crawler</span> <span class="o">=</span> <span class="n">crawler</span></div>
+
+
+<div class="viewcode-block" id="InteractiveSession.set_init_sites">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.session.InteractiveSession.set_init_sites">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_init_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sites</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__sites</span> <span class="o">=</span> <span class="n">sites</span></div>
+
+
+    <span class="c1"># used in requirements to reset app</span>
+<div class="viewcode-block" id="InteractiveSession.set_init_searchform">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.session.InteractiveSession.set_init_searchform">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_init_searchform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">searchform</span><span class="p">:</span> <span class="n">BaseCursesView</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span> <span class="o">=</span> <span class="n">searchform</span></div>
+
+
+    <span class="k">def</span> <span class="nf">__get_outer_screen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ViewBounds</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the outer screen bounds for the full terminal.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ViewBounds</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">width</span><span class="o">=</span><span class="n">width</span> <span class="o">-</span> <span class="n">OUTER_WIDTH_RIGHT_MARGIN</span><span class="p">,</span>
+            <span class="n">height</span><span class="o">=</span><span class="n">height</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__get_inner_screen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ViewBounds</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the inner screen bounds for content area.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">content_start_y</span> <span class="o">=</span> <span class="n">LAYOUT_CONTENT_START_Y_OFFSET</span>
+        <span class="n">content_end_y</span> <span class="o">=</span> <span class="n">height</span> <span class="o">-</span> <span class="n">LAYOUT_CONTENT_END_Y_OFFSET</span>
+        <span class="n">content_height</span> <span class="o">=</span> <span class="n">content_end_y</span> <span class="o">-</span> <span class="n">content_start_y</span>
+
+        <span class="k">return</span> <span class="n">ViewBounds</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">content_start_y</span><span class="p">,</span>  <span class="c1"># after outer header</span>
+            <span class="n">width</span><span class="o">=</span><span class="n">width</span> <span class="o">-</span> <span class="n">OUTER_WIDTH_RIGHT_MARGIN</span><span class="p">,</span>
+            <span class="n">height</span><span class="o">=</span><span class="n">content_height</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__get_split_top</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ViewBounds</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the top split screen bounds for dual-pane layout.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">content_start_y</span> <span class="o">=</span> <span class="n">LAYOUT_CONTENT_START_Y_OFFSET</span>
+        <span class="n">content_height</span> <span class="o">=</span> <span class="n">height</span> <span class="o">-</span> <span class="mi">2</span>
+        <span class="n">split_top_height</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">LAYOUT_SPLIT_PANE_MAX_HEIGHT</span><span class="p">,</span> <span class="n">content_height</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ViewBounds</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">content_start_y</span><span class="p">,</span>
+            <span class="n">width</span><span class="o">=</span><span class="n">width</span> <span class="o">-</span> <span class="n">OUTER_WIDTH_RIGHT_MARGIN</span><span class="p">,</span>
+            <span class="n">height</span><span class="o">=</span><span class="n">split_top_height</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__get_split_bottom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ViewBounds</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the bottom split screen bounds for dual-pane layout.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">content_start_y</span> <span class="o">=</span> <span class="n">LAYOUT_CONTENT_START_Y_OFFSET</span>
+        <span class="n">content_height</span> <span class="o">=</span> <span class="n">height</span> <span class="o">-</span> <span class="mi">2</span>
+        <span class="n">split_top_height</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">LAYOUT_SPLIT_PANE_MAX_HEIGHT</span><span class="p">,</span> <span class="n">content_height</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">split_bottom_height</span> <span class="o">=</span> <span class="n">content_height</span> <span class="o">-</span> <span class="n">split_top_height</span>
+
+        <span class="k">return</span> <span class="n">ViewBounds</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">content_start_y</span> <span class="o">+</span> <span class="n">split_top_height</span><span class="p">,</span>
+            <span class="n">width</span><span class="o">=</span><span class="n">width</span> <span class="o">-</span> <span class="n">OUTER_WIDTH_RIGHT_MARGIN</span><span class="p">,</span>
+            <span class="n">height</span><span class="o">=</span><span class="n">split_bottom_height</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__curses_main</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stdscr</span><span class="p">:</span> <span class="n">curses</span><span class="o">.</span><span class="n">window</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize curses environment and start main loop.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">curses</span><span class="o">.</span><span class="n">COLORS</span> <span class="o">&lt;</span> <span class="mi">256</span><span class="p">:</span>
+            <span class="c1"># display error in curses, dependable</span>
+            <span class="n">stdscr</span><span class="o">.</span><span class="n">addstr</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;--interactive mode requires a 256-color (or better) terminal&quot;</span><span class="p">)</span>
+            <span class="n">stdscr</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+            <span class="n">stdscr</span><span class="o">.</span><span class="n">getch</span><span class="p">()</span>  <span class="c1"># wait for keypress</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># initialize curses style pairs</span>
+        <span class="n">curses</span><span class="o">.</span><span class="n">start_color</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">theme</span> <span class="ow">in</span> <span class="n">ThemeDefinition</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__theme_map</span><span class="p">[</span><span class="n">theme</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">curses</span><span class="o">.</span><span class="n">init_pair</span><span class="p">(</span><span class="o">*</span><span class="n">theme</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="c1"># hide cursor, otherwise blinks at edge of last write</span>
+        <span class="n">curses</span><span class="o">.</span><span class="n">curs_set</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># start main loop</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__interactive_loop</span><span class="p">(</span><span class="n">stdscr</span><span class="p">)</span>
+
+<div class="viewcode-block" id="InteractiveSession.get_theme_color_pair">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.interactive.html#mcp_server_webcrawl.interactive.session.InteractiveSession.get_theme_color_pair">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_theme_color_pair</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theme</span><span class="p">:</span> <span class="n">ThemeDefinition</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">theme</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__theme_map</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">curses</span><span class="o">.</span><span class="n">color_pair</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__theme_map</span><span class="p">[</span><span class="n">theme</span><span class="o">.</span><span class="n">name</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+    <span class="k">def</span> <span class="nf">__get_help_text</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get context-sensitive help text.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">page_results</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot; | ←→ Page Results&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui_focused</span> <span class="o">==</span> <span class="n">UiFocusable</span><span class="o">.</span><span class="n">SEARCH_RESULTS</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">search_results_enter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Search&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">focused</span> <span class="k">else</span> <span class="s2">&quot;View Document&quot;</span>
+        <span class="n">search_results_tab</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Results&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">focused</span> <span class="k">else</span> <span class="s2">&quot;Search Form&quot;</span>
+        <span class="n">footers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">UiState</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">UiState</span><span class="o">.</span><span class="n">DOCUMENT</span><span class="p">:</span> <span class="s2">&quot;↑↓: Scroll | PgUp/PgDn: Page | Home/End: Top/Bot | TAB: Mode | ESC: Back&quot;</span><span class="p">,</span>
+            <span class="n">UiState</span><span class="o">.</span><span class="n">HELP</span><span class="p">:</span> <span class="s2">&quot;↑↓: Scroll | PgUp/PgDn: Page | Home/End: Top/Bot | ESC: Back&quot;</span><span class="p">,</span>
+            <span class="n">UiState</span><span class="o">.</span><span class="n">REQUIREMENTS</span><span class="p">:</span> <span class="s2">&quot;ENTER: Load Interface | ↑↓: Navigate| ESC: Exit&quot;</span><span class="p">,</span>
+            <span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_INIT</span><span class="p">:</span> <span class="s2">&quot;ENTER: Search | ↑↓: Navigate | F1: Search Help | ESC: Exit&quot;</span><span class="p">,</span>
+            <span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_RESULTS</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;ENTER: </span><span class="si">{</span><span class="n">search_results_enter</span><span class="si">}</span><span class="s2"> | ↑↓: Navigate</span><span class="si">{</span><span class="n">page_results</span><span class="si">}</span><span class="s2"> | TAB: </span><span class="si">{</span><span class="n">search_results_tab</span><span class="si">}</span><span class="s2"> | ESC: New Search&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">footers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span><span class="p">,</span> <span class="s2">&quot;↑↓: Navigate | ESC: Exit&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__handle_F1</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handle F1 key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_ui_state</span><span class="p">(</span><span class="n">UiState</span><span class="o">.</span><span class="n">HELP</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__handle_ESC</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handle ESC key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">DOCUMENT</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_ui_state</span><span class="p">(</span><span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_RESULTS</span><span class="p">,</span> <span class="n">UiFocusable</span><span class="o">.</span><span class="n">SEARCH_RESULTS</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span> <span class="ow">in</span> <span class="p">(</span><span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_RESULTS</span><span class="p">,</span> <span class="n">UiState</span><span class="o">.</span><span class="n">REQUIREMENTS</span><span class="p">,</span>  <span class="n">UiState</span><span class="o">.</span><span class="n">HELP</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_ui_state</span><span class="p">(</span><span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_INIT</span><span class="p">,</span> <span class="n">UiFocusable</span><span class="o">.</span><span class="n">SEARCH_FORM</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">searchform</span><span class="o">.</span><span class="n">clear_query</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_INIT</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__handle_TAB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handle TAB key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_RESULTS</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_focused</span> <span class="o">==</span> <span class="n">UiFocusable</span><span class="o">.</span><span class="n">SEARCH_FORM</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_ui_state</span><span class="p">(</span><span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_RESULTS</span><span class="p">,</span> <span class="n">UiFocusable</span><span class="o">.</span><span class="n">SEARCH_RESULTS</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_ui_state</span><span class="p">(</span><span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_RESULTS</span><span class="p">,</span> <span class="n">UiFocusable</span><span class="o">.</span><span class="n">SEARCH_FORM</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__interactive_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stdscr</span><span class="p">:</span> <span class="n">curses</span><span class="o">.</span><span class="n">window</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Main input loop.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">stdscr</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">CURSES_TIMEOUT_MS</span><span class="p">)</span>
+
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">searchman</span><span class="o">.</span><span class="n">check_pending</span><span class="p">()</span>
+
+                <span class="n">stdscr</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">stdscr</span><span class="o">.</span><span class="n">getmaxyx</span><span class="p">()</span>
+                <span class="n">selected_sites</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">get_selected_sites</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">REQUIREMENTS</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__requirements</span><span class="o">.</span><span class="n">validated</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">REQUIREMENTS</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">set_ui_state</span><span class="p">(</span><span class="n">UiState</span><span class="o">.</span><span class="n">REQUIREMENTS</span><span class="p">)</span>
+
+                    <span class="n">inner_screen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_inner_screen</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__requirements</span><span class="o">.</span><span class="n">draw_inner_header</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">inner_screen</span><span class="p">,</span> <span class="s2">&quot;Requirements:&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__requirements</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">(</span><span class="n">inner_screen</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__requirements</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">stdscr</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__requirements</span><span class="o">.</span><span class="n">draw_inner_footer</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">inner_screen</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Waiting on input&quot;</span><span class="p">)</span>
+
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">HELP</span><span class="p">:</span>
+
+                    <span class="n">inner_screen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_inner_screen</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__help</span><span class="o">.</span><span class="n">draw_inner_header</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">inner_screen</span><span class="p">,</span> <span class="s2">&quot;Search Help:&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__help</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">(</span><span class="n">inner_screen</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__help</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">stdscr</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__help</span><span class="o">.</span><span class="n">draw_inner_footer</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">inner_screen</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;ESC to Exit Help&quot;</span><span class="p">)</span>
+
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_RESULTS</span> <span class="ow">and</span> <span class="n">selected_sites</span><span class="p">:</span>
+
+                    <span class="n">inner_screen_split_top</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_split_top</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
+                    <span class="n">inner_screen_split_bottom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_split_bottom</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
+                    <span class="n">url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">selected_sites</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">url</span> <span class="k">if</span> <span class="n">selected_sites</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+                    <span class="n">display_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">BaseCursesView</span><span class="o">.</span><span class="n">url_for_display</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">draw_inner_header</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">inner_screen_split_top</span><span class="p">,</span> <span class="s2">&quot;Search:&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">(</span><span class="n">inner_screen_split_top</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">stdscr</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">draw_inner_footer</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">inner_screen_split_top</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Searching </span><span class="si">{</span><span class="n">display_url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__results</span><span class="o">.</span><span class="n">draw_inner_header</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">inner_screen_split_bottom</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__results</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">(</span><span class="n">inner_screen_split_bottom</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__results</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">stdscr</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__results</span><span class="o">.</span><span class="n">draw_inner_footer</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">inner_screen_split_bottom</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">DOCUMENT</span><span class="p">:</span>
+
+                    <span class="n">inner_screen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_inner_screen</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
+                    <span class="n">url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__document</span><span class="o">.</span><span class="n">url</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__document</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+                    <span class="n">display_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">BaseCursesView</span><span class="o">.</span><span class="n">url_for_display</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__document</span><span class="o">.</span><span class="n">set_focused</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__document</span><span class="o">.</span><span class="n">draw_inner_header</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">inner_screen</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;URL: </span><span class="si">{</span><span class="n">display_url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__document</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">(</span><span class="n">inner_screen</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__document</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">stdscr</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__document</span><span class="o">.</span><span class="n">draw_inner_footer</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">inner_screen</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+                <span class="k">else</span><span class="p">:</span>
+
+                    <span class="c1"># aka self.__ui_state == UiState.SEARCH_INIT</span>
+                    <span class="n">inner_screen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_inner_screen</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">draw_inner_header</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">inner_screen</span><span class="p">,</span> <span class="s2">&quot;Search:&quot;</span><span class="p">)</span>
+                    <span class="n">selected_sites</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">get_selected_sites</span><span class="p">()</span>
+                    <span class="n">first_hit</span> <span class="o">=</span> <span class="n">selected_sites</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">selected_sites</span> <span class="k">else</span> <span class="kc">None</span>
+                    <span class="n">url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">first_hit</span><span class="o">.</span><span class="n">url</span> <span class="k">if</span> <span class="n">first_hit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+                    <span class="n">display_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">BaseCursesView</span><span class="o">.</span><span class="n">url_for_display</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">(</span><span class="n">inner_screen</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">stdscr</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">draw_inner_footer</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">inner_screen</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Searching </span><span class="si">{</span><span class="n">display_url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">height</span> <span class="o">&gt;</span> <span class="n">LAYOUT_MIN_HEIGHT_FOR_HELP</span><span class="p">:</span>
+                    <span class="n">help_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_help_text</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">draw_outer_header</span><span class="p">(</span><span class="n">stdscr</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">draw_outer_footer</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">help_text</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">__render_debug</span><span class="p">(</span><span class="n">stdscr</span><span class="p">)</span>
+                <span class="n">stdscr</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+                <span class="n">key</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">stdscr</span><span class="o">.</span><span class="n">getch</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>               <span class="c1"># timeout</span>
+                    <span class="k">continue</span>
+                <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__handle_TAB</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="n">curses</span><span class="o">.</span><span class="n">KEY_F1</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__handle_F1</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="mi">27</span><span class="p">:</span>             <span class="c1"># ESC</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__handle_ESC</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__requirements</span><span class="o">.</span><span class="n">validated</span> <span class="o">==</span> <span class="kc">False</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">REQUIREMENTS</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__requirements</span><span class="o">.</span><span class="n">handle_input</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_INIT</span> <span class="ow">or</span> <span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_RESULTS</span>
+                        <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_focused</span> <span class="o">==</span> <span class="n">UiFocusable</span><span class="o">.</span><span class="n">SEARCH_FORM</span>
+                    <span class="p">):</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__searchform</span><span class="o">.</span><span class="n">handle_input</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">SEARCH_RESULTS</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__results</span><span class="o">.</span><span class="n">handle_input</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">DOCUMENT</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__document</span><span class="o">.</span><span class="n">handle_input</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ui_state</span> <span class="o">==</span> <span class="n">UiState</span><span class="o">.</span><span class="n">HELP</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__view__help</span><span class="o">.</span><span class="n">handle_input</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+                        <span class="k">continue</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;--interactive failure - </span><span class="si">{</span><span class="n">ex</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">pass</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">stdscr</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__render_debug</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stdscr</span><span class="p">:</span> <span class="n">curses</span><span class="o">.</span><span class="n">window</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Render debug info with adaptive sizing - compact for short messages, expanded for errors.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">stdscr</span><span class="o">.</span><span class="n">getmaxyx</span><span class="p">()</span>
+
+        <span class="k">with</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">():</span>
+            <span class="n">debug_lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__debug</span><span class="p">[</span><span class="o">-</span><span class="p">(</span><span class="n">DEBUG_MAX_LINES</span><span class="p">):]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">debug_lines</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">max_line_length</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">debug_lines</span><span class="p">)</span> <span class="k">if</span> <span class="n">debug_lines</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">compact_width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">width</span> <span class="o">*</span> <span class="n">DEBUG_COMPACT_WIDTH_RATIO</span><span class="p">),</span> <span class="n">DEBUG_MIN_COMPACT_WIDTH</span><span class="p">)</span>
+        <span class="n">use_expanded</span> <span class="o">=</span> <span class="n">max_line_length</span> <span class="o">&gt;</span> <span class="n">compact_width</span> <span class="o">-</span> <span class="n">DEBUG_COMPACT_THRESHOLD</span>
+
+        <span class="k">if</span> <span class="n">use_expanded</span><span class="p">:</span>
+            <span class="n">debug_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">width</span> <span class="o">-</span> <span class="n">DEBUG_EXPANDED_MARGIN</span>
+            <span class="n">debug_start_x</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEBUG_EXPANDED_START_X</span>
+            <span class="n">debug_start_y</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">DEBUG_MIN_START_Y_EXPANDED</span><span class="p">,</span> <span class="n">height</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">debug_lines</span><span class="p">)</span> <span class="o">-</span> <span class="n">DEBUG_EXPANDED_BOTTOM_MARGIN</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">debug_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">compact_width</span>
+            <span class="n">debug_start_x</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">width</span> <span class="o">-</span> <span class="n">debug_width</span> <span class="o">-</span> <span class="n">DEBUG_EXPANDED_START_X</span>
+            <span class="n">debug_start_y</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">height</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">debug_lines</span><span class="p">)</span> <span class="o">-</span> <span class="n">DEBUG_COMPACT_BOTTOM_MARGIN</span>
+
+        <span class="n">debug_start_y</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">DEBUG_MIN_START_Y</span><span class="p">,</span> <span class="n">debug_start_y</span><span class="p">)</span>
+        <span class="n">debug_start_x</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">debug_start_x</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">debug_line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">debug_lines</span><span class="p">):</span>
+            <span class="n">y_pos</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">debug_start_y</span> <span class="o">+</span> <span class="n">i</span>
+            <span class="k">if</span> <span class="n">y_pos</span> <span class="o">&gt;=</span> <span class="n">height</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">if</span> <span class="n">debug_start_x</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">y_pos</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">display_line</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">debug_line</span><span class="p">[:</span><span class="n">debug_width</span><span class="p">]</span>
+                <span class="n">safe_addstr</span><span class="p">(</span><span class="n">stdscr</span><span class="p">,</span> <span class="n">y_pos</span><span class="p">,</span> <span class="n">debug_start_x</span><span class="p">,</span> <span class="n">display_line</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_theme_color_pair</span><span class="p">(</span><span class="n">ThemeDefinition</span><span class="o">.</span><span class="n">HEADER_ACTIVE</span><span class="p">))</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, pragmar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

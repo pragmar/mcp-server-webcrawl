@@ -97,19 +97,20 @@
 <span class="s2">Usage: </span><span class="si">{</span><span class="n">__cli_gold</span><span class="p">(</span><span class="s1">&#39;mcp-server-webcrawl&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> [-c </span><span class="se">{{</span><span class="s2">wget,warc,interrobot,katana,siteone</span><span class="se">}}</span><span class="s2">] [-d DATASRC]</span>
 
 <span class="s2">Options:</span>
-<span class="s2">  -c, --crawler  Specify which crawler to use</span>
-<span class="s2">  -d, --datasrc  Path to datasrc (required unless testing)</span>
-<span class="s2">  -h, --help     Show this help message and exit</span>
+<span class="s2">  -c, --crawler       Specify which crawler to use</span>
+<span class="s2">  -d, --datasrc       Path to datasrc (required unless testing)</span>
+<span class="s2">  -h, --help          Show this help message and exit</span>
+<span class="s2">  -i, --interactive   Run interactive terminal search</span>
 
 <span class="s2">Where is my DATASRC?</span>
-<span class="s2">  warc           Directory containing WARC files</span>
-<span class="s2">  wget           Directory containing the webroot archives</span>
-<span class="s2">  archivebox     Directory above one or more archivebox init&#39;ed dirs</span>
-<span class="s2">  httrack        Projects directory (~/websites/, /My Websites/)</span>
-<span class="s2">  interrobot     Path to */interrobot.v2.db</span>
-<span class="s2">  katana         Directory containing the webroot archives</span>
-<span class="s2">  siteone        Directory containing the webroot archives</span>
-<span class="s2">                   (requires archive option)</span>
+<span class="s2">  archivebox    Directory above one or more archivebox init&#39;ed dirs</span>
+<span class="s2">  httrack       Projects directory (~/websites/, /My Websites/)</span>
+<span class="s2">  interrobot    Path to */interrobot.v2.db</span>
+<span class="s2">  katana        Directory containing the webroot archives</span>
+<span class="s2">  siteone       Directory containing the webroot archives</span>
+<span class="s2">                  (requires archive option)</span>
+<span class="s2">  warc          Directory containing WARC files</span>
+<span class="s2">  wget          Directory containing the webroot archives</span>
 
 <span class="s2">                        [DATASRC]</span>
 <span class="s2">           ╭─────────────────────────────────╮</span>
@@ -120,13 +121,9 @@
 <span class="s2">MCP Configuration Example:</span>
 <span class="se">{{</span><span class="s2">&quot;mcpServers&quot;: </span><span class="se">{{</span>
 <span class="s2">  &quot;wget&quot;: </span><span class="se">{{</span>
-<span class="s2">    &quot;command&quot;: &quot;mcp-server-webcrawl&quot;,</span>
+<span class="s2">    &quot;command&quot;: &quot;/path/to/mcp-server-webcrawl&quot;,</span>
 <span class="s2">      &quot;args&quot;: [&quot;--crawler&quot;, &quot;wget&quot;, &quot;--datasrc&quot;,</span>
-<span class="s2">        &quot;/path/to/archived/hosts/&quot;]</span><span class="se">}}</span><span class="s2">,</span>
-<span class="s2">  &quot;interrobot&quot;: </span><span class="se">{{</span>
-<span class="s2">    &quot;command&quot;: &quot;mcp-server-webcrawl&quot;,</span>
-<span class="s2">      &quot;args&quot;: [&quot;--crawler&quot;, &quot;interrobot&quot;, &quot;--datasrc&quot;,</span>
-<span class="s2">        &quot;/path/to/interrobot.v2.db&quot;]</span><span class="se">}}</span>
+<span class="s2">        &quot;/path/to/archived/hosts/&quot;]</span><span class="se">}}</span>
 <span class="s2">  </span><span class="se">}}</span>
 <span class="se">}}</span>
 

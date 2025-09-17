@@ -9,6 +9,7 @@ Subpackages
 
    mcp_server_webcrawl.crawlers
    mcp_server_webcrawl.extras
+   mcp_server_webcrawl.interactive
    mcp_server_webcrawl.models
    mcp_server_webcrawl.templates
    mcp_server_webcrawl.utils

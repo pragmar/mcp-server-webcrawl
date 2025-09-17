@@ -13,7 +13,7 @@
 
 Advanced search and retrieval for web crawler data. With **mcp-server-webcrawl**, your AI client filters and analyzes web content under your direction or autonomously. The server includes a fulltext search interface with boolean support, and resource filtering by type, HTTP status, and more.
 
-**mcp-server-webcrawl** provides the LLM a complete menu with which to search your web content, and works with a variety of web crawlers:
+**mcp-server-webcrawl** provides the LLM a complete menu with which to search, and works with a variety of web crawlers:
 
 | Crawler/Format | Description | Platforms | Setup Guide |
 |---|---|---|---|
@@ -166,9 +166,13 @@ Extras provide a means of producing token-efficient HTTP content responses. Mark
 
 The idea, of course, is that the LLM takes care of this for you. If you notice your LLM developing an affinity to the "content" field (full HTML), a nudge in chat to budget tokens using the extras feature should be all that is needed.
 
-## --interactive Mode
+## Interactive Mode
 
-mcp-server-webcrawl can double as a terminal search for your web archvies. No AI, just classic Boolean search in a terminal. Launch with --crawler and --datasource to load into search immediately, or use setup datasrc and crawler in-app.
+**No AI, just classic Boolean search of your web-archives in a terminal.**
+
+mcp-server-webcrawl can double as a terminal search for your web archvies. You can run it against your local archives, but it get's more interesting when you realize you can ssh into any remote host and view archives sitting on that host. No downloads, syncs, multifactor logins, or other common drudgery required. With interactive mode, you can be in and searching a crawl sitting on a remote server in no time at all.
+
+Launch with --crawler and --datasource to load into search immediately, or use setup datasrc and crawler in-app.
 
 ```bash
 mcp-server-webcrawl --crawler wget --datasrc /path/to/datasrc --interactive
@@ -177,3 +181,5 @@ mcp-server-webcrawl --interactive
 ```
 
 Interactive mode is a way to search through tranches of crawled data, whenever, whereever... in a terminal.
+
+![Interactive search interface](sphinx/_static/images/interactive.search.webp)

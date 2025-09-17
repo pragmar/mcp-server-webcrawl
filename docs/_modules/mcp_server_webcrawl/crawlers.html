@@ -44,6 +44,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../prompts.html">Prompt Routines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -75,6 +76,8 @@
 <span></span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
+<span class="n">VALID_CRAWLER_CHOICES</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;archivebox&quot;</span><span class="p">,</span> <span class="s2">&quot;httrack&quot;</span><span class="p">,</span> <span class="s2">&quot;interrobot&quot;</span><span class="p">,</span> <span class="s2">&quot;katana&quot;</span><span class="p">,</span> <span class="s2">&quot;siteone&quot;</span><span class="p">,</span> <span class="s2">&quot;warc&quot;</span><span class="p">,</span> <span class="s2">&quot;wget&quot;</span><span class="p">]</span>
+
 <div class="viewcode-block" id="get_fixture_directory">
 <a class="viewcode-back" href="../../mcp_server_webcrawl.crawlers.html#mcp_server_webcrawl.crawlers.get_fixture_directory">[docs]</a>
 <span class="k">def</span> <span class="nf">get_fixture_directory</span><span class="p">():</span>
@@ -82,6 +85,41 @@
     <span class="c1"># assumes git project structure to locate fixtures</span>
     <span class="k">assert</span> <span class="n">modroot</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;mcp-server-webcrawl&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;expected modroot mcp_server_webcrawl, got </span><span class="si">{</span><span class="n">modroot</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="k">return</span> <span class="n">modroot</span> <span class="o">/</span> <span class="s2">&quot;fixtures&quot;</span></div>
+
+
+<div class="viewcode-block" id="get_crawler">
+<a class="viewcode-back" href="../../mcp_server_webcrawl.crawlers.html#mcp_server_webcrawl.crawlers.get_crawler">[docs]</a>
+<span class="k">def</span> <span class="nf">get_crawler</span><span class="p">(</span><span class="n">crawler_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    lazy load crawler, some classes have additional package dependencies</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">crawler_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">crawler_name</span> <span class="o">=</span> <span class="n">crawler_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">crawler_name</span> <span class="o">==</span> <span class="s2">&quot;archivebox&quot;</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.archivebox.crawler</span> <span class="kn">import</span> <span class="n">ArchiveBoxCrawler</span>
+        <span class="k">return</span> <span class="n">ArchiveBoxCrawler</span>
+    <span class="k">elif</span> <span class="n">crawler_name</span> <span class="o">==</span> <span class="s2">&quot;httrack&quot;</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.httrack.crawler</span> <span class="kn">import</span> <span class="n">HtTrackCrawler</span>
+        <span class="k">return</span> <span class="n">HtTrackCrawler</span>
+    <span class="k">elif</span> <span class="n">crawler_name</span> <span class="o">==</span> <span class="s2">&quot;interrobot&quot;</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.interrobot.crawler</span> <span class="kn">import</span> <span class="n">InterroBotCrawler</span>
+        <span class="k">return</span> <span class="n">InterroBotCrawler</span>
+    <span class="k">elif</span> <span class="n">crawler_name</span> <span class="o">==</span> <span class="s2">&quot;katana&quot;</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.katana.crawler</span> <span class="kn">import</span> <span class="n">KatanaCrawler</span>
+        <span class="k">return</span> <span class="n">KatanaCrawler</span>
+    <span class="k">elif</span> <span class="n">crawler_name</span> <span class="o">==</span> <span class="s2">&quot;siteone&quot;</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.siteone.crawler</span> <span class="kn">import</span> <span class="n">SiteOneCrawler</span>
+        <span class="k">return</span> <span class="n">SiteOneCrawler</span>
+    <span class="k">elif</span> <span class="n">crawler_name</span> <span class="o">==</span> <span class="s2">&quot;warc&quot;</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.warc.crawler</span> <span class="kn">import</span> <span class="n">WarcCrawler</span>
+        <span class="k">return</span> <span class="n">WarcCrawler</span>
+    <span class="k">elif</span> <span class="n">crawler_name</span> <span class="o">==</span> <span class="s2">&quot;wget&quot;</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.wget.crawler</span> <span class="kn">import</span> <span class="n">WgetCrawler</span>
+        <span class="k">return</span> <span class="n">WgetCrawler</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">valid_choices</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">VALID_CRAWLER_CHOICES</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unsupported crawler &#39;</span><span class="si">{</span><span class="n">crawler_name</span><span class="si">}</span><span class="s2">&#39; (</span><span class="si">{</span><span class="n">valid_choices</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span></div>
 
 </pre></div>
 

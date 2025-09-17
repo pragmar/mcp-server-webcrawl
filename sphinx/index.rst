@@ -71,6 +71,7 @@ a variety of web crawlers:
    guides
    usage
    prompts
+   interactive
    modules
 
 Indices and tables
