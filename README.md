@@ -170,7 +170,7 @@ The idea, of course, is that the LLM takes care of this for you. If you notice y
 
 **No AI, just classic Boolean search of your web-archives in a terminal.**
 
-mcp-server-webcrawl can double as a terminal search for your web archvies. You can run it against your local archives, but it get's more interesting when you realize you can ssh into any remote host and view archives sitting on that host. No downloads, syncs, multifactor logins, or other common drudgery required. With interactive mode, you can be in and searching a crawl sitting on a remote server in no time at all.
+mcp-server-webcrawl can double as a terminal search for your web archives. You can run it against your local archives, but it gets more interesting when you realize you can ssh into any remote host and view archives sitting on that host. No downloads, syncs, multifactor logins, or other common drudgery required. With interactive mode, you can be in and searching a crawl sitting on a remote server in no time at all.
 
 Launch with --crawler and --datasource to load into search immediately, or use setup datasrc and crawler in-app.
 
