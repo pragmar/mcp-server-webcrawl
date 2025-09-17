@@ -19,11 +19,11 @@ Launch with --crawler and --datasource to load into search immediately, or use s
    :align: center
    :width: 100%
 
-   Interactive mode in search the main interface search interface
+   Search view, showing snippets with "Solar Eclipse" highlights
 
 .. figure:: _static/images/interactive.document.webp
    :alt: mcp-server-webcrawl in --interactive mode heading
    :align: center
    :width: 100%
 
-   Documents, along with search, include hit highlighting
+   Document view showing Markdown presentation, also available are raw and HTTP headers views.
