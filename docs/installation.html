@@ -48,11 +48,13 @@
 <li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#mcp-configuration">MCP Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#multiple-configurations">Multiple Configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interactive.html">Interactive Mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -90,8 +92,8 @@
 <h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
 <p>To use mcp-server-webcrawl effectively, you need:</p>
 <ul class="simple">
-<li><p>An MCP-capable LLM host such as <a class="reference external" href="https://claude.ai">Claude Desktop</a></p></li>
-<li><p><a class="reference external" href="https://python.org">Python</a> installed on your command line interface</p></li>
+<li><p>An MCP-capable LLM host such as Claude Desktop [1]</p></li>
+<li><p>Python [2] installed on your command line interface</p></li>
 <li><p>Basic familiarity with running Python packages</p></li>
 </ul>
 <p>After ensuring these prerequisites are met, run the pip install command above to add the package to your environment.</p>
@@ -99,111 +101,16 @@
 <section id="mcp-configuration">
 <h2>MCP Configuration<a class="headerlink" href="#mcp-configuration" title="Link to this heading"></a></h2>
 <p>To enable your LLM host to access your web crawl data, you’ll need to add an MCP server configuration. From Claude’s developer settings, locate the MCP configuration section and add the appropriate configuration for your crawler type.</p>
-<p>Below are configurations for each supported crawler type. Choose the one that matches your crawler and modify the <code class="docutils literal notranslate"><span class="pre">--datasrc</span></code> path to point to your specific data location.</p>
-<section id="wget">
-<h3>wget<a class="headerlink" href="#wget" title="Link to this heading"></a></h3>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;webcrawl&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/mcp-server-webcrawl&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--crawler&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;wget&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--datasrc&quot;</span><span class="p">,</span>
-<span class="w">         </span><span class="s2">&quot;/path/to/wget/archives/&quot;</span><span class="p">]</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-<p><strong>Tested wget commands:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># (macOS Terminal/Windows WSL)</span>
-<span class="c1"># --adjust-extension for file extensions, e.g. *.html</span>
-$<span class="w"> </span>wget<span class="w"> </span>--mirror<span class="w"> </span>https://example.com
-$<span class="w"> </span>wget<span class="w"> </span>--mirror<span class="w"> </span>https://example.com<span class="w"> </span>--adjust-extension
-</pre></div>
-</div>
-</section>
-<section id="warc">
-<h3>WARC<a class="headerlink" href="#warc" title="Link to this heading"></a></h3>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;webcrawl&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/mcp-server-webcrawl&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--crawler&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;warc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--datasrc&quot;</span><span class="p">,</span>
-<span class="w">         </span><span class="s2">&quot;/path/to/warc/archives/&quot;</span><span class="p">]</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-<p><strong>Tested WARC commands:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># (macOS Terminal/Windows WSL)</span>
-$<span class="w"> </span>wget<span class="w"> </span>--warc-file<span class="o">=</span>example<span class="w"> </span>--recursive<span class="w"> </span>https://example.com
-$<span class="w"> </span>wget<span class="w"> </span>--warc-file<span class="o">=</span>example<span class="w"> </span>--recursive<span class="w"> </span>--page-requisites<span class="w"> </span>https://example.com
-</pre></div>
-</div>
-</section>
-<section id="interrobot">
-<h3>InterroBot<a class="headerlink" href="#interrobot" title="Link to this heading"></a></h3>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;webcrawl&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/mcp-server-webcrawl&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--crawler&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;interrobot&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--datasrc&quot;</span><span class="p">,</span>
-<span class="w">         </span><span class="s2">&quot;[homedir]/Documents/InterroBot/interrobot.v2.db&quot;</span><span class="p">]</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-<p><strong>Notes for InterroBot:</strong></p>
+<p>Setup guides and videos are available for each supported crawler:</p>
 <ul class="simple">
-<li><p>Crawls must be executed in InterroBot (windowed application)</p></li>
-<li><p>On Windows: replace [homedir] with /Users/…</p></li>
-<li><p>On macOS: path is provided on InterroBot settings page</p></li>
+<li><p><a class="reference internal" href="guides/archivebox.html"><span class="doc">ArchiveBox</span></a></p></li>
+<li><p><a class="reference internal" href="guides/httrack.html"><span class="doc">HTTrack</span></a></p></li>
+<li><p><a class="reference internal" href="guides/interrobot.html"><span class="doc">InterroBot</span></a></p></li>
+<li><p><a class="reference internal" href="guides/katana.html"><span class="doc">Katana</span></a></p></li>
+<li><p><a class="reference internal" href="guides/siteone.html"><span class="doc">SiteOne</span></a></p></li>
+<li><p><a class="reference internal" href="guides/warc.html"><span class="doc">WARC</span></a></p></li>
+<li><p><a class="reference internal" href="guides/wget.html"><span class="doc">Wget</span></a></p></li>
 </ul>
-</section>
-<section id="katana">
-<h3>Katana<a class="headerlink" href="#katana" title="Link to this heading"></a></h3>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;webcrawl&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/mcp-server-webcrawl&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--crawler&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;katana&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--datasrc&quot;</span><span class="p">,</span>
-<span class="w">         </span><span class="s2">&quot;/path/to/katana/crawls/&quot;</span><span class="p">]</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-<p><strong>Tested Katana commands:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># (macOS Terminal/Powershell/WSL)</span>
-<span class="c1"># -store-response to save crawl contents</span>
-<span class="c1"># -store-response-dir for expansion of hosts</span>
-<span class="c1"># &amp;nbsp; consistent with default Katana behavior to</span>
-<span class="c1"># &amp;nbsp; spread assets across origin host directories</span>
-
-$<span class="w"> </span>katana<span class="w"> </span>-u<span class="w"> </span>https://example.com<span class="w"> </span>-store-response<span class="w"> </span>-store-response-dir<span class="w"> </span>crawls/example.com/
-</pre></div>
-</div>
-</section>
-<section id="siteone">
-<h3>SiteOne<a class="headerlink" href="#siteone" title="Link to this heading"></a></h3>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;webcrawl&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/mcp-server-webcrawl&quot;</span><span class="p">,</span>
-<span class="w">       </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--crawler&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;siteone&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--datasrc&quot;</span><span class="p">,</span>
-<span class="w">         </span><span class="s2">&quot;/path/to/siteone/archives/&quot;</span><span class="p">]</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-<p><strong>Notes for SiteOne:</strong></p>
-<ul class="simple">
-<li><p>Crawls must be executed in SiteOne (windowed application)</p></li>
-<li><p><em>Generate offline website</em> must be checked</p></li>
-</ul>
-</section>
 </section>
 <section id="multiple-configurations">
 <h2>Multiple Configurations<a class="headerlink" href="#multiple-configurations" title="Link to this heading"></a></h2>
@@ -223,6 +130,11 @@ $<span class="w"> </span>katana<span class="w"> </span>-u<span class="w"> </span
 </pre></div>
 </div>
 <p>After adding the configuration, save the file and restart your LLM host to apply the changes.</p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<p>[1] Claude Desktop: <a class="reference external" href="https://claude.ai">https://claude.ai</a>
+[2] Python: <a class="reference external" href="https://python.org">https://python.org</a></p>
 </section>
 </section>
 
