@@ -6,6 +6,7 @@ from typing import NamedTuple, Optional, Tuple
 from mcp_server_webcrawl.crawlers import VALID_CRAWLER_CHOICES
 
 SITE_COLUMN_WIDTH = 18
+
 LAYOUT_GRID_COLUMN_SPACING = 2
 LAYOUT_CONSTRAINED_SITES_PER_COLUMN = 3
 LAYOUT_SITES_GRID_OFFSET = 6
@@ -261,19 +262,6 @@ class InputRadioGroup:
         if self.name == "site":
             self.__calculate_grid_layout()
 
-    def get_grid_info(self) -> Tuple[int, int, int]:
-        """
-        Get grid layout information for sites group.
-        
-        Returns:
-            tuple: (sites_per_column, max_columns, total_visible_sites)
-        """
-        if self.name != "site":
-            return (len(self.radios), 1, len(self.radios))
-
-        return (self.__sites_per_column, self.__max_columns,
-                self.__sites_per_column * self.__max_columns)
-
     def get_grid_position(self, radio_index: int) -> Tuple[int, int]:
         """
         Convert linear radio index to grid position.
@@ -292,26 +280,25 @@ class InputRadioGroup:
         col = radio_index // self.__sites_per_column
         return (row, col)
 
-    def set_grid_position(self, row: int, col: int) -> Optional[int]:
+    def get_index_from_grid(self, row: int, col: int) -> Optional[int]:
         """
         Convert grid position to linear radio index.
         Only works for site groups; returns None for other group types.
-        
+    
         Args:
             row: Row in grid (0-based)
             col: Column in grid (0-based)
-            
+    
         Returns:
             Linear index if position exists within grid bounds, None otherwise
         """
         if self.name != "site":
             return row if 0 <= row < len(self.radios) else None
-
+#
         if self.__sites_per_column == 0:
             return None
-
+#
         radio_index = col * self.__sites_per_column + row
-
         if (0 <= radio_index < len(self.radios) and
             radio_index < self.__sites_per_column * self.__max_columns):
             return radio_index
@@ -335,7 +322,7 @@ class InputRadioGroup:
 
         if current_col > 0:
             # to previous column, same row
-            return self.set_grid_position(current_row, current_col - 1)
+            return self.get_index_from_grid(current_row, current_col - 1)
         else:
             # at leftmost column, signal exit to parent
             return None
@@ -355,8 +342,7 @@ class InputRadioGroup:
             return None
 
         current_row, current_col = self.get_grid_position(current_radio_index)
-        new_index = self.set_grid_position(current_row, current_col + 1)
-
+        new_index = self.get_index_from_grid(current_row, current_col + 1)
         return new_index  # if invalid/out of bounds
 
     def navigate_to_row(self, target_row: int, from_column: int = 0) -> Optional[int]:
@@ -369,7 +355,7 @@ class InputRadioGroup:
         if self.__sites_per_column == 0:
             return target_row if 0 <= target_row < len(self.radios) else None
 
-        return self.set_grid_position(target_row, from_column)
+        return self.get_index_from_grid(target_row, from_column)
 
     def get_row_from_index(self, radio_index: int) -> int:
         """
@@ -615,17 +601,6 @@ class InputText:
             return None
         # add more checks here as needed
         return char
-
-    def __validate_value(self, value: str) -> bool:
-        """
-        Validate the complete value
-        """
-        # for query fields: check for reasonable length, no null bytes
-        if '\x00' in value:
-            return False
-        if len(value) > 2048:  # reasonable query limit
-            return False
-        return True
 
     def __render_cursor(self, stdscr: curses.window, y: int, x: int,
                       display_text: str, display_cursor_pos: int, inner_width: int) -> None:

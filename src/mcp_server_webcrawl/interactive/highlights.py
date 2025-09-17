@@ -25,9 +25,9 @@ class HighlightProcessor:
     """
 
     QUOTED_PHRASE_PATTERN = re.compile(r'"([^"]+)"')
-    WORD_PATTERN = re.compile(r'\b\w+\b')
-    SNIPPET_MARKER_PATTERN = re.compile(r'\*\*([a-zA-Z\-_]+)\*\*')
-    IGNORE_WORDS = {'AND', 'OR', 'NOT', 'and', 'or', 'not', 'type', 'status', 'size', 'url', 'id'}
+    WORD_PATTERN = re.compile(r"\b\w+\b")
+    SNIPPET_MARKER_PATTERN = re.compile(r"\*\*([a-zA-Z\-_' ]+)\*\*")
+    IGNORE_WORDS = {"AND", "OR", "NOT", "and", "or", "not", "type", "status", "size", "url", "id"}
 
     @staticmethod
     def extract_search_terms(query: str) -> List[str]:
@@ -62,7 +62,7 @@ class HighlightProcessor:
             return []
 
         highlights = []
-        escaped_terms = [re.escape(term) for term in search_terms]
+        escaped_terms = [re.escape(term.strip("\"'")) for term in search_terms]
         pattern = re.compile(rf"\b({'|'.join(escaped_terms)})\b", re.IGNORECASE)
 
         for match in pattern.finditer(text):

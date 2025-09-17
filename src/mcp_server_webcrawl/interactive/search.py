@@ -11,9 +11,8 @@ from mcp_server_webcrawl.models.resources import ResourceResult
 if TYPE_CHECKING:
     from mcp_server_webcrawl.interactive.session import InteractiveSession
 
-SEARCH_DEBOUNCE_DELAY_SECONDS = 0.334
+SEARCH_DEBOUNCE_DELAY_SECONDS = 0.2
 SEARCH_RESULT_LIMIT: int = 10
-
 
 class SearchManager:
     """
@@ -98,7 +97,7 @@ class SearchManager:
 
     def is_searching(self) -> bool:
         """
-        Check if a search is currently in progress.
+        Check if a search is currently in progress or on a timer.
         """
         with self.__search_lock:
             return self.__search_in_progress or self.__search_timer is not None
@@ -134,6 +133,7 @@ class SearchManager:
         if current_state_hash != self.__search_last_state_hash:
             return
 
+        # show split view on results
         if self.__session.ui_focused == UiFocusable.SEARCH_RESULTS:
             self.__session.set_ui_state(UiState.SEARCH_RESULTS, UiFocusable.SEARCH_RESULTS)
         else:

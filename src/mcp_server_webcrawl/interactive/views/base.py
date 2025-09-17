@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 REGEX_DISPLAY_URL_CLEAN = re.compile(r"^https?://|/$")
 OUTER_WIDTH_RIGHT_MARGIN = 1
 
+LAYOUT_FOOTER_SEPARATOR = " | "
+LAYOUT_FOOTER_SEPARATOR_LENGTH = len(LAYOUT_FOOTER_SEPARATOR)
 MIN_TERMINAL_HEIGHT = 8
 MIN_TERMINAL_WIDTH = 40
 CONTENT_MARGIN = 4
@@ -86,25 +88,40 @@ class BaseCursesView:
 
     def draw_outer_footer(self, stdscr: curses.window, text: str) -> None:
         """
-        Draw context-sensitive help footer.
+        Draw context-sensitive help footer with pipe-separated items.
         
         Args:
             stdscr: The curses window to draw on
-            text: The footer text to display
+            text: The footer text to display (pipe-separated items)
         """
         height, width = stdscr.getmaxyx()
-
         footer_line: int = height - 1
         footer_line_text: str = BaseCursesView._get_full_width_line(stdscr)
         outer_theme_pair: int = self.session.get_theme_color_pair(ThemeDefinition.HEADER_OUTER)
+
         safe_addstr(stdscr, footer_line, 0, footer_line_text, outer_theme_pair)
+        items = [item.strip() for item in text.split(LAYOUT_FOOTER_SEPARATOR)]
+        available_width = width - 4 - 2  # 4 for right margin, 2 for left padding
 
-        if len(text) > width - 2:
-            text = f"{text[:width - 2]}…"
+        display_text: str = ""
+        test_text: str = ""
+        test_text_length: int = 0
+        for i in range(len(items)):
+            test_text = LAYOUT_FOOTER_SEPARATOR.join(items[:i+1])
+            test_text_length = len(test_text)
+            if test_text_length <= available_width:
+                display_text = test_text
+            else:
+                break
 
-        if len(text) < width - 2:
+         # doesn't fit indicator
+        display_text_length: int = len(display_text)
+        if test_text_length > available_width:
+            display_text += f"{(width - display_text_length - 5) * ' '} »"
+
+        if display_text:
             outer_header_theme_pair: int = self.session.get_theme_color_pair(ThemeDefinition.HEADER_OUTER)
-            safe_addstr(stdscr, footer_line, 1, text, outer_header_theme_pair)
+            safe_addstr(stdscr, footer_line, 1, display_text, outer_header_theme_pair)
 
     def draw_outer_header(self, stdscr: curses.window) -> None:
         """

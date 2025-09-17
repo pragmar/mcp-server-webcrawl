@@ -20,13 +20,155 @@ LAYOUT_FILTER_COLUMN_PADDING = 8
 LAYOUT_SORT_COLUMN_PADDING = 6
 LAYOUT_FILTER_TO_SORT_SPACING = 8
 LAYOUT_SORT_TO_SITES_SPACING = 6
-LAYOUT_SITE_COLUMN_WIDTH = 18
+LAYOUT_SITE_COLUMN_WIDTH = 22
 LAYOUT_SITE_COLUMN_SPACING = 2
-LAYOUT_CONSTRAINED_SITES_PER_COLUMN = 3
 LAYOUT_SITES_VERTICAL_OFFSET = 6
-LAYOUT_SITES_MIN_WIDTH_REQUIREMENT = 10
-LAYOUT_TRUNCATED_LABEL_MAX_LENGTH = 12
+LAYOUT_SITES_MIN_WIDTH_REQUIREMENT = 16
+LAYOUT_CONSTRAINED_SITES_PER_COLUMN = 3
+LAYOUT_TRUNCATED_LABEL_MAX_LENGTH = 18
 LAYOUT_OVERFLOW_INDICATOR_MARGIN = 2
+
+class SearchFormNavigationGrid:
+    def __init__(self, ui_state: UiState, filter_group: InputRadioGroup, sort_group: InputRadioGroup,
+            sites_group: InputRadioGroup, sites_per_column: int):
+        """
+        Create virtual grid for navigation:
+        query(0) 
+        filter0  sort0    site0    site3    site6
+        filter1  sort1    site1    site4    site7
+                 sort2    site2    site5    site8+            
+        """
+        self.__grid: dict[tuple[int, int], int] = {}
+        self.__reverse_grid: dict[int, tuple[int, int]] = {}
+
+        # query spans columns 0-2, row 0
+        for col in range(3):
+            self.__grid[(0, col)] = 0
+        self.__reverse_grid[0] = (0, 0)
+
+        for i, _ in enumerate(filter_group.radios):
+            row = 1 + i
+            index = 1 + i  # filter indices start at 1
+            self.__grid[(row, 0)] = index
+            self.__reverse_grid[index] = (row, 0)
+
+        sort_start_index = 1 + len(filter_group.radios)
+        for i, _ in enumerate(sort_group.radios):
+            row = 1 + i
+            index = sort_start_index + i
+            self.__grid[(row, 1)] = index
+            self.__reverse_grid[index] = (row, 1)
+
+        sites_start_index = 1 + len(filter_group.radios) + len(sort_group.radios)
+        self.__ui_state = ui_state
+
+        for i, _ in enumerate(sites_group.radios):
+            row = 1 + (i % sites_per_column)
+            col = 2 + (i // sites_per_column)
+            index = sites_start_index + i
+            self.__grid[(row, col)] = index
+            self.__reverse_grid[index] = (row, col)
+
+    def __rightmost_column(self, row: int) -> int:
+        """
+        Get the rightmost column that has content in the given row.
+        """
+        max_col = -1
+        for (r, c) in self.__grid.keys():
+            if r == row:
+                max_col = max(max_col, c)
+        return max_col
+
+    def __leftmost_column(self, row: int) -> int:
+        """
+        Get the leftmost column that has content in the given row.
+        """
+        min_col = float('inf')
+        for (r, c) in self.__grid.keys():
+            if r == row:
+                min_col = min(min_col, c)
+        return min_col if min_col != float('inf') else -1
+
+    def left(self, current_index: int) -> int | None:
+        """
+        Navigate left from current index. Wraps to rightmost element if at left edge.
+        """
+        if current_index not in self.__reverse_grid:
+            return None
+
+        row, col = self.__reverse_grid[current_index]
+
+        # move normally if destination exists
+        if col > 0:
+            new_pos = (row, col - 1)
+            if new_pos in self.__grid:
+                return self.__grid[new_pos]
+
+        # wrap on edge
+        rightmost_col = self.__rightmost_column(row)
+        if rightmost_col >= 0 and rightmost_col != col:
+            wrap_pos = (row, rightmost_col)
+            return self.__grid.get(wrap_pos)
+
+        return None
+
+    def right(self, current_index: int) -> int | None:
+        """
+        Navigate right from current index. Wraps to leftmost element if at right edge.
+        """
+        if current_index not in self.__reverse_grid:
+            return None
+
+        row, col = self.__reverse_grid[current_index]
+
+        # move normally if destination exists
+        new_pos = (row, col + 1)
+        if new_pos in self.__grid:
+            return self.__grid[new_pos]
+
+        # wrap on edge
+        leftmost_col = self.__leftmost_column(row)
+        if leftmost_col >= 0 and leftmost_col != col:
+            wrap_pos = (row, leftmost_col)
+            return self.__grid.get(wrap_pos)
+
+        return None
+
+    def up(self, current_index: int) -> int | None:
+        """
+        Navigate up from current index. From any radio column goes to query(0).
+        """
+        if current_index not in self.__reverse_grid:
+            return None
+
+        row, col = self.__reverse_grid[current_index]
+        if row == 0:
+            return None
+        if row == 1:
+            return 0
+
+        # otherwise, move up normally
+        if row > 1:
+            new_pos = (row - 1, col)
+            return self.__grid.get(new_pos)
+
+        return None
+
+    def down(self, current_index: int) -> int | None:
+        """
+        Navigate down from current index.
+        """
+        if current_index not in self.__reverse_grid:
+            return None
+
+        # In SEARCH_INIT mode, advance by one
+        if self.__ui_state == UiState.SEARCH_INIT:
+            return current_index + 1 if current_index + 1 in self.__reverse_grid else None
+
+        row, col = self.__reverse_grid[current_index]
+        new_pos = (row + 1, col)
+        return self.__grid.get(new_pos)
+
 
 class SearchFormView(BaseCursesView):
     """
@@ -84,6 +226,7 @@ class SearchFormView(BaseCursesView):
         self.__search_attempted = False
         self.__query_input.clear()
         self._selected_index = 0
+        self.__offset = 0
 
     def focus(self):
         """
@@ -108,8 +251,8 @@ class SearchFormView(BaseCursesView):
         handlers: dict[int, callable] = {
             curses.KEY_UP: lambda: self.__navigate_form_selection(NavigationDirection.UP),
             curses.KEY_DOWN: lambda: self.__navigate_form_selection(NavigationDirection.DOWN),
-            curses.KEY_LEFT: self.__handle_left_arrow,
-            curses.KEY_RIGHT: self.__handle_right_arrow,
+            curses.KEY_LEFT: lambda: self.__handle_horizontal_arrow(NavigationDirection.LEFT),
+            curses.KEY_RIGHT: lambda: self.__handle_horizontal_arrow(NavigationDirection.RIGHT),
             ord(' '): self.__handle_spacebar,
             ord('\n'): self.__handle_enter,
             ord('\r'): self.__handle_enter,
@@ -153,21 +296,6 @@ class SearchFormView(BaseCursesView):
             self.__offset -= self.__limit
             return True
         return False
-
-    def _truncate_label(self, label: str, max_length: int = LAYOUT_TRUNCATED_LABEL_MAX_LENGTH) -> str:
-        """
-        Truncate label to max_length, replacing last char with ellipsis if needed.
-        
-        Args:
-            label: The label text to truncate
-            max_length: Maximum allowed length for the label
-            
-        Returns:
-            str: The truncated label with ellipsis if needed
-        """
-        if len(label) <= max_length:
-            return label
-        return label[:max_length - 1] + "…"
 
     def render(self, stdscr: curses.window) -> None:
         """
@@ -248,7 +376,7 @@ class SearchFormView(BaseCursesView):
                         is_selected: bool = self._selected_index == field_index
                         col_x = sites_start_x + col * (LAYOUT_SITE_COLUMN_WIDTH + LAYOUT_SITE_COLUMN_SPACING)
                         original_label = site_radio.label
-                        site_radio.label = self._truncate_label(original_label)
+                        site_radio.label = self.__truncate_label(original_label)
                         site_radio.render(stdscr, y_current, xb + col_x, field_index, LAYOUT_TRUNCATED_LABEL_MAX_LENGTH, is_selected)
                         site_radio.label = original_label  # restore original label
 
@@ -276,32 +404,54 @@ class SearchFormView(BaseCursesView):
         """
         self._focused = False
 
-    def _calculate_group_width(self, group: InputRadioGroup) -> int:
+    def __get_sites_per_column(self) -> int:
         """
-        Calculate the display width needed for a radio group.
-        
-        Args:
-            group: The radio group to calculate width for
-            
-        Returns:
-            int: The minimum width needed to display the group
+        Handle left arrow key navigation.
         """
-        if not group.radios:
-            return 20
-        return max(len(radio.label) for radio in group.radios)
+        is_constrained = self.session.ui_state == UiState.SEARCH_RESULTS
+        return (LAYOUT_CONSTRAINED_SITES_PER_COLUMN if is_constrained
+                           else min(self.bounds.height - LAYOUT_SITES_VERTICAL_OFFSET, len(self.__sites_group.radios)))
 
     def __handle_enter(self) -> None:
         """
         Handle ENTER key - only toggles radio buttons, doesn't affect query field.
         """
 
-        if self._selected_index == 0:  # query field
+        if self._selected_index == 0:           # query field
             self.session.searchman.autosearch()
-        else:  # radios
+        else:                                   # radios
             self.__handle_radio_toggle()
             if self.session.ui_state != UiState.SEARCH_INIT:
                 self.session.searchman.autosearch(immediate=True)
 
+    def __handle_horizontal_arrow(self, direction: NavigationDirection) -> None:
+        """
+        Handle left/right arrow navigation using the directional grid.
+        
+        Args:
+            direction: The navigation direction (LEFT or RIGHT)
+        """
+        if self.session.ui_state is None:
+            return
+
+        # query field handles cursor movement internally
+        if self._selected_index == 0:
+            if direction == NavigationDirection.LEFT:
+                self.__query_input.move_cursor_left()
+            else:
+                self.__query_input.move_cursor_right()
+            return
+
+        # use grid navigation for all other fields
+        grid = SearchFormNavigationGrid(self.session.ui_state, self.__filter_group, self.__sort_group,
+                self.__sites_group, self.__get_sites_per_column())
+        if direction == NavigationDirection.LEFT:
+            new_index = grid.left(self._selected_index)
+        else:
+            new_index = grid.right(self._selected_index)
+
+        if new_index is not None:
+            self._selected_index = new_index
 
     def __handle_radio_toggle(self) -> None:
         """
@@ -325,119 +475,6 @@ class SearchFormView(BaseCursesView):
                 site_input: InputRadio = self.__sites_group.radios[site_index]
                 site_input.next_state()
                 self.__sites_selected = [self.__sites[site_index]]
-
-    def __handle_horizontal_arrow(self, direction: NavigationDirection) -> None:
-        """
-        Handle left/right arrow navigation using group helpers.
-        
-        Args:
-            direction: The navigation direction (LEFT or RIGHT)
-        """
-        if self.session.ui_state is None:
-            return
-
-        # query handles self
-        if self._selected_index == 0:
-            if direction == NavigationDirection.LEFT:
-                self.__query_input.move_cursor_left()
-            else:
-                self.__query_input.move_cursor_right()
-            return
-
-        # try navigation within current group first
-        current_group, group_index = self.__get_current_group_and_index()
-        if current_group:
-            if direction == NavigationDirection.LEFT:
-                new_group_index = current_group.navigate_left(group_index)
-            else:
-                new_group_index = current_group.navigate_right(group_index)
-
-            if new_group_index is not None:
-                self._selected_index = self.__convert_to_absolute_index(current_group, new_group_index)
-                return
-
-        # group can't handle it try xgroup navigation
-        self.__navigate_between_groups(direction)
-
-    def __handle_left_arrow(self) -> None:
-        """
-        Handle left arrow key navigation.
-        """
-        self.__handle_horizontal_arrow(NavigationDirection.LEFT)
-
-    def __handle_right_arrow(self) -> None:
-        """
-        Handle right arrow key navigation.
-        """
-        self.__handle_horizontal_arrow(NavigationDirection.RIGHT)
-
-    def __get_field_boundaries(self) -> tuple[int, int, int]:
-        """
-        Get start indices for each field group.
-        
-        Returns:
-            tuple: (filter_start, sorts_start, sites_start) indices
-        """
-        filter_start = 1
-        sorts_start = filter_start + len(self.__filter_group.radios)
-        sites_start = sorts_start + len(self.__sort_group.radios)
-        return filter_start, sorts_start, sites_start
-
-    def __get_current_group_and_index(self) -> tuple[InputRadioGroup, int]:
-        """
-        Get the current group and relative index within that group.
-        
-        Returns:
-            tuple: (current_group, group_relative_index)
-        """
-        filter_start, sorts_start, sites_start = self.__get_field_boundaries()
-
-        if self._selected_index < sorts_start:
-            return self.__filter_group, self._selected_index - filter_start
-        elif self._selected_index < sites_start:
-            return self.__sort_group, self._selected_index - sorts_start
-        else:
-            return self.__sites_group, self._selected_index - sites_start
-
-    def __convert_to_absolute_index(self, group: InputRadioGroup, group_index: int) -> int:
-        """
-        Convert group-relative index back to absolute selection index.
-        
-        Args:
-            group: The radio group containing the index
-            group_index: The index within the group
-            
-        Returns:
-            int: The absolute selection index
-        """
-        filter_start, sorts_start, sites_start = self.__get_field_boundaries()
-        group_start_map = {
-            "filter": filter_start,
-            "sort": sorts_start,
-            "site": sites_start,
-        }
-        return group_start_map[group.name] + group_index
-
-    def __navigate_between_groups(self, direction: NavigationDirection) -> None:
-        """
-        Handle navigation between different radio groups.
-        
-        Args:
-            direction: The navigation direction (LEFT or RIGHT)
-        """
-        current_group, group_index = self.__get_current_group_and_index()
-        current_row = current_group.get_row_from_index(group_index)
-        group_map = {
-            (NavigationDirection.LEFT, "site"): self.__sort_group,
-            (NavigationDirection.LEFT, "sort"): self.__filter_group,
-            (NavigationDirection.RIGHT, "filter"): self.__sort_group,
-            (NavigationDirection.RIGHT, "sort"): self.__sites_group,
-        }
-        target_group = group_map.get((direction, current_group.name))
-        if target_group:
-            new_index = target_group.navigate_to_row(current_row)
-            if new_index is not None:
-                self._selected_index = self.__convert_to_absolute_index(target_group, new_index)
 
     def __handle_spacebar(self) -> None:
         """
@@ -470,3 +507,18 @@ class SearchFormView(BaseCursesView):
                 self._selected_index = 0
             else:
                 self._selected_index += 1
+
+    def __truncate_label(self, label: str, max_length: int = LAYOUT_TRUNCATED_LABEL_MAX_LENGTH) -> str:
+        """
+        Truncate label to max_length, replacing last char with ellipsis if needed.
+        
+        Args:
+            label: The label text to truncate
+            max_length: Maximum allowed length for the label
+            
+        Returns:
+            str: The truncated label with ellipsis if needed
+        """
+        if len(label) <= max_length:
+            return label
+        return label[:max_length - 1] + "…"

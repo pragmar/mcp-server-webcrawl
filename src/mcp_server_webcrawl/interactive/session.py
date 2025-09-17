@@ -18,7 +18,8 @@ from mcp_server_webcrawl.interactive.views.searchform import SearchFormView
 from mcp_server_webcrawl.interactive.views.help import HelpView
 from mcp_server_webcrawl.models.sites import SiteResult
 
-CURSES_TIMEOUT_MS = 50
+# can be as low as 1, 50 feels a little laggy
+CURSES_TIMEOUT_MS = 25
 
 LAYOUT_CONTENT_START_Y_OFFSET = 1
 LAYOUT_CONTENT_END_Y_OFFSET = 1
@@ -268,9 +269,9 @@ class InteractiveSession:
         """
         Get context-sensitive help text.
         """
-        page_results: str = " | ←→ Page Results" if self.results.results_total > self.searchform.limit else ""
+        page_results: str = " | ←→ Page Results" if self.ui_focused == UiFocusable.SEARCH_RESULTS else ""
         search_results_enter: str = "Search" if self.__view__searchform.focused else "View Document"
-        search_results_tab: str = "To Results" if self.__view__searchform.focused else "To Form"
+        search_results_tab: str = "Results" if self.__view__searchform.focused else "Search Form"
         footers: dict[UiState, str] = {
             UiState.DOCUMENT: "↑↓: Scroll | PgUp/PgDn: Page | Home/End: Top/Bot | TAB: Mode | ESC: Back",
             UiState.HELP: "↑↓: Scroll | PgUp/PgDn: Page | Home/End: Top/Bot | ESC: Back",
