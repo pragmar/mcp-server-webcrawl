@@ -252,7 +252,7 @@ class HelpView(BaseCursesView):
                         line.rstrip(),
                         width=content_width,
                         expand_tabs=True,
-                        replace_whitespace=False,
+                        replace_whitespace=True,
                         break_long_words=True,
                         break_on_hyphens=True
                     )
