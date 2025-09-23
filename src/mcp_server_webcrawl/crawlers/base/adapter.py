@@ -28,10 +28,9 @@ from mcp_server_webcrawl.utils import to_isoformat_zulu, from_isoformat_zulu
 from mcp_server_webcrawl.utils.search import SearchQueryParser, SearchSubquery
 from mcp_server_webcrawl.utils.logger import get_logger
 
-logger = get_logger()
-
 # in the interest of sane imports (avoiding circulars), INDEXED_* constants
 # live here, happily, as denizens of adapterville
+INDEXED_BATCH_SIZE: Final[int] = 256
 INDEXED_BINARY_EXTENSIONS: Final[tuple[str, ...]] = (
     ".woff",".woff2",".ttf",".otf",".eot",
     ".jpeg",".jpg",".png",".webp",".gif",".bmp",".tiff",".tif",".svg",".ico",".heic",".heif",
@@ -43,58 +42,17 @@ INDEXED_BINARY_EXTENSIONS: Final[tuple[str, ...]] = (
     ".swf",".svgz",".dat",".db",".sqlite",".class",".pyc",".o"
 )
 
-INDEXED_WARC_EXTENSIONS: Final[list[str]] = [".warc", ".warc.gz", ".txt"]
-
-# files on disk will need default for reassembly {proto}{dir}
-# these things are already approximations (perhaps) having passed through wget
-# filtering (--adjust-extension) representative of the file on disk, also https
-# is what the LLM is going to guess in all cases
-INDEXED_RESOURCE_DEFAULT_PROTOCOL: Final[str] = "https://"
-INDEXED_BATCH_SIZE: Final[int] = 256
-INDEXED_MAX_WORKERS: Final[int] = min(8, os.cpu_count() or 4)
-
-# 2MB max HTTP content, anything larger passed over by fulltext indexer
-INDEXED_MAX_FILE_SIZE: Final[int] = 2000000
-
-# max indexing time may need a cli arg to override at some point,
-# but for now, this is a fan spinner--just make sure it doesn't run away
-INDEXED_MAX_PROCESS_TIME: Final[timedelta] = timedelta(minutes=10)
-
-# maximum indexes held in cache, an index is a unique list[site-ids] argument
-INDEXED_MANAGER_CACHE_MAX: Final[int] = 20
-INDEXED_IGNORE_DIRECTORIES: Final[list[str]] = ["http-client-cache", "result-storage"]
-
-INDEXED_TYPE_MAPPING: Final[dict[str, ResourceResultType]] = {
-    "": ResourceResultType.PAGE,
-    ".html": ResourceResultType.PAGE,
-    ".htm": ResourceResultType.PAGE,
-    ".php": ResourceResultType.PAGE,
-    ".asp": ResourceResultType.PAGE,
-    ".aspx": ResourceResultType.PAGE,
-    ".js": ResourceResultType.SCRIPT,
-    ".css": ResourceResultType.CSS,
-    ".jpg": ResourceResultType.IMAGE,
-    ".jpeg": ResourceResultType.IMAGE,
-    ".png": ResourceResultType.IMAGE,
-    ".gif": ResourceResultType.IMAGE,
-    ".svg": ResourceResultType.IMAGE,
-    ".tif": ResourceResultType.IMAGE,
-    ".tiff": ResourceResultType.IMAGE,
-    ".webp": ResourceResultType.IMAGE,
-    ".bmp": ResourceResultType.IMAGE,
-    ".pdf": ResourceResultType.PDF,
-    ".txt": ResourceResultType.TEXT,
-    ".xml": ResourceResultType.TEXT,
-    ".json": ResourceResultType.TEXT,
-    ".doc": ResourceResultType.DOC,
-    ".docx": ResourceResultType.DOC,
-    ".mov": ResourceResultType.VIDEO,
-    ".mp4": ResourceResultType.VIDEO,
-    ".mp3": ResourceResultType.AUDIO,
-    ".ogg": ResourceResultType.AUDIO,
+INDEXED_BYTE_MULTIPLIER: Final[dict[str, int]] = {
+    "b": 1,
+    "kb": 1024,
+    "kB": 1024,
+    "mb": 1024*1024,
+    "MB": 1024*1024,
+    "gb": 1024*1024*1024,
+    "GB": 1024*1024*1024,
 }
 
-INDEXED_EXTENSION_MAPPING = {
+INDEXED_EXTENSION_MAPPING: Final[dict[str, str]] = {
     # image/*
     ".jpg": "image/jpeg",
     ".jpeg": "image/jpeg",
@@ -142,6 +100,89 @@ INDEXED_EXTENSION_MAPPING = {
     ".otf": "font/otf",
     ".eot": "application/vnd.ms-fontobject",
 }
+
+INDEXED_IGNORE_DIRECTORIES: Final[list[str]] = ["http-client-cache", "result-storage"]
+
+# maximum indexes held in cache, an index is a unique list[site-ids] argument
+INDEXED_MANAGER_CACHE_MAX: Final[int] = 20
+
+# 2MB max HTTP content, anything larger passed over by fulltext indexer
+INDEXED_MAX_FILE_SIZE: Final[int] = 2000000
+
+# max indexing time may need a cli arg to override at some point,
+# but for now, this is a fan spinner--just make sure it doesn't run away
+INDEXED_MAX_PROCESS_TIME: Final[timedelta] = timedelta(minutes=10)
+INDEXED_MAX_WORKERS: Final[int] = min(8, os.cpu_count() or 4)
+INDEXED_MIME_FALLBACKS: Final[dict[ResourceResultType, str]] = {
+    ResourceResultType.PAGE: "text/html",
+    ResourceResultType.CSS: "text/css",
+    ResourceResultType.SCRIPT: "application/javascript",
+    ResourceResultType.IMAGE: "image/jpeg", # default for type, override
+    ResourceResultType.PDF: "application/pdf",
+    ResourceResultType.TEXT: "text/plain",
+    ResourceResultType.DOC: "application/msword",
+    ResourceResultType.AUDIO: "audio/mpeg", # default for type, override
+    ResourceResultType.VIDEO: "video/mp4", # default for type, override
+    ResourceResultType.OTHER: "application/octet-stream"
+}
+INDEXED_MIME_MAPPING: Final[dict[str, ResourceResultType]] = {
+    "html": ResourceResultType.PAGE,
+    "javascript": ResourceResultType.SCRIPT,
+    "css": ResourceResultType.CSS,
+    "image/": ResourceResultType.IMAGE,
+    "pdf": ResourceResultType.PDF,
+    "text/": ResourceResultType.TEXT,
+    "audio/": ResourceResultType.AUDIO,
+    "video/": ResourceResultType.VIDEO,
+    "application/json": ResourceResultType.TEXT,
+    "application/xml": ResourceResultType.TEXT
+}
+
+# files on disk will need default for reassembly {proto}{dir}
+# these things are already approximations (perhaps) having passed through wget
+# filtering (--adjust-extension) representative of the file on disk, also https
+# is what the LLM is going to guess in all cases
+INDEXED_RESOURCE_DEFAULT_PROTOCOL: Final[str] = "https://"
+INDEXED_TEXT_APPLICATION_TYPES: Final[tuple[str, ...]] = (
+    "application/json", "application/xml", "application/javascript",
+    "application/atom+xml", "application/ld+json", "application/rss+xml",
+    "application/x-www-form-urlencoded",
+)
+
+INDEXED_TYPE_MAPPING: Final[dict[str, ResourceResultType]] = {
+    "": ResourceResultType.PAGE,
+    ".html": ResourceResultType.PAGE,
+    ".htm": ResourceResultType.PAGE,
+    ".php": ResourceResultType.PAGE,
+    ".asp": ResourceResultType.PAGE,
+    ".aspx": ResourceResultType.PAGE,
+    ".js": ResourceResultType.SCRIPT,
+    ".css": ResourceResultType.CSS,
+    ".jpg": ResourceResultType.IMAGE,
+    ".jpeg": ResourceResultType.IMAGE,
+    ".png": ResourceResultType.IMAGE,
+    ".gif": ResourceResultType.IMAGE,
+    ".svg": ResourceResultType.IMAGE,
+    ".tif": ResourceResultType.IMAGE,
+    ".tiff": ResourceResultType.IMAGE,
+    ".webp": ResourceResultType.IMAGE,
+    ".bmp": ResourceResultType.IMAGE,
+    ".pdf": ResourceResultType.PDF,
+    ".txt": ResourceResultType.TEXT,
+    ".xml": ResourceResultType.TEXT,
+    ".json": ResourceResultType.TEXT,
+    ".doc": ResourceResultType.DOC,
+    ".docx": ResourceResultType.DOC,
+    ".mov": ResourceResultType.VIDEO,
+    ".mp4": ResourceResultType.VIDEO,
+    ".mp3": ResourceResultType.AUDIO,
+    ".ogg": ResourceResultType.AUDIO,
+}
+
+INDEXED_WARC_EXTENSIONS: Final[list[str]] = [".warc", ".warc.gz", ".txt"]
+
+logger = get_logger()
+
 
 class IndexStatus(Enum):
     UNDEFINED = ""
@@ -296,33 +337,20 @@ class BaseManager:
             HTTP headers string with content type and length
         """
 
-        type_fallbacks: dict[ResourceResultType, str] = {
-            ResourceResultType.PAGE: "text/html",
-            ResourceResultType.CSS: "text/css",
-            ResourceResultType.SCRIPT: "application/javascript",
-            ResourceResultType.IMAGE: "image/jpeg", # default for type, override
-            ResourceResultType.PDF: "application/pdf",
-            ResourceResultType.TEXT: "text/plain",
-            ResourceResultType.DOC: "application/msword",
-            ResourceResultType.AUDIO: "audio/mpeg", # default for type, override
-            ResourceResultType.VIDEO: "video/mp4", # default for type, override
-            ResourceResultType.OTHER: "application/octet-stream"
-        }
         fallback_mime_default = "application/octet-stream"
-
         if resource_type in (ResourceResultType.IMAGE, ResourceResultType.AUDIO, ResourceResultType.VIDEO):
             # get file mime if type/ext not one-to-one
             extension = path.suffix.lower()
             content_type = INDEXED_EXTENSION_MAPPING.get(extension)
             if not content_type:
-                content_type = type_fallbacks.get(resource_type, fallback_mime_default)
+                content_type = INDEXED_MIME_FALLBACKS.get(resource_type, fallback_mime_default)
         elif resource_type == ResourceResultType.OTHER:
             # aquire from file if unknown
             mime_type, _ = mimetypes.guess_type(str(path))
             content_type = mime_type if mime_type is not None else fallback_mime_default
         else:
             # normal one-to-one mapping
-            content_type = type_fallbacks.get(resource_type, fallback_mime_default)
+            content_type = INDEXED_MIME_FALLBACKS.get(resource_type, fallback_mime_default)
 
         return f"HTTP/1.0 200 OK\r\nContent-Type: {content_type}\r\nContent-Length: {file_size}\r\n\r\n"
 
@@ -367,8 +395,7 @@ class BaseManager:
             return null_result
 
         mime_type, _ = mimetypes.guess_type(file_path)
-        mime_text_exceptions = ["application/json", "application/xml", "application/javascript"]
-        if mime_type and not mime_type.startswith("text/") and mime_type not in mime_text_exceptions:
+        if mime_type and not mime_type.startswith("text/") and mime_type not in INDEXED_TEXT_APPLICATION_TYPES:
             return null_result
 
         content = None
@@ -413,8 +440,7 @@ class BaseManager:
 
         mime_type, _ = mimetypes.guess_type(file_path)
         if mime_type and not mime_type.startswith("text/"):
-            if not any(mime_type.startswith(prefix) for prefix in ["application/json",
-                    "application/xml", "application/javascript"]):
+            if not any(mime_type.startswith(prefix) for prefix in INDEXED_TEXT_APPLICATION_TYPES):
                 return None
 
         content = None
@@ -667,21 +693,8 @@ class BaseManager:
             ResourceResultType enum value based on content type
         """
 
-        content_type_mapping = {
-            "html": ResourceResultType.PAGE,
-            "javascript": ResourceResultType.SCRIPT,
-            "css": ResourceResultType.CSS,
-            "image/": ResourceResultType.IMAGE,
-            "pdf": ResourceResultType.PDF,
-            "text/": ResourceResultType.TEXT,
-            "audio/": ResourceResultType.AUDIO,
-            "video/": ResourceResultType.VIDEO,
-            "application/json": ResourceResultType.TEXT,
-            "application/xml": ResourceResultType.TEXT
-        }
-
         content_type = content_type.lower()
-        for pattern, res_type in content_type_mapping.items():
+        for pattern, res_type in INDEXED_MIME_MAPPING.items():
             if pattern in content_type:
                 return res_type
 
@@ -703,10 +716,6 @@ class BaseManager:
         elif content_type_lower.startswith(("font/", "image/", "audio/", "video/", "application/octet-stream")):
             return False
         elif content_type_lower.startswith("application/"):
-            return content_type_lower in {
-                "application/atom+xml", "application/ld+json", "application/rss+xml",
-                "application/x-www-form-urlencoded", "application/xml", "application/json",
-                "application/javascript"
-            }
+            return content_type_lower in INDEXED_TEXT_APPLICATION_TYPES
         else:
             return True

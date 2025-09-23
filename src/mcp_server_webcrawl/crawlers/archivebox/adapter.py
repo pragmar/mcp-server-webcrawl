@@ -28,6 +28,10 @@ from mcp_server_webcrawl.models.sites import (
 )
 from mcp_server_webcrawl.utils.logger import get_logger
 
+# skip metadata directories
+ARCHIVEBOX_SKIP_DIRECTORIES: set[str] = {"media", "mercury"}
+ARCHIVEBOX_COLLAPSE_FILENAMES: list[str] = ["/index.html", "/index.htm"]
+
 logger = get_logger()
 
 class ArchiveBoxManager(IndexedManager):
@@ -313,12 +317,10 @@ class ArchiveBoxManager(IndexedManager):
         """
         assets: list[tuple] = []
 
-        # skip metadata directories
-        skip_directories: set[str] = {"media", "mercury"}
-        collapse_filenames: list[str] = ["/index.html", "/index.htm"]
+
 
         for item in entry_dir.iterdir():
-            if item.is_dir() and item.name not in skip_directories:
+            if item.is_dir() and item.name not in ARCHIVEBOX_SKIP_DIRECTORIES:
                 # this is an archivebox domain directory
                 domain_name: str = item.name
 
@@ -338,7 +340,7 @@ class ArchiveBoxManager(IndexedManager):
                         clean_file_path: Path = Path(root) / clean_filename
                         relative_path = clean_file_path.relative_to(item)
                         url = f"https://{domain_name}/{str(relative_path).replace(os.sep, '/')}"
-                        for collapse_filename in collapse_filenames:
+                        for collapse_filename in ARCHIVEBOX_COLLAPSE_FILENAMES:
                             # turn ./index.html and variants into ./ (dir index) to help the indexer
                             if url.endswith(collapse_filename):
                                 url = url[:-(len(collapse_filename))] + "/"

@@ -27,6 +27,8 @@ from mcp_server_webcrawl.utils.logger import get_logger
 
 logger = get_logger()
 
+KATANA_REGEX_HTTP_STATUS = re.compile(r"HTTP/\d\.\d\s+(\d+)")
+KATANA_REGEX_CONTENT_TYPE = re.compile(r"Content-Type:\s*([^\r\n;]+)", re.IGNORECASE)
 
 class KatanaManager(IndexedManager):
     """
@@ -130,10 +132,10 @@ class KatanaManager(IndexedManager):
                 body = body.rsplit("\n0", 1)[0].strip() # remove trailing "0" terminator
 
             # status from the first line of headers
-            status_match: str = re.search(r"HTTP/\d\.\d\s+(\d+)", headers.split("\n")[0])
+            status_match: str = KATANA_REGEX_HTTP_STATUS.search(headers.split("\n", 2)[0])
             status_code: int = int(status_match.group(1)) if status_match else 0
 
-            content_type_match = re.search(r"Content-Type:\s*([^\r\n;]+)", headers, re.IGNORECASE)
+            content_type_match = KATANA_REGEX_CONTENT_TYPE.search(headers)
             content_type = content_type_match.group(1).strip() if content_type_match else ""
             resource_type = self._determine_resource_type(content_type)
             content_size = len(body)

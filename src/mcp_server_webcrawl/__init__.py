@@ -12,8 +12,7 @@ from mcp_server_webcrawl.utils.cli import get_help_short_message, get_help_long_
 from mcp_server_webcrawl.settings import DEBUG, DATA_DIRECTORY
 from mcp_server_webcrawl.crawlers import get_crawler, VALID_CRAWLER_CHOICES
 
-
-__version__: str = "0.14.2"
+__version__: str = "0.14.3"
 __name__: str = "mcp-server-webcrawl"
 
 if DEBUG:

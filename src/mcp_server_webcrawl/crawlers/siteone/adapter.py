@@ -12,8 +12,9 @@ from mcp_server_webcrawl.crawlers.base.adapter import (
     IndexStatus,
     SitesGroup,
     INDEXED_BATCH_SIZE,
+    INDEXED_BYTE_MULTIPLIER,
     INDEXED_RESOURCE_DEFAULT_PROTOCOL,
-    INDEXED_TYPE_MAPPING
+    INDEXED_TYPE_MAPPING,
 )
 from mcp_server_webcrawl.crawlers.base.indexed import IndexedManager
 from mcp_server_webcrawl.utils.logger import get_logger
@@ -26,12 +27,18 @@ from mcp_server_webcrawl.models.sites import (
     SiteResult,
 )
 
-# heads up. SiteOne uses wget adapters, this is unintuitive but reasonable as SiteOne
-# uses wget for archiving. lean into maximal recycling of wget, if it stops making
-# sense switch to homegrown
-# from mcp_server_webcrawl.crawlers.wget.adapter import (
-#     get_sites,  # hands off, used
-# )
+SITEONE_LOG_TYPE_MAPPING = {
+    "html": ResourceResultType.PAGE,
+    "redirect": ResourceResultType.PAGE,
+    "image": ResourceResultType.IMAGE,
+    "js": ResourceResultType.SCRIPT,
+    "css": ResourceResultType.CSS,
+    "video": ResourceResultType.VIDEO,
+    "audio": ResourceResultType.AUDIO,
+    "pdf": ResourceResultType.PDF,
+    "other": ResourceResultType.OTHER,
+    "font": ResourceResultType.OTHER,
+}
 
 logger = get_logger()
 
@@ -87,15 +94,7 @@ class SiteOneManager(IndexedManager):
                             if size_str:
                                 size_value = float(size_str.split()[0])
                                 size_unit = size_str.split()[1].lower() if len(size_str.split()) > 1 else "b"
-                                multiplier = {
-                                    "b": 1,
-                                    "kb": 1024,
-                                    "kB": 1024,
-                                    "mb": 1024*1024,
-                                    "MB": 1024*1024,
-                                    "gb": 1024*1024*1024,
-                                    "GB": 1024*1024*1024
-                                }.get(size_unit, 1)
+                                multiplier = INDEXED_BYTE_MULTIPLIER.get(size_unit, 1)
                                 size = int(size_value * multiplier)
 
                             if 400 <= status < 600:
@@ -279,19 +278,8 @@ class SiteOneManager(IndexedManager):
             if log_type:
                 # no type for redirects, but more often than not
                 # redirection to another page
-                type_mapping = {
-                    "html": ResourceResultType.PAGE,
-                    "redirect": ResourceResultType.PAGE,
-                    "image": ResourceResultType.IMAGE,
-                    "js": ResourceResultType.SCRIPT,
-                    "css": ResourceResultType.CSS,
-                    "video": ResourceResultType.VIDEO,
-                    "audio": ResourceResultType.AUDIO,
-                    "pdf": ResourceResultType.PDF,
-                    "other": ResourceResultType.OTHER,
-                    "font": ResourceResultType.OTHER,
-                }
-                resource_type = type_mapping.get(log_type, INDEXED_TYPE_MAPPING.get(extension, ResourceResultType.OTHER))
+
+                resource_type = SITEONE_LOG_TYPE_MAPPING.get(log_type, INDEXED_TYPE_MAPPING.get(extension, ResourceResultType.OTHER))
             else:
                 # fallback to extension-based mapping
                 resource_type = INDEXED_TYPE_MAPPING.get(extension, ResourceResultType.OTHER)
