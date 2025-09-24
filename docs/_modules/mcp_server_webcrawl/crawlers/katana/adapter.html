@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../interactive.html">Interactive Mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -103,6 +104,8 @@
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
 
+<span class="n">KATANA_REGEX_HTTP_STATUS</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;HTTP/\d\.\d\s+(\d+)&quot;</span><span class="p">)</span>
+<span class="n">KATANA_REGEX_CONTENT_TYPE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Content-Type:\s*([^\r\n;]+)&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
 
 <div class="viewcode-block" id="KatanaManager">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.katana.html#mcp_server_webcrawl.crawlers.katana.adapter.KatanaManager">[docs]</a>
@@ -211,10 +214,10 @@
                 <span class="n">body</span> <span class="o">=</span> <span class="n">body</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">0&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="c1"># remove trailing &quot;0&quot; terminator</span>
 
             <span class="c1"># status from the first line of headers</span>
-            <span class="n">status_match</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;HTTP/\d\.\d\s+(\d+)&quot;</span><span class="p">,</span> <span class="n">headers</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">status_match</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">KATANA_REGEX_HTTP_STATUS</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">headers</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
             <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">status_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="k">if</span> <span class="n">status_match</span> <span class="k">else</span> <span class="mi">0</span>
 
-            <span class="n">content_type_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Content-Type:\s*([^\r\n;]+)&quot;</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+            <span class="n">content_type_match</span> <span class="o">=</span> <span class="n">KATANA_REGEX_CONTENT_TYPE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
             <span class="n">content_type</span> <span class="o">=</span> <span class="n">content_type_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">content_type_match</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
             <span class="n">resource_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_determine_resource_type</span><span class="p">(</span><span class="n">content_type</span><span class="p">)</span>
             <span class="n">content_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>

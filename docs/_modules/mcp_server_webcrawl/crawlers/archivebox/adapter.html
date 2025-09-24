@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../interactive.html">Interactive Mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -103,6 +104,10 @@
     <span class="n">SITES_FIELDS_DEFAULT</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="c1"># skip metadata directories</span>
+<span class="n">ARCHIVEBOX_SKIP_DIRECTORIES</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;media&quot;</span><span class="p">,</span> <span class="s2">&quot;mercury&quot;</span><span class="p">}</span>
+<span class="n">ARCHIVEBOX_COLLAPSE_FILENAMES</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;/index.html&quot;</span><span class="p">,</span> <span class="s2">&quot;/index.htm&quot;</span><span class="p">]</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
 
@@ -394,12 +399,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">assets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="c1"># skip metadata directories</span>
-        <span class="n">skip_directories</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;media&quot;</span><span class="p">,</span> <span class="s2">&quot;mercury&quot;</span><span class="p">}</span>
-        <span class="n">collapse_filenames</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;/index.html&quot;</span><span class="p">,</span> <span class="s2">&quot;/index.htm&quot;</span><span class="p">]</span>
+
 
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">entry_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="n">item</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">skip_directories</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="n">item</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ARCHIVEBOX_SKIP_DIRECTORIES</span><span class="p">:</span>
                 <span class="c1"># this is an archivebox domain directory</span>
                 <span class="n">domain_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">name</span>
 
@@ -419,7 +422,7 @@
                         <span class="n">clean_file_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="n">clean_filename</span>
                         <span class="n">relative_path</span> <span class="o">=</span> <span class="n">clean_file_path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
                         <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;https://</span><span class="si">{</span><span class="n">domain_name</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">relative_path</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;/&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
-                        <span class="k">for</span> <span class="n">collapse_filename</span> <span class="ow">in</span> <span class="n">collapse_filenames</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">collapse_filename</span> <span class="ow">in</span> <span class="n">ARCHIVEBOX_COLLAPSE_FILENAMES</span><span class="p">:</span>
                             <span class="c1"># turn ./index.html and variants into ./ (dir index) to help the indexer</span>
                             <span class="k">if</span> <span class="n">url</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">collapse_filename</span><span class="p">):</span>
                                 <span class="n">url</span> <span class="o">=</span> <span class="n">url</span><span class="p">[:</span><span class="o">-</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">collapse_filename</span><span class="p">))]</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span>

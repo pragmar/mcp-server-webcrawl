@@ -7,12 +7,25 @@ mcp-server-webcrawl can double as a terminal search for your web archives. You c
 
 Launch with --crawler and --datasource to load into search immediately, or use setup datasrc and crawler in-app.
 
+.. raw:: html
+
+   <iframe width="560" height="315" style="display: block;margin-bottom:1rem;" src="https://www.youtube.com/embed/8kNkP-zNzs4" frameborder="0" allowfullscreen></iframe>
+
+Usage
+-----
+
+Interactive mode exposes the mcp-server-webcrawl search layer as a terminal UI (TUI), bypassing MCP/AI altogether. Core field and Boolean search are supported, along with the human-friendly aspects of the search interface, such as result snippets.
+
+You launch interactive mode from the termial, using the --interactive command line argument.
+
 .. code-block:: bash
 
    mcp-server-webcrawl --crawler wget --datasrc /path/to/datasrc --interactive
    # or manually enter crawler and datasrc in the UI
    mcp-server-webcrawl --interactive
 
+Screencaps
+----------
 
 .. figure:: _static/images/interactive.search.webp
    :alt: mcp-server-webcrawl in --interactive mode heading
@@ -26,4 +39,4 @@ Launch with --crawler and --datasource to load into search immediately, or use s
    :align: center
    :width: 100%
 
-   Document view showing Markdown presentation, also available are raw and HTTP headers views.
+   Document presentated in in Markdown, with raw and HTTP headers views available.

@@ -48,7 +48,11 @@
 <li class="toctree-l1"><a class="reference internal" href="guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="prompts.html">Prompt Routines</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Interactive Mode</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Interactive Mode</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#screencaps">Screencaps</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -81,11 +85,18 @@
 <p><strong>No AI, just classic Boolean search of your web-archives in a terminal.</strong></p>
 <p>mcp-server-webcrawl can double as a terminal search for your web archives. You can run it against your local archives, but it gets more interesting when you realize you can ssh into any remote host and view archives sitting on that host. No downloads, syncs, multifactor logins, or other common drudgery required. With interactive mode, you can be in and searching a crawl sitting on a remote server in no time at all.</p>
 <p>Launch with –crawler and –datasource to load into search immediately, or use setup datasrc and crawler in-app.</p>
+<iframe width="560" height="315" style="display: block;margin-bottom:1rem;" src="https://www.youtube.com/embed/8kNkP-zNzs4" frameborder="0" allowfullscreen></iframe><section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<p>Interactive mode exposes the mcp-server-webcrawl search layer as a terminal UI (TUI), bypassing MCP/AI altogether. Core field and Boolean search are supported, along with the human-friendly aspects of the search interface, such as result snippets.</p>
+<p>You launch interactive mode from the termial, using the –interactive command line argument.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mcp-server-webcrawl<span class="w"> </span>--crawler<span class="w"> </span>wget<span class="w"> </span>--datasrc<span class="w"> </span>/path/to/datasrc<span class="w"> </span>--interactive
 <span class="c1"># or manually enter crawler and datasrc in the UI</span>
 mcp-server-webcrawl<span class="w"> </span>--interactive
 </pre></div>
 </div>
+</section>
+<section id="screencaps">
+<h2>Screencaps<a class="headerlink" href="#screencaps" title="Link to this heading"></a></h2>
 <figure class="align-center" id="id1">
 <a class="reference internal image-reference" href="_images/interactive.search.webp"><img alt="mcp-server-webcrawl in --interactive mode heading" src="_images/interactive.search.webp" style="width: 100%;" /></a>
 <figcaption>
@@ -95,9 +106,10 @@ mcp-server-webcrawl<span class="w"> </span>--interactive
 <figure class="align-center" id="id2">
 <a class="reference internal image-reference" href="_images/interactive.document.webp"><img alt="mcp-server-webcrawl in --interactive mode heading" src="_images/interactive.document.webp" style="width: 100%;" /></a>
 <figcaption>
-<p><span class="caption-text">Document view showing Markdown presentation, also available are raw and HTTP headers views.</span><a class="headerlink" href="#id2" title="Link to this image"></a></p>
+<p><span class="caption-text">Document presentated in in Markdown, with raw and HTTP headers views available.</span><a class="headerlink" href="#id2" title="Link to this image"></a></p>
 </figcaption>
 </figure>
+</section>
 </section>
 
 

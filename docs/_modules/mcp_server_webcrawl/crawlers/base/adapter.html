@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../interactive.html">Interactive Mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -104,10 +105,9 @@
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.search</span> <span class="kn">import</span> <span class="n">SearchQueryParser</span><span class="p">,</span> <span class="n">SearchSubquery</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
-
 <span class="c1"># in the interest of sane imports (avoiding circulars), INDEXED_* constants</span>
 <span class="c1"># live here, happily, as denizens of adapterville</span>
+<span class="n">INDEXED_BATCH_SIZE</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">256</span>
 <span class="n">INDEXED_BINARY_EXTENSIONS</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">&quot;.woff&quot;</span><span class="p">,</span><span class="s2">&quot;.woff2&quot;</span><span class="p">,</span><span class="s2">&quot;.ttf&quot;</span><span class="p">,</span><span class="s2">&quot;.otf&quot;</span><span class="p">,</span><span class="s2">&quot;.eot&quot;</span><span class="p">,</span>
     <span class="s2">&quot;.jpeg&quot;</span><span class="p">,</span><span class="s2">&quot;.jpg&quot;</span><span class="p">,</span><span class="s2">&quot;.png&quot;</span><span class="p">,</span><span class="s2">&quot;.webp&quot;</span><span class="p">,</span><span class="s2">&quot;.gif&quot;</span><span class="p">,</span><span class="s2">&quot;.bmp&quot;</span><span class="p">,</span><span class="s2">&quot;.tiff&quot;</span><span class="p">,</span><span class="s2">&quot;.tif&quot;</span><span class="p">,</span><span class="s2">&quot;.svg&quot;</span><span class="p">,</span><span class="s2">&quot;.ico&quot;</span><span class="p">,</span><span class="s2">&quot;.heic&quot;</span><span class="p">,</span><span class="s2">&quot;.heif&quot;</span><span class="p">,</span>
@@ -119,58 +119,17 @@
     <span class="s2">&quot;.swf&quot;</span><span class="p">,</span><span class="s2">&quot;.svgz&quot;</span><span class="p">,</span><span class="s2">&quot;.dat&quot;</span><span class="p">,</span><span class="s2">&quot;.db&quot;</span><span class="p">,</span><span class="s2">&quot;.sqlite&quot;</span><span class="p">,</span><span class="s2">&quot;.class&quot;</span><span class="p">,</span><span class="s2">&quot;.pyc&quot;</span><span class="p">,</span><span class="s2">&quot;.o&quot;</span>
 <span class="p">)</span>
 
-<span class="n">INDEXED_WARC_EXTENSIONS</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;.warc&quot;</span><span class="p">,</span> <span class="s2">&quot;.warc.gz&quot;</span><span class="p">,</span> <span class="s2">&quot;.txt&quot;</span><span class="p">]</span>
-
-<span class="c1"># files on disk will need default for reassembly {proto}{dir}</span>
-<span class="c1"># these things are already approximations (perhaps) having passed through wget</span>
-<span class="c1"># filtering (--adjust-extension) representative of the file on disk, also https</span>
-<span class="c1"># is what the LLM is going to guess in all cases</span>
-<span class="n">INDEXED_RESOURCE_DEFAULT_PROTOCOL</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;https://&quot;</span>
-<span class="n">INDEXED_BATCH_SIZE</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">256</span>
-<span class="n">INDEXED_MAX_WORKERS</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">4</span><span class="p">)</span>
-
-<span class="c1"># 2MB max HTTP content, anything larger passed over by fulltext indexer</span>
-<span class="n">INDEXED_MAX_FILE_SIZE</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2000000</span>
-
-<span class="c1"># max indexing time may need a cli arg to override at some point,</span>
-<span class="c1"># but for now, this is a fan spinner--just make sure it doesn&#39;t run away</span>
-<span class="n">INDEXED_MAX_PROCESS_TIME</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">timedelta</span><span class="p">]</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-
-<span class="c1"># maximum indexes held in cache, an index is a unique list[site-ids] argument</span>
-<span class="n">INDEXED_MANAGER_CACHE_MAX</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span>
-<span class="n">INDEXED_IGNORE_DIRECTORIES</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;http-client-cache&quot;</span><span class="p">,</span> <span class="s2">&quot;result-storage&quot;</span><span class="p">]</span>
-
-<span class="n">INDEXED_TYPE_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
-    <span class="s2">&quot;.html&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
-    <span class="s2">&quot;.htm&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
-    <span class="s2">&quot;.php&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
-    <span class="s2">&quot;.asp&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
-    <span class="s2">&quot;.aspx&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
-    <span class="s2">&quot;.js&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="p">,</span>
-    <span class="s2">&quot;.css&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="p">,</span>
-    <span class="s2">&quot;.jpg&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
-    <span class="s2">&quot;.jpeg&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
-    <span class="s2">&quot;.png&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
-    <span class="s2">&quot;.gif&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
-    <span class="s2">&quot;.svg&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
-    <span class="s2">&quot;.tif&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
-    <span class="s2">&quot;.tiff&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
-    <span class="s2">&quot;.webp&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
-    <span class="s2">&quot;.bmp&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
-    <span class="s2">&quot;.pdf&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PDF</span><span class="p">,</span>
-    <span class="s2">&quot;.txt&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
-    <span class="s2">&quot;.xml&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
-    <span class="s2">&quot;.json&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
-    <span class="s2">&quot;.doc&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">DOC</span><span class="p">,</span>
-    <span class="s2">&quot;.docx&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">DOC</span><span class="p">,</span>
-    <span class="s2">&quot;.mov&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">,</span>
-    <span class="s2">&quot;.mp4&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">,</span>
-    <span class="s2">&quot;.mp3&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">AUDIO</span><span class="p">,</span>
-    <span class="s2">&quot;.ogg&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">AUDIO</span><span class="p">,</span>
+<span class="n">INDEXED_BYTE_MULTIPLIER</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;kb&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="p">,</span>
+    <span class="s2">&quot;kB&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="p">,</span>
+    <span class="s2">&quot;mb&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="p">,</span>
+    <span class="s2">&quot;MB&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="p">,</span>
+    <span class="s2">&quot;gb&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="p">,</span>
+    <span class="s2">&quot;GB&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="p">,</span>
 <span class="p">}</span>
 
-<span class="n">INDEXED_EXTENSION_MAPPING</span> <span class="o">=</span> <span class="p">{</span>
+<span class="n">INDEXED_EXTENSION_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="c1"># image/*</span>
     <span class="s2">&quot;.jpg&quot;</span><span class="p">:</span> <span class="s2">&quot;image/jpeg&quot;</span><span class="p">,</span>
     <span class="s2">&quot;.jpeg&quot;</span><span class="p">:</span> <span class="s2">&quot;image/jpeg&quot;</span><span class="p">,</span>
@@ -218,6 +177,89 @@
     <span class="s2">&quot;.otf&quot;</span><span class="p">:</span> <span class="s2">&quot;font/otf&quot;</span><span class="p">,</span>
     <span class="s2">&quot;.eot&quot;</span><span class="p">:</span> <span class="s2">&quot;application/vnd.ms-fontobject&quot;</span><span class="p">,</span>
 <span class="p">}</span>
+
+<span class="n">INDEXED_IGNORE_DIRECTORIES</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;http-client-cache&quot;</span><span class="p">,</span> <span class="s2">&quot;result-storage&quot;</span><span class="p">]</span>
+
+<span class="c1"># maximum indexes held in cache, an index is a unique list[site-ids] argument</span>
+<span class="n">INDEXED_MANAGER_CACHE_MAX</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span>
+
+<span class="c1"># 2MB max HTTP content, anything larger passed over by fulltext indexer</span>
+<span class="n">INDEXED_MAX_FILE_SIZE</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2000000</span>
+
+<span class="c1"># max indexing time may need a cli arg to override at some point,</span>
+<span class="c1"># but for now, this is a fan spinner--just make sure it doesn&#39;t run away</span>
+<span class="n">INDEXED_MAX_PROCESS_TIME</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">timedelta</span><span class="p">]</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">INDEXED_MAX_WORKERS</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">4</span><span class="p">)</span>
+<span class="n">INDEXED_MIME_FALLBACKS</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">:</span> <span class="s2">&quot;text/html&quot;</span><span class="p">,</span>
+    <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="p">:</span> <span class="s2">&quot;text/css&quot;</span><span class="p">,</span>
+    <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="p">:</span> <span class="s2">&quot;application/javascript&quot;</span><span class="p">,</span>
+    <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">:</span> <span class="s2">&quot;image/jpeg&quot;</span><span class="p">,</span> <span class="c1"># default for type, override</span>
+    <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PDF</span><span class="p">:</span> <span class="s2">&quot;application/pdf&quot;</span><span class="p">,</span>
+    <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">:</span> <span class="s2">&quot;text/plain&quot;</span><span class="p">,</span>
+    <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">DOC</span><span class="p">:</span> <span class="s2">&quot;application/msword&quot;</span><span class="p">,</span>
+    <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">AUDIO</span><span class="p">:</span> <span class="s2">&quot;audio/mpeg&quot;</span><span class="p">,</span> <span class="c1"># default for type, override</span>
+    <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">:</span> <span class="s2">&quot;video/mp4&quot;</span><span class="p">,</span> <span class="c1"># default for type, override</span>
+    <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">:</span> <span class="s2">&quot;application/octet-stream&quot;</span>
+<span class="p">}</span>
+<span class="n">INDEXED_MIME_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;html&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
+    <span class="s2">&quot;javascript&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="p">,</span>
+    <span class="s2">&quot;css&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="p">,</span>
+    <span class="s2">&quot;image/&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+    <span class="s2">&quot;pdf&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PDF</span><span class="p">,</span>
+    <span class="s2">&quot;text/&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
+    <span class="s2">&quot;audio/&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">AUDIO</span><span class="p">,</span>
+    <span class="s2">&quot;video/&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">,</span>
+    <span class="s2">&quot;application/json&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
+    <span class="s2">&quot;application/xml&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span>
+<span class="p">}</span>
+
+<span class="c1"># files on disk will need default for reassembly {proto}{dir}</span>
+<span class="c1"># these things are already approximations (perhaps) having passed through wget</span>
+<span class="c1"># filtering (--adjust-extension) representative of the file on disk, also https</span>
+<span class="c1"># is what the LLM is going to guess in all cases</span>
+<span class="n">INDEXED_RESOURCE_DEFAULT_PROTOCOL</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;https://&quot;</span>
+<span class="n">INDEXED_TEXT_APPLICATION_TYPES</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;application/json&quot;</span><span class="p">,</span> <span class="s2">&quot;application/xml&quot;</span><span class="p">,</span> <span class="s2">&quot;application/javascript&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;application/atom+xml&quot;</span><span class="p">,</span> <span class="s2">&quot;application/ld+json&quot;</span><span class="p">,</span> <span class="s2">&quot;application/rss+xml&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;application/x-www-form-urlencoded&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">INDEXED_TYPE_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.html&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.htm&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.php&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.asp&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.aspx&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.js&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="p">,</span>
+    <span class="s2">&quot;.css&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="p">,</span>
+    <span class="s2">&quot;.jpg&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.jpeg&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.png&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.gif&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.svg&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.tif&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.tiff&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.webp&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.bmp&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+    <span class="s2">&quot;.pdf&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PDF</span><span class="p">,</span>
+    <span class="s2">&quot;.txt&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
+    <span class="s2">&quot;.xml&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
+    <span class="s2">&quot;.json&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
+    <span class="s2">&quot;.doc&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">DOC</span><span class="p">,</span>
+    <span class="s2">&quot;.docx&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">DOC</span><span class="p">,</span>
+    <span class="s2">&quot;.mov&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">,</span>
+    <span class="s2">&quot;.mp4&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">,</span>
+    <span class="s2">&quot;.mp3&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">AUDIO</span><span class="p">,</span>
+    <span class="s2">&quot;.ogg&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">AUDIO</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">INDEXED_WARC_EXTENSIONS</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;.warc&quot;</span><span class="p">,</span> <span class="s2">&quot;.warc.gz&quot;</span><span class="p">,</span> <span class="s2">&quot;.txt&quot;</span><span class="p">]</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
+
 
 <div class="viewcode-block" id="IndexStatus">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.IndexStatus">[docs]</a>
@@ -415,33 +457,20 @@
 <span class="sd">            HTTP headers string with content type and length</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="n">type_fallbacks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ResourceResultType</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">:</span> <span class="s2">&quot;text/html&quot;</span><span class="p">,</span>
-            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="p">:</span> <span class="s2">&quot;text/css&quot;</span><span class="p">,</span>
-            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="p">:</span> <span class="s2">&quot;application/javascript&quot;</span><span class="p">,</span>
-            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">:</span> <span class="s2">&quot;image/jpeg&quot;</span><span class="p">,</span> <span class="c1"># default for type, override</span>
-            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PDF</span><span class="p">:</span> <span class="s2">&quot;application/pdf&quot;</span><span class="p">,</span>
-            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">:</span> <span class="s2">&quot;text/plain&quot;</span><span class="p">,</span>
-            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">DOC</span><span class="p">:</span> <span class="s2">&quot;application/msword&quot;</span><span class="p">,</span>
-            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">AUDIO</span><span class="p">:</span> <span class="s2">&quot;audio/mpeg&quot;</span><span class="p">,</span> <span class="c1"># default for type, override</span>
-            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">:</span> <span class="s2">&quot;video/mp4&quot;</span><span class="p">,</span> <span class="c1"># default for type, override</span>
-            <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">:</span> <span class="s2">&quot;application/octet-stream&quot;</span>
-        <span class="p">}</span>
         <span class="n">fallback_mime_default</span> <span class="o">=</span> <span class="s2">&quot;application/octet-stream&quot;</span>
-
         <span class="k">if</span> <span class="n">resource_type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">AUDIO</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">):</span>
             <span class="c1"># get file mime if type/ext not one-to-one</span>
             <span class="n">extension</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
             <span class="n">content_type</span> <span class="o">=</span> <span class="n">INDEXED_EXTENSION_MAPPING</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">extension</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">content_type</span><span class="p">:</span>
-                <span class="n">content_type</span> <span class="o">=</span> <span class="n">type_fallbacks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource_type</span><span class="p">,</span> <span class="n">fallback_mime_default</span><span class="p">)</span>
+                <span class="n">content_type</span> <span class="o">=</span> <span class="n">INDEXED_MIME_FALLBACKS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource_type</span><span class="p">,</span> <span class="n">fallback_mime_default</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">resource_type</span> <span class="o">==</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">:</span>
             <span class="c1"># aquire from file if unknown</span>
             <span class="n">mime_type</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
             <span class="n">content_type</span> <span class="o">=</span> <span class="n">mime_type</span> <span class="k">if</span> <span class="n">mime_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">fallback_mime_default</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># normal one-to-one mapping</span>
-            <span class="n">content_type</span> <span class="o">=</span> <span class="n">type_fallbacks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource_type</span><span class="p">,</span> <span class="n">fallback_mime_default</span><span class="p">)</span>
+            <span class="n">content_type</span> <span class="o">=</span> <span class="n">INDEXED_MIME_FALLBACKS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource_type</span><span class="p">,</span> <span class="n">fallback_mime_default</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;HTTP/1.0 200 OK</span><span class="se">\r\n</span><span class="s2">Content-Type: </span><span class="si">{</span><span class="n">content_type</span><span class="si">}</span><span class="se">\r\n</span><span class="s2">Content-Length: </span><span class="si">{</span><span class="n">file_size</span><span class="si">}</span><span class="se">\r\n\r\n</span><span class="s2">&quot;</span></div>
 
@@ -490,8 +519,7 @@
             <span class="k">return</span> <span class="n">null_result</span>
 
         <span class="n">mime_type</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-        <span class="n">mime_text_exceptions</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;application/json&quot;</span><span class="p">,</span> <span class="s2">&quot;application/xml&quot;</span><span class="p">,</span> <span class="s2">&quot;application/javascript&quot;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">mime_type</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">mime_type</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;text/&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">mime_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">mime_text_exceptions</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">mime_type</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">mime_type</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;text/&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">mime_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">INDEXED_TEXT_APPLICATION_TYPES</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">null_result</span>
 
         <span class="n">content</span> <span class="o">=</span> <span class="kc">None</span>
@@ -538,8 +566,7 @@
 
         <span class="n">mime_type</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">mime_type</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">mime_type</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;text/&quot;</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">mime_type</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;application/xml&quot;</span><span class="p">,</span> <span class="s2">&quot;application/javascript&quot;</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">mime_type</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="n">INDEXED_TEXT_APPLICATION_TYPES</span><span class="p">):</span>
                 <span class="k">return</span> <span class="kc">None</span>
 
         <span class="n">content</span> <span class="o">=</span> <span class="kc">None</span>
@@ -802,21 +829,8 @@
 <span class="sd">            ResourceResultType enum value based on content type</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="n">content_type_mapping</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;html&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
-            <span class="s2">&quot;javascript&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="p">,</span>
-            <span class="s2">&quot;css&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="p">,</span>
-            <span class="s2">&quot;image/&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
-            <span class="s2">&quot;pdf&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PDF</span><span class="p">,</span>
-            <span class="s2">&quot;text/&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
-            <span class="s2">&quot;audio/&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">AUDIO</span><span class="p">,</span>
-            <span class="s2">&quot;video/&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">,</span>
-            <span class="s2">&quot;application/json&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
-            <span class="s2">&quot;application/xml&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">TEXT</span>
-        <span class="p">}</span>
-
         <span class="n">content_type</span> <span class="o">=</span> <span class="n">content_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">res_type</span> <span class="ow">in</span> <span class="n">content_type_mapping</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">res_type</span> <span class="ow">in</span> <span class="n">INDEXED_MIME_MAPPING</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">content_type</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">res_type</span>
 
@@ -838,11 +852,7 @@
         <span class="k">elif</span> <span class="n">content_type_lower</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">&quot;font/&quot;</span><span class="p">,</span> <span class="s2">&quot;image/&quot;</span><span class="p">,</span> <span class="s2">&quot;audio/&quot;</span><span class="p">,</span> <span class="s2">&quot;video/&quot;</span><span class="p">,</span> <span class="s2">&quot;application/octet-stream&quot;</span><span class="p">)):</span>
             <span class="k">return</span> <span class="kc">False</span>
         <span class="k">elif</span> <span class="n">content_type_lower</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;application/&quot;</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">content_type_lower</span> <span class="ow">in</span> <span class="p">{</span>
-                <span class="s2">&quot;application/atom+xml&quot;</span><span class="p">,</span> <span class="s2">&quot;application/ld+json&quot;</span><span class="p">,</span> <span class="s2">&quot;application/rss+xml&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;application/x-www-form-urlencoded&quot;</span><span class="p">,</span> <span class="s2">&quot;application/xml&quot;</span><span class="p">,</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;application/javascript&quot;</span>
-            <span class="p">}</span>
+            <span class="k">return</span> <span class="n">content_type_lower</span> <span class="ow">in</span> <span class="n">INDEXED_TEXT_APPLICATION_TYPES</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span></div>
 

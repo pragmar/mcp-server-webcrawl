@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../interactive.html">Interactive Mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -88,8 +89,9 @@
     <span class="n">IndexStatus</span><span class="p">,</span>
     <span class="n">SitesGroup</span><span class="p">,</span>
     <span class="n">INDEXED_BATCH_SIZE</span><span class="p">,</span>
+    <span class="n">INDEXED_BYTE_MULTIPLIER</span><span class="p">,</span>
     <span class="n">INDEXED_RESOURCE_DEFAULT_PROTOCOL</span><span class="p">,</span>
-    <span class="n">INDEXED_TYPE_MAPPING</span>
+    <span class="n">INDEXED_TYPE_MAPPING</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.indexed</span> <span class="kn">import</span> <span class="n">IndexedManager</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
@@ -102,12 +104,18 @@
     <span class="n">SiteResult</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="c1"># heads up. SiteOne uses wget adapters, this is unintuitive but reasonable as SiteOne</span>
-<span class="c1"># uses wget for archiving. lean into maximal recycling of wget, if it stops making</span>
-<span class="c1"># sense switch to homegrown</span>
-<span class="c1"># from mcp_server_webcrawl.crawlers.wget.adapter import (</span>
-<span class="c1">#     get_sites,  # hands off, used</span>
-<span class="c1"># )</span>
+<span class="n">SITEONE_LOG_TYPE_MAPPING</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;html&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
+    <span class="s2">&quot;redirect&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
+    <span class="s2">&quot;image&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+    <span class="s2">&quot;js&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="p">,</span>
+    <span class="s2">&quot;css&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="p">,</span>
+    <span class="s2">&quot;video&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">,</span>
+    <span class="s2">&quot;audio&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">AUDIO</span><span class="p">,</span>
+    <span class="s2">&quot;pdf&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PDF</span><span class="p">,</span>
+    <span class="s2">&quot;other&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">,</span>
+    <span class="s2">&quot;font&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">,</span>
+<span class="p">}</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
 
@@ -168,15 +176,7 @@
                             <span class="k">if</span> <span class="n">size_str</span><span class="p">:</span>
                                 <span class="n">size_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">size_str</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
                                 <span class="n">size_unit</span> <span class="o">=</span> <span class="n">size_str</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">size_str</span><span class="o">.</span><span class="n">split</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;b&quot;</span>
-                                <span class="n">multiplier</span> <span class="o">=</span> <span class="p">{</span>
-                                    <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-                                    <span class="s2">&quot;kb&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="p">,</span>
-                                    <span class="s2">&quot;kB&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="p">,</span>
-                                    <span class="s2">&quot;mb&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="p">,</span>
-                                    <span class="s2">&quot;MB&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="p">,</span>
-                                    <span class="s2">&quot;gb&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="p">,</span>
-                                    <span class="s2">&quot;GB&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span>
-                                <span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">size_unit</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                                <span class="n">multiplier</span> <span class="o">=</span> <span class="n">INDEXED_BYTE_MULTIPLIER</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">size_unit</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
                                 <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">size_value</span> <span class="o">*</span> <span class="n">multiplier</span><span class="p">)</span>
 
                             <span class="k">if</span> <span class="mi">400</span> <span class="o">&lt;=</span> <span class="n">status</span> <span class="o">&lt;</span> <span class="mi">600</span><span class="p">:</span>
@@ -360,19 +360,8 @@
             <span class="k">if</span> <span class="n">log_type</span><span class="p">:</span>
                 <span class="c1"># no type for redirects, but more often than not</span>
                 <span class="c1"># redirection to another page</span>
-                <span class="n">type_mapping</span> <span class="o">=</span> <span class="p">{</span>
-                    <span class="s2">&quot;html&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
-                    <span class="s2">&quot;redirect&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PAGE</span><span class="p">,</span>
-                    <span class="s2">&quot;image&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
-                    <span class="s2">&quot;js&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">SCRIPT</span><span class="p">,</span>
-                    <span class="s2">&quot;css&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">CSS</span><span class="p">,</span>
-                    <span class="s2">&quot;video&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">,</span>
-                    <span class="s2">&quot;audio&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">AUDIO</span><span class="p">,</span>
-                    <span class="s2">&quot;pdf&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">PDF</span><span class="p">,</span>
-                    <span class="s2">&quot;other&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">,</span>
-                    <span class="s2">&quot;font&quot;</span><span class="p">:</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">,</span>
-                <span class="p">}</span>
-                <span class="n">resource_type</span> <span class="o">=</span> <span class="n">type_mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">log_type</span><span class="p">,</span> <span class="n">INDEXED_TYPE_MAPPING</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">extension</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">))</span>
+                <span class="n">resource_type</span> <span class="o">=</span> <span class="n">SITEONE_LOG_TYPE_MAPPING</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">log_type</span><span class="p">,</span>
+                        <span class="n">INDEXED_TYPE_MAPPING</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">extension</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># fallback to extension-based mapping</span>
                 <span class="n">resource_type</span> <span class="o">=</span> <span class="n">INDEXED_TYPE_MAPPING</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">extension</span><span class="p">,</span> <span class="n">ResourceResultType</span><span class="o">.</span><span class="n">OTHER</span><span class="p">)</span>
