@@ -5,8 +5,6 @@ Interactive Mode
 
 mcp-server-webcrawl can double as a terminal search for your web archives. You can run it against your local archives, but it gets more interesting when you realize you can ssh into any remote host and view archives sitting on that host. No downloads, syncs, multifactor logins, or other common drudgery required. With interactive mode, you can be in and searching a crawl sitting on a remote server in no time at all.
 
-Launch with --crawler and --datasource to load into search immediately, or use setup datasrc and crawler in-app.
-
 .. raw:: html
 
    <iframe width="560" height="315" style="display: block;margin-bottom:1rem;" src="https://www.youtube.com/embed/8kNkP-zNzs4" frameborder="0" allowfullscreen></iframe>
