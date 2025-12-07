@@ -74,6 +74,7 @@ class RequirementsView(BaseCursesView):
         Returns:
             bool: True if the input was handled, False otherwise
         """
+
         handlers: dict[int, callable] = {
             curses.KEY_UP: self.__navigate_form_selection_up,
             curses.KEY_DOWN: self.__navigate_form_selection_down,

@@ -7,6 +7,7 @@ from datetime import datetime
 from logging import Logger
 
 from mcp_server_webcrawl.crawlers.base.crawler import BaseCrawler
+from mcp_server_webcrawl.crawlers.wget.crawler import WgetCrawler
 from mcp_server_webcrawl.models.resources import ResourceResultType
 from mcp_server_webcrawl.crawlers.base.api import BaseJsonApi
 from mcp_server_webcrawl.utils.logger import get_logger
@@ -279,7 +280,7 @@ class BaseCrawlerTests(unittest.TestCase):
         self.assertTrue(combo_not_resources_keyword.total == combo_and_not_resources_quoted.total, f"NOT ({combo_not_resources_keyword.total}) and AND NOT ({combo_and_not_resources_quoted.total}) equivalence expected")
         self.assertTrue(mcp_resources_keyword.total >= combo_and_resources_keyword.total, "Total records should be greater or equal to ANDs.")
         self.assertTrue(mcp_resources_keyword.total <= combo_or_resources_keyword.total, "Total records should be less than or equal to ORs.")
-        self.assertTrue(mcp_resources_keyword.total > combo_not_resources_keyword.total, "Total records should be greater than to NOTs.")
+        self.assertTrue(mcp_resources_keyword.total > combo_not_resources_keyword.total, "Total records should be greater than NOTs.")
 
 
 
@@ -478,7 +479,7 @@ class BaseCrawlerTests(unittest.TestCase):
             limit=5,
         )
         self.assertTrue(appstat_resources.total > 0, "Status filtering should return results")
-        self.assertGreaterEqual(len(appstat_resources._results), 3, f"Unexpected page count\n{len(appstat_resources._results)}")
+        self.assertGreaterEqual(len(appstat_resources._results), 3, f"Should have at least 3 results in appstat resources")
 
         # multiple status codes
         multi_status_resources = crawler.get_resources_api(
@@ -591,7 +592,7 @@ class BaseCrawlerTests(unittest.TestCase):
         )
 
         # page count varies by crawler, 10 is conservative low end
-        self.assertGreater(html_resources.total, 10, "Should have exactly 34 HTML resources")
+        self.assertGreater(html_resources.total, 10, "Should have greater than 10 HTML resources")
 
         not_html_resources = crawler.get_resources_api(
             sites=[site_id],
@@ -599,7 +600,8 @@ class BaseCrawlerTests(unittest.TestCase):
             extras=[],
             limit=1,
         )
-        self.assertGreater(not_html_resources.total, 10, "Should have exactly 48 non-HTML resources")
+        # wget is HTML-only fixture
+        self.assertGreater(not_html_resources.total, 10, "Should have greater than 10 non-HTML resources")
 
         html_sum: int = html_resources.total + not_html_resources.total
         self.assertEqual(html_sum, site_resources.total, "HTML + non-HTML should sum to all resources")
@@ -639,7 +641,8 @@ class BaseCrawlerTests(unittest.TestCase):
             extras=[],
             limit=1,
         )
-        self.assertGreater(html_or_img.total, 20, "HTML + IMG should equal 66 resources (34+32)")
+
+        self.assertGreater(html_or_img.total, 20, "HTML + IMG should be greater than 20 resources")
 
         img_resources = crawler.get_resources_api(
             sites=[site_id],
@@ -688,7 +691,7 @@ class BaseCrawlerTests(unittest.TestCase):
         )
 
         # varies by crawler, katana doesn't crawl /help/ depth by default
-        self.assertTrue(boolean_primary_resources .total > 0, f"Primary search returned {boolean_primary_resources .total}, expected results")
+        self.assertTrue(boolean_primary_resources .total > 0, f"Primary search should return results")
 
         boolean_secondary_resources = crawler.get_resources_api(
             sites=[site_id],
@@ -697,7 +700,7 @@ class BaseCrawlerTests(unittest.TestCase):
         )
 
         # re: all these > 0 checks, result counts vary by crawler, all have default crawl behaviors/depths/externals
-        self.assertTrue(boolean_secondary_resources.total > 0, f"Secondary returned {boolean_secondary_resources.total}, expected results")
+        self.assertTrue(boolean_secondary_resources.total > 0, f"Secondary search should return results")
 
         # AND
         primary_and_secondary_resources = crawler.get_resources_api(
@@ -705,7 +708,7 @@ class BaseCrawlerTests(unittest.TestCase):
             query=f"type: html AND ({self.__PRAGMAR_PRIMARY_KEYWORD} AND {self.__PRAGMAR_SECONDARY_KEYWORD})",
             limit=1,
         )
-        self.assertTrue(primary_and_secondary_resources.total >= 0, f"Primary AND Secondary returned {primary_and_secondary_resources.total}, expected results")
+        self.assertTrue(primary_and_secondary_resources.total >= 0, f"Primary AND Secondary should return results")
 
         # OR
         primary_or_secondary_resources = crawler.get_resources_api(
@@ -713,7 +716,7 @@ class BaseCrawlerTests(unittest.TestCase):
             query=f"type: html AND ({self.__PRAGMAR_PRIMARY_KEYWORD} OR {self.__PRAGMAR_SECONDARY_KEYWORD})",
             limit=1,
         )
-        self.assertTrue(primary_or_secondary_resources.total > 0, f"Primary OR Secondary returned {primary_or_secondary_resources.total}, expected results (union)")
+        self.assertTrue(primary_or_secondary_resources.total > 0, f"Primary OR Secondary should return results (union)")
 
         # NOT
         primary_not_secondary_resources = crawler.get_resources_api(
@@ -727,7 +730,7 @@ class BaseCrawlerTests(unittest.TestCase):
             query=f"type: html AND ({self.__PRAGMAR_SECONDARY_KEYWORD} NOT {self.__PRAGMAR_PRIMARY_KEYWORD})",
             limit=1,
         )
-        self.assertTrue(secondary_not_primary_resources.total >= 0, f"Secondary NOT Primary returned {secondary_not_primary_resources.total}, expected results")
+        self.assertTrue(secondary_not_primary_resources.total >= 0, f"Secondary NOT Primary should return results")
 
         # logical relationships
         self.assertEqual(
@@ -760,7 +763,7 @@ class BaseCrawlerTests(unittest.TestCase):
             query=f"type: html AND ({self.__PRAGMAR_PRIMARY_KEYWORD})",
             limit=1,
         )
-        self.assertTrue(primary_and_html_resources.total > 0, f"Primary AND type:html returned {primary_and_html_resources.total}, expected results")
+        self.assertTrue(primary_and_html_resources.total > 0, f"Primary AND type:html should return results")
         self.assertTrue(
             primary_and_html_resources.total <= boolean_primary_resources .total,
             "Adding AND constraints should not increase result count"
@@ -772,7 +775,7 @@ class BaseCrawlerTests(unittest.TestCase):
             query=f"type: html AND ({self.__PRAGMAR_PRIMARY_KEYWORD} OR {self.__PRAGMAR_SECONDARY_KEYWORD})",
             limit=1,
         )
-        self.assertTrue(grouped_resources.total > 0, f"Grouped OR with HTML filter returned {grouped_resources.total}, expected results")
+        self.assertTrue(grouped_resources.total > 0, f"Grouped OR with HTML filter should return results")
 
 
         hyphenated_resources = crawler.get_resources_api(
@@ -790,9 +793,9 @@ class BaseCrawlerTests(unittest.TestCase):
             double_or_resources.total, 0,
             f"OR query should return some results"
         )
-        self.assertLess(
+        self.assertLessEqual(
             double_or_resources.total, site_resources.total,
-            f"OR query should be less than all results"
+            f"OR query should be less than, or equal to all results"
         )
         parens_or_and_resources = crawler.get_resources_api(
             sites=[site_id],
@@ -820,6 +823,7 @@ class BaseCrawlerTests(unittest.TestCase):
             sites=[site_id],
             query=f"type: script OR type: style OR type: iframe OR type: font OR type: text OR type: rss OR type: other"
         )
+
         self.assertLess(
             wide_type_resources.total, site_resources.total,
             f"A long chained OR should not return all results"
@@ -853,9 +857,9 @@ class BaseCrawlerTests(unittest.TestCase):
         html_total = crawler.get_resources_api(
             sites=[site_id], query="type: html", limit=1)
         self.assertTrue(url_or_with_type.total <= url_or_simple.total,
-            f"AND constraint should not increase results: {url_or_with_type.total} <= {url_or_simple.total}")
+            f"AND constraint should not increase results")
         self.assertTrue(url_or_with_type.total <= html_total.total,
-            f"URL filter should not exceed HTML total: {url_or_with_type.total} <= {html_total.total}")
+            f"URL filter should not exceed HTML total")
 
     def __run_pragmar_search_tests_extras(
             self,

@@ -411,7 +411,7 @@ class InputRadioGroup:
         ]
 
     def __load_sites(self, sites: list) -> None:
-        site_labels = [self.__display_url(s.url) for s in sites]
+        site_labels = [self.__display_url(s.urls[0]) if s.urls else "unknown" for s in sites]
         self.radios = [
             InputRadio(self, "site", label, 0, self.__get_on_off_state())
             for label in site_labels

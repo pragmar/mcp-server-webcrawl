@@ -148,8 +148,8 @@ class HtTrackTests(BaseCrawlerTests):
         specific_site = crawler.get_sites_api(ids=[PRAGMAR_SITE_ID])
         if specific_site.total > 0:
             site_data = specific_site._results[0].to_dict()
-            self.assertIn("url", site_data, "Site should have reconstructed URL")
-            self.assertTrue(site_data["url"].startswith("https://"), "Site URL should be properly formatted")
+            self.assertIn("urls", site_data, "Site should have URLs")
+            self.assertTrue(len(site_data["urls"]) > 0, "Site should have at least one valid URL")
 
     def test_httrack_file_exclusion(self):
         """

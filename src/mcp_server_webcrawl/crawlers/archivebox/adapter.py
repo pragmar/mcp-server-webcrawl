@@ -23,6 +23,7 @@ from mcp_server_webcrawl.models.resources import (
 )
 from mcp_server_webcrawl.models.sites import (
     SiteResult,
+    SiteType,
     SITES_FIELDS_BASE,
     SITES_FIELDS_DEFAULT,
 )
@@ -459,7 +460,9 @@ def get_sites(
         site = SiteResult(
             path=site_directory,
             id=site_id,
-            url=f"archivebox://{site_directory.name}/",
+            name=site_directory.name,  # NEW: the directory name
+            type=SiteType.CRAWLED_LIST,  # NEW: always CRAWLED_LIST for archivebox
+            urls=[f"archivebox://{site_directory.name}/"],  # CHANGED: now a list
             created=created_time if "created" in selected_fields else None,
             modified=modified_time if "modified" in selected_fields else None,
         )

@@ -1,18 +1,16 @@
 import re
 import sqlite3
 import traceback
+
 from contextlib import closing
 from logging import Logger
 from pathlib import Path
 from typing import Final
+from urllib.parse import urlparse
 
 from mcp_server_webcrawl.crawlers.base.adapter import IndexState, IndexStatus, BaseManager, SitesGroup
-from mcp_server_webcrawl.models.resources import (
-    ResourceResult,
-    RESOURCES_LIMIT_DEFAULT,
-)
-
-from mcp_server_webcrawl.models.sites import SiteResult
+from mcp_server_webcrawl.models.resources import ResourceResult, RESOURCES_LIMIT_DEFAULT
+from mcp_server_webcrawl.models.sites import SiteResult, SiteType
 from mcp_server_webcrawl.utils import from_isoformat_zulu
 from mcp_server_webcrawl.utils.logger import get_logger
 
@@ -31,15 +29,16 @@ INTERROBOT_RESOURCE_FIELD_MAPPING: Final[dict[str, str]] = {
     "time": "ResourcesFullText.Time"
 }
 
-INTERROBOT_SITE_FIELD_REQUIRED: Final[set[str]] = set(["id", "url"])
+INTERROBOT_SITE_FIELD_REQUIRED: Final[set[str]] = set(["id", "name", "type", "urls"])
 
 # legit different from default version (extra robots)
 INTERROBOT_SITE_FIELD_MAPPING: Final[dict[str, str]] = {
     "id": "Project.Id",
-    "url": "Project.Url",
+    "name": "Project.Name",
+    "type": "Project.Type",
+    "urls": "Project.Urls",
     "created": "Project.Created",
     "modified": "Project.Modified",
-    "robots": "Project.RobotsText",
 }
 
 logger: Logger = get_logger()
@@ -97,7 +96,7 @@ def get_sites(datasrc: Path, ids=None, fields=None) -> list[SiteResult]:
     Returns:
         List of SiteResult objects
     """
-    site_fields_required: list[str] = ["id", "url"]
+    site_fields_required: list[str] = ["id", "name", "type", "urls"]
     site_fields_default: list[str] = site_fields_required + ["created", "modified"]
     site_fields_available: list[str] = list(INTERROBOT_SITE_FIELD_MAPPING.keys())
 
@@ -123,7 +122,7 @@ def get_sites(datasrc: Path, ids=None, fields=None) -> list[SiteResult]:
     assert all(re.match(r"^[A-Za-z\.]+$", field) for field in safe_sql_fields), "Unknown or unsafe field requested"
     safe_sql_fields_joined: str = ", ".join(safe_sql_fields)
 
-    statement: str = f"SELECT {safe_sql_fields_joined} FROM Projects AS Project{ids_clause} ORDER BY Project.Url ASC"
+    statement: str = f"SELECT {safe_sql_fields_joined} FROM Projects AS Project{ids_clause} ORDER BY Project.Name ASC"
     sql_results: list[dict[str, int | str | None]] = []
     try:
         if not statement.strip().upper().startswith("SELECT"):
@@ -143,18 +142,55 @@ def get_sites(datasrc: Path, ids=None, fields=None) -> list[SiteResult]:
         return []
 
     results: list[SiteResult] = []
+    #for row in sql_results:
+    #    results.append(SiteResult(
+    #        path=datasrc,
+    #        id=row.get("id"),
+    #        url=row.get("url", ""),
+    #        created=from_isoformat_zulu(row.get("created")),
+    #        modified=from_isoformat_zulu(row.get("modified")),
+    #        robots=row.get("robotstext"),
+    #        metadata=None,
+    #    ))
+
     for row in sql_results:
+        urls_list = __urls_from_text(row.get("urls", ""))
+        site_type: SiteType
+        db_type = row.get("type")
+        if db_type == 1:
+            site_type = SiteType.CRAWLED_URL
+        elif db_type == 2:
+            site_type = SiteType.CRAWLED_LIST
+        else:
+            site_type = SiteType.UNDEFINED
+
         results.append(SiteResult(
             path=datasrc,
             id=row.get("id"),
-            url=row.get("url", ""),
+            name=row.get("name"),  # NEW: directly from DB
+            type=site_type,  # NEW: from DB (needs mapping)
+            urls=urls_list,  # CHANGED: split into list
             created=from_isoformat_zulu(row.get("created")),
             modified=from_isoformat_zulu(row.get("modified")),
-            robots=row.get("robotstext"),
+            robots=None,  # Removed - not in new model
             metadata=None,
         ))
 
     return results
+
+def __urls_from_text(urls: str) -> list[str]:
+    urls_list = []
+    if urls:
+        for url in urls.split('\n'):
+            url = url.strip()
+            if url:
+                try:
+                    parsed = urlparse(url)
+                    if parsed.scheme:
+                        urls_list.append(url)
+                except Exception:
+                    continue
+    return urls_list
 
 def get_resources(
     datasrc: Path,

@@ -14,6 +14,10 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+fixtures-report.log
+
+prompts/archive/
+fixtures/
 
 settings_local.py
 *.db-shm

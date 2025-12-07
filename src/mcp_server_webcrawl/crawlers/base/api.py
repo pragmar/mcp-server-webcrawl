@@ -4,7 +4,7 @@ from time import time
 from typing import Any, Final
 
 from mcp_server_webcrawl.crawlers.base.adapter import IndexState
-from mcp_server_webcrawl.models import METADATA_VALUE_TYPE
+from mcp_server_webcrawl.models.base import METADATA_VALUE_TYPE
 from mcp_server_webcrawl.models.resources import ResourceResult, ResourceResultType
 from mcp_server_webcrawl.models.sites import SiteResult
 from mcp_server_webcrawl.utils import to_isoformat_zulu

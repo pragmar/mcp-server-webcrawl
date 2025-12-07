@@ -278,8 +278,8 @@ class SiteOneManager(IndexedManager):
             if log_type:
                 # no type for redirects, but more often than not
                 # redirection to another page
-
-                resource_type = SITEONE_LOG_TYPE_MAPPING.get(log_type, INDEXED_TYPE_MAPPING.get(extension, ResourceResultType.OTHER))
+                resource_type = SITEONE_LOG_TYPE_MAPPING.get(log_type,
+                        INDEXED_TYPE_MAPPING.get(extension, ResourceResultType.OTHER))
             else:
                 # fallback to extension-based mapping
                 resource_type = INDEXED_TYPE_MAPPING.get(extension, ResourceResultType.OTHER)

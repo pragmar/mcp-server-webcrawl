@@ -32,7 +32,7 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
     sites_field_options = list(set(SITES_FIELDS_DEFAULT) - set(SITES_FIELDS_BASE))
     resources_type_options = list(ResourceResultType.values())
     resources_sort_options = list(RESOURCES_DEFAULT_SORT_MAPPING.keys())
-    sites_display = ", ".join([f"{s.url} (site: {s.id})" for s in sites]) if sites is not None else ""
+    sites_display = ", ".join([f"{s.name} (site: {s.id})" for s in sites]) if sites is not None else ""
     sites_ids = [s.id for s in sites]
 
     tools = [
@@ -53,8 +53,8 @@ def get_crawler_tools(sites: list[SiteResult] | None = None):
                             "enum": sites_field_options
                         },
                         "description": ("List of additional fields to include in the response beyond the defaults "
-                            "(id, url) Empty list means default fields only. Options include created (ISO 8601), "
-                            "modified (ISO 8601), and norobots (str).")
+                            "(id, name, type, urls) Empty list means default fields only. Options include created (ISO 8601), "
+                            "modified (ISO 8601).")
                     }
                 },
                 "required": []

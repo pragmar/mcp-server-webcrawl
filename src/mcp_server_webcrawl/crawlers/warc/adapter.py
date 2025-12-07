@@ -24,6 +24,7 @@ from mcp_server_webcrawl.models.resources import (
 )
 from mcp_server_webcrawl.models.sites import (
     SiteResult,
+    SiteType,
     SITES_FIELDS_DEFAULT,
     SITES_FIELDS_BASE,
 )
@@ -203,6 +204,20 @@ def get_sites(
     if ids:
         file_id_map = {id_val: path for id_val, path in file_id_map.items() if id_val in ids}
 
+
+    # for site_id, file_path in sorted(file_id_map.items()):
+    #     file_stat = file_path.stat()
+    #     created_time: datetime = datetime.fromtimestamp(file_stat.st_ctime)
+    #     modified_time: datetime = datetime.fromtimestamp(file_stat.st_mtime)
+    #     site: SiteResult = SiteResult(
+    #         path=file_path,
+    #         id=site_id,
+    #         url=str(file_path.absolute()),
+    #         created=created_time if "created" in selected_fields else None,
+    #         modified=modified_time if "modified" in selected_fields else None,
+    #     )
+    #     results.append(site)
+
     for site_id, file_path in sorted(file_id_map.items()):
         file_stat = file_path.stat()
         created_time: datetime = datetime.fromtimestamp(file_stat.st_ctime)
@@ -210,7 +225,9 @@ def get_sites(
         site: SiteResult = SiteResult(
             path=file_path,
             id=site_id,
-            url=str(file_path.absolute()),
+            name=file_path.name,  # NEW: just the filename
+            type=SiteType.CRAWLED_URL,  # NEW: treated as single-site crawl
+            urls=[str(file_path.absolute())],  # CHANGED: now a list (file path as the "URL")
             created=created_time if "created" in selected_fields else None,
             modified=modified_time if "modified" in selected_fields else None,
         )

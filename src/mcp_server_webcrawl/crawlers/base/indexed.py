@@ -25,6 +25,7 @@ from mcp_server_webcrawl.models.resources import (
 )
 from mcp_server_webcrawl.models.sites import (
     SiteResult,
+    SiteType,
     SITES_FIELDS_BASE,
     SITES_FIELDS_DEFAULT,
 )
@@ -158,10 +159,13 @@ class IndexedManager(BaseManager):
             site = SiteResult(
                 path=site_directory,
                 id=site_id,
-                url=f"{INDEXED_RESOURCE_DEFAULT_PROTOCOL}{site_directory.name}/",  # base URL from directory name
+                name=site_directory.name,  # NEW: directory name
+                type=SiteType.CRAWLED_URL,  # NEW: always single-site crawls
+                urls=[f"{INDEXED_RESOURCE_DEFAULT_PROTOCOL}{site_directory.name}/"],  # CHANGED: now a list
                 created=created_time if "created" in select_fields else None,
                 modified=modified_time if "modified" in select_fields else None,
-                robots=robots_content
+                robots=robots_content,
+                metadata=None,
             )
 
             results.append(site)
@@ -317,7 +321,7 @@ class IndexedCrawler(BaseCrawler):
         assert len(default_tools) == 2, "expected exactly 2 Tools: sites and resources"
 
         default_sites_tool, default_resources_tool = default_tools
-        all_sites_display = ", ".join([f"{s.url} (site: {s.id})" for s in all_sites])
+        all_sites_display = ", ".join([f"{s.name} (site: {s.id})" for s in all_sites])
         drt_props = default_resources_tool.inputSchema["properties"]
         drt_props["sites"]["description"] = ("Optional "
             "list of project ID to filter search results to a specific site. In 95% "

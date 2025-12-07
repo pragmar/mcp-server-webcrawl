@@ -1,13 +1,18 @@
 
+import sys
 from pathlib import Path
+from mcp_server_webcrawl.settings import FIXTURES_DIRECTORY
 
 VALID_CRAWLER_CHOICES: list[str] = ["archivebox", "httrack", "interrobot", "katana", "siteone", "warc", "wget"]
 
-def get_fixture_directory():
-    modroot: Path = Path(__file__).parent.parent.parent.parent
-    # assumes git project structure to locate fixtures
-    assert modroot.name == "mcp-server-webcrawl", f"expected modroot mcp_server_webcrawl, got {modroot.name}"
-    return modroot / "fixtures"
+def get_fixture_directory() -> Path:
+    # only to be used for devs on test runs, configured in settings_local.py
+    # settings_local.py added as sibling of settings.py if not present
+    # download https://github.com/pragmar/mcp-server-webcrawl-fixtures
+    assert FIXTURES_DIRECTORY is not None and FIXTURES_DIRECTORY.is_dir(), \
+        f"Fixtures not configured in settings_local.py, or is not a valid directory.\nFIXTURES_DIRECTORY: {FIXTURES_DIRECTORY}"
+
+    return FIXTURES_DIRECTORY
 
 def get_crawler(crawler_name: str) -> str | None:
     """

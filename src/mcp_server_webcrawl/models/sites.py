@@ -1,15 +1,21 @@
 from datetime import datetime
 from typing import Final
 from pathlib import Path
+from enum import Enum
 
-from mcp_server_webcrawl.models import METADATA_VALUE_TYPE
+from mcp_server_webcrawl.models.base import BaseModel, METADATA_VALUE_TYPE
 from mcp_server_webcrawl.utils import to_isoformat_zulu
 
+class SiteType(Enum):
+    UNDEFINED = "undefined"
+    CRAWLED_URL = "url"
+    CRAWLED_LIST = "list"
+
 SITES_TOOL_NAME: Final[str] = "webcrawl_sites"
-SITES_FIELDS_BASE: Final[list[str]] = ["id", "url"]
+SITES_FIELDS_BASE: Final[list[str]] = ["id", "name", "type", "urls"]
 SITES_FIELDS_DEFAULT: Final[list[str]] = SITES_FIELDS_BASE + ["created", "modified"]
 
-class SiteResult:
+class SiteResult(BaseModel):
     """
     Represents a website or crawl directory result.
     """
@@ -17,7 +23,9 @@ class SiteResult:
     def __init__(
         self,
         id: int,
-        url: str | None = None,
+        name: str | None = None,
+        type: SiteType = SiteType.CRAWLED_URL,
+        urls: list[str] | None = None,
         path: Path = None,
         created: datetime | None = None,
         modified: datetime | None = None,
@@ -29,7 +37,8 @@ class SiteResult:
 
         Args:
             id: site identifier
-            url: site URL
+            name: site name, either a URL or a custom job
+            urls: site URL(s), multiple for list type crawls
             path: path to site data, different from datasrc
             created: creation timestamp
             modified: last modification timestamp
@@ -37,7 +46,9 @@ class SiteResult:
             metadata: additional metadata for the site
         """
         self.id = id
-        self.url = url
+        self.name = name
+        self.type = type
+        self.urls = urls
         self.path = path
         self.created = created
         self.modified = modified
@@ -50,33 +61,12 @@ class SiteResult:
         """
         result: dict[str, METADATA_VALUE_TYPE] = {
             "id": self.id,
-            "url": self.url,
+            "name": self.name,
+            "type": self.type.value,
+            "urls": self.urls,
             "created": to_isoformat_zulu(self.created) if self.created else None,
             "modified": to_isoformat_zulu(self.modified) if self.modified else None,
-            "robots": self.robots,
             "metadata": self.metadata if self.metadata else None,
         }
 
         return {k: v for k, v in result.items() if v is not None and not (k == "metadata" and v == {})}
-
-    def to_forcefield_dict(self, forcefields: list[str]) -> dict[str, METADATA_VALUE_TYPE]:
-        """
-        Convert the object to a dictionary with specified fields forced to exist.
-
-        Creates a dictionary that includes all non-None values from the forcefields list,
-        and ensuring all fields in the forcefields list exist, even if null.
-
-        Args:
-            forcefields: list of field names that must appear in the output dictionary
-                with at least a None value
-
-        Returns:
-            Dictionary containing all non-None object attributes, plus forced fields
-            set to None if not already present
-        """
-        # None self-annihilates in filter, forcefields can force their existence, as null
-        result = {}
-        if forcefields:
-            result = {k: None for k in forcefields}
-        result.update(self.to_dict())
-        return result

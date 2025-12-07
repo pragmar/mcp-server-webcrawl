@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Final
 from datetime import datetime
 
-from mcp_server_webcrawl.models import METADATA_VALUE_TYPE
+from mcp_server_webcrawl.models.base import BaseModel, METADATA_VALUE_TYPE
 from mcp_server_webcrawl.utils import to_isoformat_zulu
 
 RESOURCES_TOOL_NAME: Final[str] = "webcrawl_search"
@@ -96,7 +96,7 @@ RESOURCES_ENUMERATED_TYPE_MAPPING: Final[dict[int, ResourceResultType]] = {
     15: ResourceResultType.DOC
 }
 
-class ResourceResult:
+class ResourceResult(BaseModel):
     """
     Represents a web resource result from a crawl operation.
     """
@@ -190,20 +190,3 @@ class ResourceResult:
             return self.__extras[extra_name]
         else:
             return None
-
-    def to_forcefield_dict(self, forcefields=None) -> dict[str, METADATA_VALUE_TYPE]:
-        """
-        Create a dictionary with forced fields set to None if not present in the object.
-
-        Args:
-            forcefields: list of field names that should be included in the result
-                even if they're not present in the object data
-
-        Returns:
-            Dictionary containing object data with forced fields included
-        """
-        result = {}
-        if forcefields:
-            result = {k: None for k in forcefields}
-        result.update(self.to_dict())
-        return result

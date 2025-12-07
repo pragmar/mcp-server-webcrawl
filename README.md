@@ -172,7 +172,7 @@ The idea, of course, is that the LLM takes care of this for you. If you notice y
 
 mcp-server-webcrawl can double as a terminal search for your web archives. You can run it against your local archives, but it gets more interesting when you realize you can ssh into any remote host and view archives sitting on that host. No downloads, syncs, multifactor logins, or other common drudgery required. With interactive mode, you can be in and searching a crawl sitting on a remote server in no time at all.
 
-Launch with --crawler and --datasource to load into search immediately, or use setup datasrc and crawler in-app.
+Launch with --crawler and --datasrc to search immediately, or setup datasrc and crawler in-app.
 
 ```bash
 mcp-server-webcrawl --crawler wget --datasrc /path/to/datasrc --interactive

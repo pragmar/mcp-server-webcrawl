@@ -9,10 +9,10 @@ from pathlib import Path
 from argparse import ArgumentParser
 
 from mcp_server_webcrawl.utils.cli import get_help_short_message, get_help_long_message
-from mcp_server_webcrawl.settings import DEBUG, DATA_DIRECTORY
+from mcp_server_webcrawl.settings import DEBUG, DATA_DIRECTORY, FIXTURES_DIRECTORY
 from mcp_server_webcrawl.crawlers import get_crawler, VALID_CRAWLER_CHOICES
 
-__version__: str = "0.14.3"
+__version__: str = "0.15.0"
 __name__: str = "mcp-server-webcrawl"
 
 if DEBUG:
@@ -40,23 +40,24 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.run_tests:
-        is_development: bool = Path(__file__).parent.parent.parent.name == "mcp-server-webcrawl"
-        if not is_development:
-            sys.stderr.write("you must have the full github repo, locally installed, to run tests. \n")
+
+        # Check if FIXTURES_DIRECTORY is configured and exists
+        if FIXTURES_DIRECTORY is None or not FIXTURES_DIRECTORY.exists() or not FIXTURES_DIRECTORY.is_dir():
+            sys.stderr.write(f"Fixtures not configured in settings_local.py, or is not a valid directory.\nFIXTURES_DIRECTORY: {FIXTURES_DIRECTORY}")
             sys.exit(1)
-        else:
-            # testing captures some cross-fixture file information, useful for debug
-            # force=True gets this to write during tests (usually quieted during run)
-            unittest_log: Path = DATA_DIRECTORY / "fixtures-report.log"
-            logging.basicConfig(level=logging.INFO, filename=unittest_log, filemode='w', force=True)
-            file_directory = os.path.dirname(os.path.abspath(__file__))
-            sys.exit(unittest.main(module=None, argv=["", "discover", "-s", file_directory, "-p", "*test*.py"]))
+
+        # testing captures some cross-fixture file information, useful for debug
+        # force=True gets this to write during tests (usually quieted during run)
+        unittest_log: Path = DATA_DIRECTORY / "fixtures-report.log"
+        logging.basicConfig(level=logging.INFO, filename=unittest_log, filemode='w', force=True)
+        file_directory = os.path.dirname(os.path.abspath(__file__))
+        sys.exit(unittest.main(module=None, argv=["", "discover", "-s", file_directory, "-p", "*test*.py"]))
 
     if args.interactive:
         from mcp_server_webcrawl.interactive.session import InteractiveSession
         intersession = InteractiveSession(args.crawler, args.datasrc)
         intersession.run()
-        sys.exit()
+        sys.exit(0)
 
     if not args.datasrc:
         parser.error("the -d/--datasrc argument is required when not in test mode")
@@ -64,8 +65,6 @@ def main() -> None:
     if not args.crawler or args.crawler.lower() not in VALID_CRAWLER_CHOICES:
         valid_crawlers = ", ".join(VALID_CRAWLER_CHOICES)
         parser.error(f"the -c/--crawler argument must be one of: {valid_crawlers}")
-
-
 
     # cli interaction prior to loading the server
     from mcp_server_webcrawl.main import main as mcp_main

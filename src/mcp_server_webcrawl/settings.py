@@ -5,6 +5,9 @@ from pathlib import Path
 DEBUG: bool = False
 DATA_DIRECTORY: Path = Path.home() / ".mcp_server_webcrawl"
 
+# fixtures directory (optional, for running tests)
+FIXTURES_DIRECTORY: Path | None = None
+
 # logging.NOTSET will not write to a log file, all other levels will
 # LOG_LEVEL: int = logging.ERROR
 

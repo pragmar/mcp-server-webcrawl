@@ -122,16 +122,16 @@ class InterroBotTests(BaseCrawlerTests):
         crawler = InterroBotCrawler(self.fixture_path)
 
         # robots field retrieval
-        site_one_field_json = crawler.get_sites_api(ids=[1], fields=["robots"])
+        site_one_field_json = crawler.get_sites_api(ids=[1], fields=["urls"])
         if site_one_field_json.total > 0:
             result_dict = site_one_field_json._results[0].to_dict()
-            self.assertIn("robots", result_dict, "robots field should be present in response")
+            self.assertIn("urls", result_dict, "robots field should be present in response")
 
         # multiple custom fields
-        site_multiple_fields_json = crawler.get_sites_api(ids=[1], fields=["robots", "created"])
+        site_multiple_fields_json = crawler.get_sites_api(ids=[1], fields=["urls", "created"])
         if site_multiple_fields_json.total > 0:
             result = site_multiple_fields_json._results[0].to_dict()
-            self.assertIn("robots", result, "robots field should be present in response")
+            self.assertIn("urls", result, "robots field should be present in response")
             self.assertIn("created", result, "created field should be present in response")
 
     def test_report(self):

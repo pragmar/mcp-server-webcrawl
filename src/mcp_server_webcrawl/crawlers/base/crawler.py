@@ -13,13 +13,12 @@ from mcp.types import EmbeddedResource, ImageContent, TextContent, Tool
 
 from mcp_server_webcrawl.crawlers.base.api import BaseJsonApi
 from mcp_server_webcrawl.crawlers.base.adapter import IndexState
-from mcp_server_webcrawl.models import METADATA_VALUE_TYPE
+from mcp_server_webcrawl.models.base import METADATA_VALUE_TYPE
 from mcp_server_webcrawl.models.sites import SITES_TOOL_NAME
 from mcp_server_webcrawl.models.resources import (
     ResourceResult,
     ResourceResultType,
     RESOURCES_DEFAULT_FIELD_MAPPING,
-    RESOURCES_DEFAULT_SORT_MAPPING,
     RESOURCE_EXTRAS_ALLOWED,
     RESOURCES_TOOL_NAME,
 )

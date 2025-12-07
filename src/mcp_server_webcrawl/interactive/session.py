@@ -293,10 +293,10 @@ class InteractiveSession:
         """
         if self.__ui_state == UiState.DOCUMENT:
             self.set_ui_state(UiState.SEARCH_RESULTS, UiFocusable.SEARCH_RESULTS)
-        elif self.__ui_state in (UiState.SEARCH_RESULTS, UiState.REQUIREMENTS,  UiState.HELP):
+        elif self.__ui_state in (UiState.SEARCH_RESULTS, UiState.HELP):
             self.set_ui_state(UiState.SEARCH_INIT, UiFocusable.SEARCH_FORM)
             self.searchform.clear_query()
-        elif self.__ui_state == UiState.SEARCH_INIT:
+        elif self.__ui_state in (UiState.SEARCH_INIT, UiState.REQUIREMENTS):
             sys.exit(0)
 
     def __handle_TAB(self) -> None:
@@ -347,7 +347,7 @@ class InteractiveSession:
 
                     inner_screen_split_top = self.__get_split_top(width, height)
                     inner_screen_split_bottom = self.__get_split_bottom(width, height)
-                    url: str = selected_sites[0].url if selected_sites else ""
+                    url: str = selected_sites[0].urls[0] if selected_sites and selected_sites[0].urls else ""
                     display_url: str = BaseCursesView.url_for_display(url)
                     self.__view__searchform.draw_inner_header(stdscr, inner_screen_split_top, "Search:")
                     self.__view__searchform.set_bounds(inner_screen_split_top)
@@ -361,7 +361,7 @@ class InteractiveSession:
                 elif self.__ui_state == UiState.DOCUMENT:
 
                     inner_screen = self.__get_inner_screen(width, height)
-                    url: str = self.__view__document.url if self.__view__document is not None else ""
+                    url: str = self.__view__document.urls[0] if self.__view__document is not None and self.__view__document.urls else ""
                     display_url: str = BaseCursesView.url_for_display(url)
                     self.__view__document.set_focused(True)
                     self.__view__document.draw_inner_header(stdscr, inner_screen, f"URL: {display_url}")
@@ -376,7 +376,7 @@ class InteractiveSession:
                     self.__view__searchform.draw_inner_header(stdscr, inner_screen, "Search:")
                     selected_sites = self.__view__searchform.get_selected_sites()
                     first_hit = selected_sites[0] if selected_sites else None
-                    url: str = first_hit.url if first_hit is not None else ""
+                    url: str = first_hit.urls[0] if first_hit is not None and first_hit.urls else ""
                     display_url: str = BaseCursesView.url_for_display(url)
                     self.__view__searchform.set_bounds(inner_screen)
                     self.__view__searchform.render(stdscr)

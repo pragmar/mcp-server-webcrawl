@@ -24,6 +24,7 @@ from mcp_server_webcrawl.models.resources import (
 )
 from mcp_server_webcrawl.models.sites import (
     SiteResult,
+    SiteType,
 )
 from mcp_server_webcrawl.utils.logger import get_logger
 
