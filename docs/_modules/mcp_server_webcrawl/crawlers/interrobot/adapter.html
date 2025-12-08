@@ -44,6 +44,8 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../interactive.html">Interactive Mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -76,18 +78,16 @@
 <span></span><span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">sqlite3</span>
 <span class="kn">import</span> <span class="nn">traceback</span>
+
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">closing</span>
 <span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">Logger</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlparse</span>
 
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.adapter</span> <span class="kn">import</span> <span class="n">IndexState</span><span class="p">,</span> <span class="n">IndexStatus</span><span class="p">,</span> <span class="n">BaseManager</span><span class="p">,</span> <span class="n">SitesGroup</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">ResourceResult</span><span class="p">,</span>
-    <span class="n">RESOURCES_LIMIT_DEFAULT</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="n">SiteResult</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="n">ResourceResult</span><span class="p">,</span> <span class="n">RESOURCES_LIMIT_DEFAULT</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="n">SiteResult</span><span class="p">,</span> <span class="n">SiteType</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils</span> <span class="kn">import</span> <span class="n">from_isoformat_zulu</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
 
@@ -106,15 +106,16 @@
     <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="s2">&quot;ResourcesFullText.Time&quot;</span>
 <span class="p">}</span>
 
-<span class="n">INTERROBOT_SITE_FIELD_REQUIRED</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;url&quot;</span><span class="p">])</span>
+<span class="n">INTERROBOT_SITE_FIELD_REQUIRED</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;urls&quot;</span><span class="p">])</span>
 
 <span class="c1"># legit different from default version (extra robots)</span>
 <span class="n">INTERROBOT_SITE_FIELD_MAPPING</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;Project.Id&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;Project.Url&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Project.Name&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Project.Type&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;urls&quot;</span><span class="p">:</span> <span class="s2">&quot;Project.Urls&quot;</span><span class="p">,</span>
     <span class="s2">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;Project.Created&quot;</span><span class="p">,</span>
     <span class="s2">&quot;modified&quot;</span><span class="p">:</span> <span class="s2">&quot;Project.Modified&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;robots&quot;</span><span class="p">:</span> <span class="s2">&quot;Project.RobotsText&quot;</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
@@ -183,7 +184,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        List of SiteResult objects</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">site_fields_required</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;url&quot;</span><span class="p">]</span>
+    <span class="n">site_fields_required</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;urls&quot;</span><span class="p">]</span>
     <span class="n">site_fields_default</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">site_fields_required</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="s2">&quot;modified&quot;</span><span class="p">]</span>
     <span class="n">site_fields_available</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">INTERROBOT_SITE_FIELD_MAPPING</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
@@ -209,7 +210,7 @@
     <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^[A-Za-z\.]+$&quot;</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">safe_sql_fields</span><span class="p">),</span> <span class="s2">&quot;Unknown or unsafe field requested&quot;</span>
     <span class="n">safe_sql_fields_joined</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">safe_sql_fields</span><span class="p">)</span>
 
-    <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;SELECT </span><span class="si">{</span><span class="n">safe_sql_fields_joined</span><span class="si">}</span><span class="s2"> FROM Projects AS Project</span><span class="si">{</span><span class="n">ids_clause</span><span class="si">}</span><span class="s2"> ORDER BY Project.Url ASC&quot;</span>
+    <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;SELECT </span><span class="si">{</span><span class="n">safe_sql_fields_joined</span><span class="si">}</span><span class="s2"> FROM Projects AS Project</span><span class="si">{</span><span class="n">ids_clause</span><span class="si">}</span><span class="s2"> ORDER BY Project.Name ASC&quot;</span>
     <span class="n">sql_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">statement</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;SELECT&quot;</span><span class="p">):</span>
@@ -229,19 +230,56 @@
         <span class="k">return</span> <span class="p">[]</span>
 
     <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SiteResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1">#for row in sql_results:</span>
+    <span class="c1">#    results.append(SiteResult(</span>
+    <span class="c1">#        path=datasrc,</span>
+    <span class="c1">#        id=row.get(&quot;id&quot;),</span>
+    <span class="c1">#        url=row.get(&quot;url&quot;, &quot;&quot;),</span>
+    <span class="c1">#        created=from_isoformat_zulu(row.get(&quot;created&quot;)),</span>
+    <span class="c1">#        modified=from_isoformat_zulu(row.get(&quot;modified&quot;)),</span>
+    <span class="c1">#        robots=row.get(&quot;robotstext&quot;),</span>
+    <span class="c1">#        metadata=None,</span>
+    <span class="c1">#    ))</span>
+
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">sql_results</span><span class="p">:</span>
+        <span class="n">urls_list</span> <span class="o">=</span> <span class="n">__urls_from_text</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;urls&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+        <span class="n">site_type</span><span class="p">:</span> <span class="n">SiteType</span>
+        <span class="n">db_type</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">db_type</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">site_type</span> <span class="o">=</span> <span class="n">SiteType</span><span class="o">.</span><span class="n">CRAWLED_URL</span>
+        <span class="k">elif</span> <span class="n">db_type</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">site_type</span> <span class="o">=</span> <span class="n">SiteType</span><span class="o">.</span><span class="n">CRAWLED_LIST</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">site_type</span> <span class="o">=</span> <span class="n">SiteType</span><span class="o">.</span><span class="n">UNDEFINED</span>
+
         <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SiteResult</span><span class="p">(</span>
             <span class="n">path</span><span class="o">=</span><span class="n">datasrc</span><span class="p">,</span>
             <span class="nb">id</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">),</span>
-            <span class="n">url</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;url&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">),</span>  <span class="c1"># NEW: directly from DB</span>
+            <span class="nb">type</span><span class="o">=</span><span class="n">site_type</span><span class="p">,</span>  <span class="c1"># NEW: from DB (needs mapping)</span>
+            <span class="n">urls</span><span class="o">=</span><span class="n">urls_list</span><span class="p">,</span>  <span class="c1"># CHANGED: split into list</span>
             <span class="n">created</span><span class="o">=</span><span class="n">from_isoformat_zulu</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;created&quot;</span><span class="p">)),</span>
             <span class="n">modified</span><span class="o">=</span><span class="n">from_isoformat_zulu</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;modified&quot;</span><span class="p">)),</span>
-            <span class="n">robots</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;robotstext&quot;</span><span class="p">),</span>
+            <span class="n">robots</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Removed - not in new model</span>
             <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">))</span>
 
     <span class="k">return</span> <span class="n">results</span></div>
 
+
+<span class="k">def</span> <span class="nf">__urls_from_text</span><span class="p">(</span><span class="n">urls</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">urls_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">urls</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">urls</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">):</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">url</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">parsed</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span><span class="p">:</span>
+                        <span class="n">urls_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="k">continue</span>
+    <span class="k">return</span> <span class="n">urls_list</span>
 
 <div class="viewcode-block" id="get_resources">
 <a class="viewcode-back" href="../../../../mcp_server_webcrawl.crawlers.interrobot.html#mcp_server_webcrawl.crawlers.interrobot.adapter.get_resources">[docs]</a>

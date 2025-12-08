@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../interactive.html">Interactive Mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -232,16 +233,16 @@
         <span class="n">crawler</span> <span class="o">=</span> <span class="n">InterroBotCrawler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixture_path</span><span class="p">)</span>
 
         <span class="c1"># robots field retrieval</span>
-        <span class="n">site_one_field_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;robots&quot;</span><span class="p">])</span>
+        <span class="n">site_one_field_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;urls&quot;</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">site_one_field_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">result_dict</span> <span class="o">=</span> <span class="n">site_one_field_json</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;robots&quot;</span><span class="p">,</span> <span class="n">result_dict</span><span class="p">,</span> <span class="s2">&quot;robots field should be present in response&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;urls&quot;</span><span class="p">,</span> <span class="n">result_dict</span><span class="p">,</span> <span class="s2">&quot;robots field should be present in response&quot;</span><span class="p">)</span>
 
         <span class="c1"># multiple custom fields</span>
-        <span class="n">site_multiple_fields_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;robots&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">])</span>
+        <span class="n">site_multiple_fields_json</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;urls&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">site_multiple_fields_json</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">site_multiple_fields_json</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;robots&quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="s2">&quot;robots field should be present in response&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;urls&quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="s2">&quot;robots field should be present in response&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="s2">&quot;created field should be present in response&quot;</span><span class="p">)</span></div>
 
 

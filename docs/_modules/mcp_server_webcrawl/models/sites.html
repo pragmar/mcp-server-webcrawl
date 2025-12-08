@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../interactive.html">Interactive Mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -76,17 +77,26 @@
 <span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
 
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models</span> <span class="kn">import</span> <span class="n">METADATA_VALUE_TYPE</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.base</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">METADATA_VALUE_TYPE</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils</span> <span class="kn">import</span> <span class="n">to_isoformat_zulu</span>
 
+<div class="viewcode-block" id="SiteType">
+<a class="viewcode-back" href="../../../mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.sites.SiteType">[docs]</a>
+<span class="k">class</span> <span class="nc">SiteType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">UNDEFINED</span> <span class="o">=</span> <span class="s2">&quot;undefined&quot;</span>
+    <span class="n">CRAWLED_URL</span> <span class="o">=</span> <span class="s2">&quot;url&quot;</span>
+    <span class="n">CRAWLED_LIST</span> <span class="o">=</span> <span class="s2">&quot;list&quot;</span></div>
+
+
 <span class="n">SITES_TOOL_NAME</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;webcrawl_sites&quot;</span>
-<span class="n">SITES_FIELDS_BASE</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;url&quot;</span><span class="p">]</span>
+<span class="n">SITES_FIELDS_BASE</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;urls&quot;</span><span class="p">]</span>
 <span class="n">SITES_FIELDS_DEFAULT</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">SITES_FIELDS_BASE</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="s2">&quot;modified&quot;</span><span class="p">]</span>
 
 <div class="viewcode-block" id="SiteResult">
 <a class="viewcode-back" href="../../../mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.sites.SiteResult">[docs]</a>
-<span class="k">class</span> <span class="nc">SiteResult</span><span class="p">:</span>
+<span class="k">class</span> <span class="nc">SiteResult</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents a website or crawl directory result.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -96,7 +106,9 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">type</span><span class="p">:</span> <span class="n">SiteType</span> <span class="o">=</span> <span class="n">SiteType</span><span class="o">.</span><span class="n">CRAWLED_URL</span><span class="p">,</span>
+        <span class="n">urls</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">created</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">modified</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -108,7 +120,8 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            id: site identifier</span>
-<span class="sd">            url: site URL</span>
+<span class="sd">            name: site name, either a URL or a custom job</span>
+<span class="sd">            urls: site URL(s), multiple for list type crawls</span>
 <span class="sd">            path: path to site data, different from datasrc</span>
 <span class="sd">            created: creation timestamp</span>
 <span class="sd">            modified: last modification timestamp</span>
@@ -116,7 +129,9 @@
 <span class="sd">            metadata: additional metadata for the site</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">url</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">urls</span> <span class="o">=</span> <span class="n">urls</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">created</span> <span class="o">=</span> <span class="n">created</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">modified</span> <span class="o">=</span> <span class="n">modified</span>
@@ -132,39 +147,15 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">METADATA_VALUE_TYPE</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-            <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">&quot;urls&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">urls</span><span class="p">,</span>
             <span class="s2">&quot;created&quot;</span><span class="p">:</span> <span class="n">to_isoformat_zulu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">created</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">created</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="s2">&quot;modified&quot;</span><span class="p">:</span> <span class="n">to_isoformat_zulu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modified</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">modified</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="s2">&quot;robots&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">robots</span><span class="p">,</span>
             <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
         <span class="p">}</span>
 
         <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">k</span> <span class="o">==</span> <span class="s2">&quot;metadata&quot;</span> <span class="ow">and</span> <span class="n">v</span> <span class="o">==</span> <span class="p">{})}</span></div>
-
-
-<div class="viewcode-block" id="SiteResult.to_forcefield_dict">
-<a class="viewcode-back" href="../../../mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.sites.SiteResult.to_forcefield_dict">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_forcefield_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">forcefields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">METADATA_VALUE_TYPE</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Convert the object to a dictionary with specified fields forced to exist.</span>
-
-<span class="sd">        Creates a dictionary that includes all non-None values from the forcefields list,</span>
-<span class="sd">        and ensuring all fields in the forcefields list exist, even if null.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            forcefields: list of field names that must appear in the output dictionary</span>
-<span class="sd">                with at least a None value</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            Dictionary containing all non-None object attributes, plus forced fields</span>
-<span class="sd">            set to None if not already present</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># None self-annihilates in filter, forcefields can force their existence, as null</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">if</span> <span class="n">forcefields</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">forcefields</span><span class="p">}</span>
-        <span class="n">result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">result</span></div>
 </div>
 
 </pre></div>

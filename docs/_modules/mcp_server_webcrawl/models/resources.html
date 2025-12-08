@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../interactive.html">Interactive Mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -77,7 +78,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models</span> <span class="kn">import</span> <span class="n">METADATA_VALUE_TYPE</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.base</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">METADATA_VALUE_TYPE</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.utils</span> <span class="kn">import</span> <span class="n">to_isoformat_zulu</span>
 
 <span class="n">RESOURCES_TOOL_NAME</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;webcrawl_search&quot;</span>
@@ -182,7 +183,7 @@
 
 <div class="viewcode-block" id="ResourceResult">
 <a class="viewcode-back" href="../../../mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.resources.ResourceResult">[docs]</a>
-<span class="k">class</span> <span class="nc">ResourceResult</span><span class="p">:</span>
+<span class="k">class</span> <span class="nc">ResourceResult</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents a web resource result from a crawl operation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -287,26 +288,6 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__extras</span><span class="p">[</span><span class="n">extra_name</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span></div>
-
-
-<div class="viewcode-block" id="ResourceResult.to_forcefield_dict">
-<a class="viewcode-back" href="../../../mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.resources.ResourceResult.to_forcefield_dict">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_forcefield_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">forcefields</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">METADATA_VALUE_TYPE</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create a dictionary with forced fields set to None if not present in the object.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            forcefields: list of field names that should be included in the result</span>
-<span class="sd">                even if they&#39;re not present in the object data</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            Dictionary containing object data with forced fields included</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">if</span> <span class="n">forcefields</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">forcefields</span><span class="p">}</span>
-        <span class="n">result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">result</span></div>
 </div>
 
 </pre></div>

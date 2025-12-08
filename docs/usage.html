@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Prompt Routines" href="prompts.html" />
-    <link rel="prev" title="SiteOne MCP Setup Guide" href="guides/siteone.html" /> 
+    <link rel="prev" title="wget MCP Setup Guide" href="guides/wget.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -51,6 +51,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interactive.html">Interactive Mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -82,6 +83,18 @@
 .wy-table-responsive table td, .wy-table-responsive table th {
   white-space: normal !important;
 }
+table th.head {
+ font-size: 80%;
+ word-break: break-word;
+ }
+ table td, table th {
+     text-align: center;
+     vertical-align: middle;
+ }
+ table td:first-of-type, table th:first-of-type {
+     text-align: left;
+     white-space: nowrap !important;
+ }
 </style><section id="usage">
 <h1>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h1>
 <p>Once installed, <strong>mcp-server-webcrawl</strong> can leverage search and retrieval capabilities to pull
@@ -92,7 +105,7 @@ designed to be consumed by the LLM. It is, however, useful to understand for adv
 <section id="available-tools">
 <h2>Available Tools<a class="headerlink" href="#available-tools" title="Link to this heading"></a></h2>
 <p>The API is <em>supposed</em> to stay out your way, and to a large degree
-it can be navigated autonomously by your MCP client. Sometimes, however,
+it can be navigated autonomously by your MCP client. Sometimes
 you may need to nudge the LLM to the correct field or search strategy. The
 following is the currect API interface for your reference.</p>
 <section id="webcrawl-sites">
@@ -121,7 +134,7 @@ following is the currect API interface for your reference.</p>
 <tr class="row-odd"><td><p>fields</p></td>
 <td><p>array&lt;string&gt;</p></td>
 <td><p>No</p></td>
-<td><p>List of additional fields to include beyond defaults (id, url). Empty list means default fields only. Options include created (ISO 8601), modified (ISO 8601), and norobots (str).</p></td>
+<td><p>List of additional fields to include beyond defaults (id, type, name, urls). Empty list means default fields only. Options include created (ISO 8601), modified (ISO 8601).</p></td>
 </tr>
 </tbody>
 </table>
@@ -195,26 +208,32 @@ following is the currect API interface for your reference.</p>
 <section id="crawler-features-support">
 <h3>Crawler Features Support<a class="headerlink" href="#crawler-features-support" title="Link to this heading"></a></h3>
 <p>API support, by parameter, across crawler type.</p>
-<table class="docutils align-default">
+<table class="featuresgrid docutils align-default">
 <colgroup>
-<col style="width: 16.7%" />
-<col style="width: 16.7%" />
-<col style="width: 16.7%" />
-<col style="width: 16.7%" />
-<col style="width: 16.7%" />
-<col style="width: 16.7%" />
+<col style="width: 13.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+<col style="width: 13.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+<col style="width: 13.0%" />
+<col style="width: 13.0%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Parameter</p></th>
-<th class="head"><p>wget</p></th>
+<th class="head"><p>Archive­Box</p></th>
+<th class="head"><p>HT­Track</p></th>
+<th class="head"><p>Interro­Bot</p></th>
+<th class="head"><p>Ka­tana</p></th>
+<th class="head"><p>Site­One</p></th>
 <th class="head"><p>WARC</p></th>
-<th class="head"><p>InterroBot</p></th>
-<th class="head"><p>Katana</p></th>
-<th class="head"><p>SiteOne</p></th>
+<th class="head"><p>wget</p></th>
 </tr>
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Sites/ids</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
@@ -227,8 +246,12 @@ following is the currect API interface for your reference.</p>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
 </tr>
 <tr class="row-even"><td><p>Search/ids</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
@@ -241,22 +264,30 @@ following is the currect API interface for your reference.</p>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
 </tr>
 <tr class="row-even"><td><p>Search/query</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
 <td><p>①</p></td>
-<td><p>✔</p></td>
-<td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>①</p></td>
 </tr>
 <tr class="row-odd"><td><p>Search/fields</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
 <td><p>②</p></td>
-<td><p>✔</p></td>
-<td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>②</p></td>
 </tr>
 <tr class="row-even"><td><p>Search/sort</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
@@ -269,8 +300,12 @@ following is the currect API interface for your reference.</p>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
 </tr>
 <tr class="row-even"><td><p>Search/offset</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
@@ -283,6 +318,8 @@ following is the currect API interface for your reference.</p>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
 </tr>
 </tbody>
 </table>
@@ -290,68 +327,122 @@ following is the currect API interface for your reference.</p>
 <section id="crawler-field-support">
 <h3>Crawler Field Support<a class="headerlink" href="#crawler-field-support" title="Link to this heading"></a></h3>
 <p>API support, by field, across crawler type.</p>
-<table class="docutils align-default">
+<table class="featuresgrid docutils align-default">
 <colgroup>
-<col style="width: 16.7%" />
-<col style="width: 16.7%" />
-<col style="width: 16.7%" />
-<col style="width: 16.7%" />
-<col style="width: 16.7%" />
-<col style="width: 16.7%" />
+<col style="width: 13.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+<col style="width: 13.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+<col style="width: 13.0%" />
+<col style="width: 13.0%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Parameter</p></th>
-<th class="head"><p>wget</p></th>
+<th class="head"><p>Archive­Box</p></th>
+<th class="head"><p>HT­Track</p></th>
+<th class="head"><p>Interro­Bot</p></th>
+<th class="head"><p>Ka­tana</p></th>
+<th class="head"><p>Site­One</p></th>
 <th class="head"><p>WARC</p></th>
-<th class="head"><p>InterroBot</p></th>
-<th class="head"><p>Katana</p></th>
-<th class="head"><p>SiteOne</p></th>
+<th class="head"><p>wget</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>id</p></td>
+<tr class="row-even"><td><p>site.id</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
-<td><p>✔</p></td>
-<td><p>✔</p></td>
-<td><p>✔</p></td>
-</tr>
-<tr class="row-odd"><td><p>url</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 </tr>
-<tr class="row-even"><td><p>type</p></td>
+<tr class="row-odd"><td><p>site.name</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 </tr>
-<tr class="row-odd"><td><p>status</p></td>
+<tr class="row-even"><td><p>site.type</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-odd"><td><p>site.urls</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-even"><td><p>resource.id</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-odd"><td><p>resource.url</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-even"><td><p>resource.type</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+</tr>
+<tr class="row-odd"><td><p>resource.status</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
 <td><p>③</p></td>
-<td><p>✔</p></td>
-<td><p>✔</p></td>
-<td><p>✔</p></td>
-<td><p>✔</p></td>
 </tr>
-<tr class="row-even"><td><p>size</p></td>
+<tr class="row-even"><td><p>resource.size</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 </tr>
-<tr class="row-odd"><td><p>headers</p></td>
+<tr class="row-odd"><td><p>resource.headers</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
 <td></td>
 <td><p>✔</p></td>
-<td><p>✔</p></td>
-<td><p>✔</p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td><p>content</p></td>
+<tr class="row-even"><td><p>resource.content</p></td>
+<td><p>✔</p></td>
+<td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
 <td><p>✔</p></td>
@@ -364,11 +455,9 @@ following is the currect API interface for your reference.</p>
 wget and SiteOne crawler implementations do not support field searchable HTTP headers. When used in
 WARC mode (as opposed to simple mirror), wget is capable of collecting HTTP headers
 and status.</p>
-<p>Crawlers have strengths and weaknesses, judge them on how well they
-fit your needs. Don’t worry too
-much about field support. You probably don’t need HTTP headers, except for
-specialized web-dev, honestly. They all support fulltext boolean search
-across the crawl data.</p>
+<p>Crawlers all have strengths and weaknesses, judge them on how well they
+fit your needs, and don’t be all that concerned over headers field support. They all
+support fulltext boolean search across the crawl data.</p>
 </section>
 <section id="boolean-search-syntax">
 <h3>Boolean Search Syntax<a class="headerlink" href="#boolean-search-syntax" title="Link to this heading"></a></h3>
@@ -455,7 +544,7 @@ specific attributes or patterns within crawl data.</p>
 </thead>
 <tbody>
 <tr class="row-even"><td><p>id</p></td>
-<td><p>database ID</p></td>
+<td><p>resource database ID</p></td>
 </tr>
 <tr class="row-odd"><td><p>url</p></td>
 <td><p>resource URL</p></td>
@@ -463,13 +552,16 @@ specific attributes or patterns within crawl data.</p>
 <tr class="row-even"><td><p>type</p></td>
 <td><p>enumerated list of types (see types table)</p></td>
 </tr>
-<tr class="row-odd"><td><p>status</p></td>
+<tr class="row-odd"><td><p>size</p></td>
+<td><p>resource size in bytes</p></td>
+</tr>
+<tr class="row-even"><td><p>status</p></td>
 <td><p>HTTP response codes</p></td>
 </tr>
-<tr class="row-even"><td><p>headers</p></td>
+<tr class="row-odd"><td><p>headers</p></td>
 <td><p>HTTP response headers</p></td>
 </tr>
-<tr class="row-odd"><td><p>content</p></td>
+<tr class="row-even"><td><p>content</p></td>
 <td><p>HTTP body—HTML, CSS, JS, and more</p></td>
 </tr>
 </tbody>
@@ -620,7 +712,7 @@ supported content types in the search system.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="guides/siteone.html" class="btn btn-neutral float-left" title="SiteOne MCP Setup Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="guides/wget.html" class="btn btn-neutral float-left" title="wget MCP Setup Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="prompts.html" class="btn btn-neutral float-right" title="Prompt Routines" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

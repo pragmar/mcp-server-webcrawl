@@ -100,6 +100,7 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">SiteResult</span><span class="p">,</span>
+    <span class="n">SiteType</span><span class="p">,</span>
     <span class="n">SITES_FIELDS_BASE</span><span class="p">,</span>
     <span class="n">SITES_FIELDS_DEFAULT</span><span class="p">,</span>
 <span class="p">)</span>
@@ -544,7 +545,9 @@
         <span class="n">site</span> <span class="o">=</span> <span class="n">SiteResult</span><span class="p">(</span>
             <span class="n">path</span><span class="o">=</span><span class="n">site_directory</span><span class="p">,</span>
             <span class="nb">id</span><span class="o">=</span><span class="n">site_id</span><span class="p">,</span>
-            <span class="n">url</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;archivebox://</span><span class="si">{</span><span class="n">site_directory</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">site_directory</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>  <span class="c1"># NEW: the directory name</span>
+            <span class="nb">type</span><span class="o">=</span><span class="n">SiteType</span><span class="o">.</span><span class="n">CRAWLED_LIST</span><span class="p">,</span>  <span class="c1"># NEW: always CRAWLED_LIST for archivebox</span>
+            <span class="n">urls</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;archivebox://</span><span class="si">{</span><span class="n">site_directory</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">],</span>  <span class="c1"># CHANGED: now a list</span>
             <span class="n">created</span><span class="o">=</span><span class="n">created_time</span> <span class="k">if</span> <span class="s2">&quot;created&quot;</span> <span class="ow">in</span> <span class="n">selected_fields</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">modified</span><span class="o">=</span><span class="n">modified_time</span> <span class="k">if</span> <span class="s2">&quot;modified&quot;</span> <span class="ow">in</span> <span class="n">selected_fields</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>

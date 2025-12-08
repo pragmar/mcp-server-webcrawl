@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../interactive.html">Interactive Mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -89,13 +90,12 @@
 
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.api</span> <span class="kn">import</span> <span class="n">BaseJsonApi</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.crawlers.base.adapter</span> <span class="kn">import</span> <span class="n">IndexState</span>
-<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models</span> <span class="kn">import</span> <span class="n">METADATA_VALUE_TYPE</span>
+<span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.base</span> <span class="kn">import</span> <span class="n">METADATA_VALUE_TYPE</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="n">SITES_TOOL_NAME</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.resources</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ResourceResult</span><span class="p">,</span>
     <span class="n">ResourceResultType</span><span class="p">,</span>
     <span class="n">RESOURCES_DEFAULT_FIELD_MAPPING</span><span class="p">,</span>
-    <span class="n">RESOURCES_DEFAULT_SORT_MAPPING</span><span class="p">,</span>
     <span class="n">RESOURCE_EXTRAS_ALLOWED</span><span class="p">,</span>
     <span class="n">RESOURCES_TOOL_NAME</span><span class="p">,</span>
 <span class="p">)</span>

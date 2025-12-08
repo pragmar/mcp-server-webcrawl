@@ -4,6 +4,18 @@
    .wy-table-responsive table td, .wy-table-responsive table th {
      white-space: normal !important;
    }
+   table th.head {
+    font-size: 80%;
+    word-break: break-word;
+    }
+    table td, table th {
+        text-align: center;
+        vertical-align: middle;
+    }
+    table td:first-of-type, table th:first-of-type {
+        text-align: left;
+        white-space: nowrap !important;
+    }
    </style>
 
 Usage
@@ -20,7 +32,7 @@ Available Tools
 ---------------
 
 The API is *supposed* to stay out your way, and to a large degree
-it can be navigated autonomously by your MCP client. Sometimes, however,
+it can be navigated autonomously by your MCP client. Sometimes
 you may need to nudge the LLM to the correct field or search strategy. The
 following is the currect API interface for your reference.
 
@@ -44,7 +56,7 @@ This tool retrieves a list of sites (project websites or crawl directories).
    * - fields
      - array<string>
      - No
-     - List of additional fields to include beyond defaults (id, url). Empty list means default fields only. Options include created (ISO 8601), modified (ISO 8601), and norobots (str).
+     - List of additional fields to include beyond defaults (id, type, name, urls). Empty list means default fields only. Options include created (ISO 8601), modified (ISO 8601).
 
 webcrawl_search
 ~~~~~~~~~~~~~~~
@@ -104,15 +116,20 @@ API support, by parameter, across crawler type.
 
 .. list-table::
    :header-rows: 1
-   :widths: 16 16 16 16 16 16
+   :widths: 13 12 12 13 12 12 13 13
+   :class: featuresgrid
 
    * - Parameter
-     - wget
+     - Archive­Box
+     - HT­Track
+     - Interro­Bot
+     - Ka­tana
+     - Site­One
      - WARC
-     - InterroBot
-     - Katana
-     - SiteOne
+     - wget
    * - Sites/ids
+     - ✔
+     - ✔
      - ✔
      - ✔
      - ✔
@@ -124,7 +141,11 @@ API support, by parameter, across crawler type.
      - ✔
      - ✔
      - ✔
+     - ✔
+     - ✔
    * - Search/ids
+     - ✔
+     - ✔
      - ✔
      - ✔
      - ✔
@@ -136,19 +157,27 @@ API support, by parameter, across crawler type.
      - ✔
      - ✔
      - ✔
+     - ✔
+     - ✔
    * - Search/query
+     - ✔
+     - ✔
+     - ✔
+     - ✔
      - ①
-     - ✔
-     - ✔
      - ✔
      - ①
    * - Search/fields
+     - ✔
+     - ✔
+     - ✔
+     - ✔
      - ②
-     - ✔
-     - ✔
      - ✔
      - ②
    * - Search/sort
+     - ✔
+     - ✔
      - ✔
      - ✔
      - ✔
@@ -160,13 +189,19 @@ API support, by parameter, across crawler type.
      - ✔
      - ✔
      - ✔
+     - ✔
+     - ✔
    * - Search/offset
      - ✔
      - ✔
      - ✔
      - ✔
      - ✔
+     - ✔
+     - ✔
    * - Search/extras
+     - ✔
+     - ✔
      - ✔
      - ✔
      - ✔
@@ -180,51 +215,100 @@ API support, by field, across crawler type.
 
 .. list-table::
    :header-rows: 1
-   :widths: 16 16 16 16 16 16
+   :widths: 13 12 12 13 12 12 13 13
+   :class: featuresgrid
 
    * - Parameter
-     - wget
+     - Archive­Box
+     - HT­Track
+     - Interro­Bot
+     - Ka­tana
+     - Site­One
      - WARC
-     - InterroBot
-     - Katana
-     - SiteOne
-   * - id
+     - wget
+   * - site.id
      - ✔
      - ✔
      - ✔
      - ✔
      - ✔
-   * - url
+     - ✔
+     - ✔
+   * - site.name
      - ✔
      - ✔
      - ✔
      - ✔
      - ✔
-   * - type
+     - ✔
+     - ✔
+   * - site.type
      - ✔
      - ✔
      - ✔
      - ✔
      - ✔
-   * - status
+     - ✔
+     - ✔
+   * - site.urls
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+   * - resource.id
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+   * - resource.url
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+   * - resource.type
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+   * - resource.status
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+     - ✔
+     - ✔
      - ③
-     - ✔
-     - ✔
-     - ✔
-     - ✔
-   * - size
+   * - resource.size
      - ✔
      - ✔
      - ✔
      - ✔
      - ✔
-   * - headers
+     - ✔
+     - ✔
+   * - resource.headers
+     - ✔
+     - ✔
+     - ✔
+     - ✔
      -
      - ✔
-     - ✔
-     - ✔
      -
-   * - content
+   * - resource.content
+     - ✔
+     - ✔
      - ✔
      - ✔
      - ✔
@@ -236,11 +320,9 @@ wget and SiteOne crawler implementations do not support field searchable HTTP he
 WARC mode (as opposed to simple mirror), wget is capable of collecting HTTP headers
 and status.
 
-Crawlers have strengths and weaknesses, judge them on how well they
-fit your needs. Don't worry too
-much about field support. You probably don't need HTTP headers, except for
-specialized web-dev, honestly. They all support fulltext boolean search
-across the crawl data.
+Crawlers all have strengths and weaknesses, judge them on how well they
+fit your needs, and don't be all that concerned over headers field support. They all
+support fulltext boolean search across the crawl data.
 
 Boolean Search Syntax
 ~~~~~~~~~~~~~~~~~~~~~
@@ -305,11 +387,13 @@ specific attributes or patterns within crawl data.
    * - Field
      - Description
    * - id
-     - database ID
+     - resource database ID
    * - url
      - resource URL
    * - type
      - enumerated list of types (see types table)
+   * - size
+     - resource size in bytes
    * - status
      - HTTP response codes
    * - headers

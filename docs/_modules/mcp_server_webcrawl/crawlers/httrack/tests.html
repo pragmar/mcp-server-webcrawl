@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../interactive.html">Interactive Mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -261,8 +262,8 @@
         <span class="n">specific_site</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">get_sites_api</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="n">PRAGMAR_SITE_ID</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">specific_site</span><span class="o">.</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">site_data</span> <span class="o">=</span> <span class="n">specific_site</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;url&quot;</span><span class="p">,</span> <span class="n">site_data</span><span class="p">,</span> <span class="s2">&quot;Site should have reconstructed URL&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">site_data</span><span class="p">[</span><span class="s2">&quot;url&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;https://&quot;</span><span class="p">),</span> <span class="s2">&quot;Site URL should be properly formatted&quot;</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span><span class="s2">&quot;urls&quot;</span><span class="p">,</span> <span class="n">site_data</span><span class="p">,</span> <span class="s2">&quot;Site should have URLs&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">site_data</span><span class="p">[</span><span class="s2">&quot;urls&quot;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Site should have at least one valid URL&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="HtTrackTests.test_httrack_file_exclusion">

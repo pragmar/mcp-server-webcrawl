@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../interactive.html">Interactive Mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -101,6 +102,7 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">mcp_server_webcrawl.models.sites</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">SiteResult</span><span class="p">,</span>
+    <span class="n">SiteType</span><span class="p">,</span>
     <span class="n">SITES_FIELDS_BASE</span><span class="p">,</span>
     <span class="n">SITES_FIELDS_DEFAULT</span><span class="p">,</span>
 <span class="p">)</span>
@@ -244,10 +246,13 @@
             <span class="n">site</span> <span class="o">=</span> <span class="n">SiteResult</span><span class="p">(</span>
                 <span class="n">path</span><span class="o">=</span><span class="n">site_directory</span><span class="p">,</span>
                 <span class="nb">id</span><span class="o">=</span><span class="n">site_id</span><span class="p">,</span>
-                <span class="n">url</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">INDEXED_RESOURCE_DEFAULT_PROTOCOL</span><span class="si">}{</span><span class="n">site_directory</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">,</span>  <span class="c1"># base URL from directory name</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">site_directory</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>  <span class="c1"># NEW: directory name</span>
+                <span class="nb">type</span><span class="o">=</span><span class="n">SiteType</span><span class="o">.</span><span class="n">CRAWLED_URL</span><span class="p">,</span>  <span class="c1"># NEW: always single-site crawls</span>
+                <span class="n">urls</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">INDEXED_RESOURCE_DEFAULT_PROTOCOL</span><span class="si">}{</span><span class="n">site_directory</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">],</span>  <span class="c1"># CHANGED: now a list</span>
                 <span class="n">created</span><span class="o">=</span><span class="n">created_time</span> <span class="k">if</span> <span class="s2">&quot;created&quot;</span> <span class="ow">in</span> <span class="n">select_fields</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
                 <span class="n">modified</span><span class="o">=</span><span class="n">modified_time</span> <span class="k">if</span> <span class="s2">&quot;modified&quot;</span> <span class="ow">in</span> <span class="n">select_fields</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-                <span class="n">robots</span><span class="o">=</span><span class="n">robots_content</span>
+                <span class="n">robots</span><span class="o">=</span><span class="n">robots_content</span><span class="p">,</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="p">)</span>
 
             <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">site</span><span class="p">)</span>
@@ -412,7 +417,7 @@
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">default_tools</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;expected exactly 2 Tools: sites and resources&quot;</span>
 
         <span class="n">default_sites_tool</span><span class="p">,</span> <span class="n">default_resources_tool</span> <span class="o">=</span> <span class="n">default_tools</span>
-        <span class="n">all_sites_display</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s2"> (site: </span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">all_sites</span><span class="p">])</span>
+        <span class="n">all_sites_display</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (site: </span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">all_sites</span><span class="p">])</span>
         <span class="n">drt_props</span> <span class="o">=</span> <span class="n">default_resources_tool</span><span class="o">.</span><span class="n">inputSchema</span><span class="p">[</span><span class="s2">&quot;properties&quot;</span><span class="p">]</span>
         <span class="n">drt_props</span><span class="p">[</span><span class="s2">&quot;sites&quot;</span><span class="p">][</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Optional &quot;</span>
             <span class="s2">&quot;list of project ID to filter search results to a specific site. In 95% &quot;</span>

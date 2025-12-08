@@ -117,16 +117,16 @@ Provides connection pooling and caching for efficient access.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>datasrc</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>Path</em></a>) – path to the directory containing site subdirectories</p></li>
-<li><p><strong>ids</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – optional list of site IDs to filter by</p></li>
-<li><p><strong>fields</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – optional list of fields to include in the response</p></li>
+<li><p><strong>datasrc</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>Path</em></a>) – path to the directory containing site subdirectories</p></li>
+<li><p><strong>ids</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – optional list of site IDs to filter by</p></li>
+<li><p><strong>fields</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – optional list of fields to include in the response</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>List of SiteResult objects, one for each site directory</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a>[<a class="reference internal" href="mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.sites.SiteResult" title="mcp_server_webcrawl.models.sites.SiteResult"><em>SiteResult</em></a>]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<a class="reference internal" href="mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.sites.SiteResult" title="mcp_server_webcrawl.models.sites.SiteResult"><em>SiteResult</em></a>]</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -140,20 +140,20 @@ Provides connection pooling and caching for efficient access.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>datasrc</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>Path</em></a>) – path to the directory containing wget captures</p></li>
-<li><p><strong>sites</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – optional list of site IDs to filter by</p></li>
-<li><p><strong>query</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – search query string</p></li>
-<li><p><strong>fields</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – optional list of fields to include in response</p></li>
-<li><p><strong>sort</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><em>None</em>) – sort order for results</p></li>
-<li><p><strong>limit</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – maximum number of results to return</p></li>
-<li><p><strong>offset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – number of results to skip for pagination</p></li>
+<li><p><strong>datasrc</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>Path</em></a>) – path to the directory containing wget captures</p></li>
+<li><p><strong>sites</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – optional list of site IDs to filter by</p></li>
+<li><p><strong>query</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – search query string</p></li>
+<li><p><strong>fields</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – optional list of fields to include in response</p></li>
+<li><p><strong>sort</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – sort order for results</p></li>
+<li><p><strong>limit</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – maximum number of results to return</p></li>
+<li><p><strong>offset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – number of results to skip for pagination</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Tuple of (list of ResourceResult objects, total count)</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)">tuple</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a>[<a class="reference internal" href="mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.resources.ResourceResult" title="mcp_server_webcrawl.models.resources.ResourceResult"><em>ResourceResult</em></a>], <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a>, <a class="reference internal" href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.IndexState" title="mcp_server_webcrawl.crawlers.base.adapter.IndexState"><em>IndexState</em></a>]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<a class="reference internal" href="mcp_server_webcrawl.models.html#mcp_server_webcrawl.models.resources.ResourceResult" title="mcp_server_webcrawl.models.resources.ResourceResult"><em>ResourceResult</em></a>], <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a>, <a class="reference internal" href="mcp_server_webcrawl.crawlers.base.html#mcp_server_webcrawl.crawlers.base.adapter.IndexState" title="mcp_server_webcrawl.crawlers.base.adapter.IndexState"><em>IndexState</em></a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -176,7 +176,7 @@ fields than wget can alone.</p>
 SiteOne captures organized as subdirectories</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AssertionError" title="(in Python v3.13)"><strong>AssertionError</strong></a> – If datasrc is None or not a directory</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AssertionError" title="(in Python v3.14)"><strong>AssertionError</strong></a> – If datasrc is None or not a directory</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -185,11 +185,11 @@ SiteOne captures organized as subdirectories</p>
 <dd><p>Initialize the SiteOne crawler with a data source directory.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>datasrc</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>Path</em></a>) – The input argument as Path, it must be a directory containing
+<dd class="field-odd"><p><strong>datasrc</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>Path</em></a>) – The input argument as Path, it must be a directory containing
 SiteOne captures organized as subdirectories</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AssertionError" title="(in Python v3.13)"><strong>AssertionError</strong></a> – If datasrc is None or not a directory</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AssertionError" title="(in Python v3.14)"><strong>AssertionError</strong></a> – If datasrc is None or not a directory</p>
 </dd>
 </dl>
 </dd></dl>

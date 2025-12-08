@@ -44,6 +44,8 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides.html">Setup Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../prompts.html">Prompt Routines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../interactive.html">Interactive Mode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules.html">mcp_server_webcrawl</a></li>
 </ul>
 
@@ -94,11 +96,9 @@
 <span class="sd">        tuple[str, Path, int]: A tuple containing name, path, and level</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">log_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">DEFAULT_LOG_PATH</span>
-    <span class="n">log_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_LOG_LEVEL</span>
+    <span class="n">log_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span> <span class="k">if</span> <span class="n">DEBUG</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="s2">&quot;LOG_LEVEL&quot;</span><span class="p">,</span> <span class="n">DEFAULT_LOG_LEVEL</span><span class="p">)</span>
+    <span class="n">log_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="s2">&quot;LOG_PATH&quot;</span><span class="p">,</span> <span class="n">DEFAULT_LOG_PATH</span><span class="p">)</span>
 
-    <span class="n">log_level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span> <span class="k">if</span> <span class="n">DEBUG</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="s2">&quot;LOG_LEVEL&quot;</span><span class="p">,</span> <span class="n">DEFAULT_LOG_LEVEL</span><span class="p">)</span>
-    <span class="n">log_path</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="s2">&quot;LOG_PATH&quot;</span><span class="p">,</span> <span class="n">DEFAULT_LOG_PATH</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">DEFAULT_LOG_KEY</span><span class="p">,</span> <span class="n">log_path</span><span class="p">,</span> <span class="n">log_level</span><span class="p">)</span></div>
 
 
