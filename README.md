@@ -48,6 +48,10 @@ pip install mcp-server-webcrawl
 
 For step-by-step MCP server setup, refer to the [Setup Guides](https://pragmar.github.io/mcp-server-webcrawl/guides.html).
 
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/pragmar-mcp-server-webcrawl).
+
 ## Features
 
 * Claude Desktop ready
