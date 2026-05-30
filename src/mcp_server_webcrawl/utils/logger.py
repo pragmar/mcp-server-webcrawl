@@ -17,11 +17,9 @@ def get_logger_configuration() -> tuple[str, Path, int]:
         tuple[str, Path, int]: A tuple containing name, path, and level
     """
 
-    log_path: Path = DEFAULT_LOG_PATH
-    log_level: int = DEFAULT_LOG_LEVEL
+    log_level: int = logging.DEBUG if DEBUG else getattr(settings, "LOG_LEVEL", DEFAULT_LOG_LEVEL)
+    log_path: Path = getattr(settings, "LOG_PATH", DEFAULT_LOG_PATH)
 
-    log_level = logging.DEBUG if DEBUG else getattr(settings, "LOG_LEVEL", DEFAULT_LOG_LEVEL)
-    log_path = getattr(settings, "LOG_PATH", DEFAULT_LOG_PATH)
     return (DEFAULT_LOG_KEY, log_path, log_level)
 
 def get_logger() -> logging.Logger:

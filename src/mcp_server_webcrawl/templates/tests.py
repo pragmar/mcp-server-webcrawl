@@ -89,7 +89,7 @@ class TemplateTests(unittest.TestCase):
 
         # structural integrity - count major elements
         heading_count = len(re.findall(r"^#{1,6} ", markdown, re.MULTILINE))
-        self.assertEqual(heading_count, 11, "Should have exactly 6 headings")
+        self.assertEqual(heading_count, 11, "Should have exactly 11 headings")
         table_count = len(re.findall(r"^\|.*\|$", markdown, re.MULTILINE))
         self.assertGreater(table_count, 5, "Should have multiple table rows")
 

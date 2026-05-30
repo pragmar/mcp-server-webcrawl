@@ -99,7 +99,7 @@ class BaseCrawlerTests(unittest.TestCase):
             resource_dict = resource.to_dict()
             self.assertIsNotNone(resource_dict["created"], "Created timestamp should not be None")
             self.assertIsNotNone(resource_dict["modified"], "Modified timestamp should not be None")
-            self.assertIsNotNone(resource_dict["time"], "Modified timestamp should not be None")
+            self.assertIsNotNone(resource_dict["time"], "Time should not be None")
 
         # resource ID filtering
         if resources_json.total > 0:
@@ -708,7 +708,7 @@ class BaseCrawlerTests(unittest.TestCase):
             query=f"type: html AND ({self.__PRAGMAR_PRIMARY_KEYWORD} AND {self.__PRAGMAR_SECONDARY_KEYWORD})",
             limit=1,
         )
-        self.assertTrue(primary_and_secondary_resources.total >= 0, f"Primary AND Secondary should return results")
+        self.assertTrue(primary_and_secondary_resources.total > 0, f"Primary AND Secondary should return results")
 
         # OR
         primary_or_secondary_resources = crawler.get_resources_api(
@@ -730,7 +730,9 @@ class BaseCrawlerTests(unittest.TestCase):
             query=f"type: html AND ({self.__PRAGMAR_SECONDARY_KEYWORD} NOT {self.__PRAGMAR_PRIMARY_KEYWORD})",
             limit=1,
         )
-        self.assertTrue(secondary_not_primary_resources.total >= 0, f"Secondary NOT Primary should return results")
+        # 'privacy' pages are a subset of 'crawler' pages in this fixture, so this can be 0
+        self.assertGreaterEqual(secondary_not_primary_resources.total, 0,
+                "Secondary NOT Primary may be empty (privacy subset of crawler in fixture)")
 
         # logical relationships
         self.assertEqual(
