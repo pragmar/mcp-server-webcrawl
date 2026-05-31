@@ -1,21 +1,16 @@
 import curses
 import os
-import traceback
 
 from enum import Enum, auto
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Optional
 
-from mcp_server_webcrawl.crawlers import VALID_CRAWLER_CHOICES, get_crawler
-from mcp_server_webcrawl.crawlers.base.api import BaseJsonApi
-from mcp_server_webcrawl.crawlers.base.crawler import BaseCrawler
-from mcp_server_webcrawl.interactive.ui import InputRadioGroup, InputText, ThemeDefinition, UiState
+from mcp_server_webcrawl.crawlers import VALID_CRAWLER_CHOICES
+from mcp_server_webcrawl.interactive.actions import Action, ApplyConfig
+from mcp_server_webcrawl.interactive.config import AppConfig
+from mcp_server_webcrawl.interactive.ui import InputRadioGroup, InputText, Theme, ThemeDefinition
 from mcp_server_webcrawl.interactive.views.base import BaseCursesView
 from mcp_server_webcrawl.interactive.ui import safe_addstr
-from mcp_server_webcrawl.interactive.views.searchform import SearchFormView
-
-if TYPE_CHECKING:
-    from mcp_server_webcrawl.interactive.session import InteractiveSession
 
 LAYOUT_BOX_MAX_WIDTH = 60
 LAYOUT_BOX_MARGIN = 8
@@ -31,16 +26,8 @@ class RequirementsView(BaseCursesView):
     Interactive requirements view for configuring crawler and data source.
     """
 
-    def __init__(self, session: 'InteractiveSession', crawler: str, datasrc: str):
-        """
-        Initialize the requirements view.
-        
-        Args:
-            session: The interactive session instance
-            crawler: Initial crawler type selection
-            datasrc: Initial data source path
-        """
-        super().__init__(session)
+    def __init__(self, theme: Theme, crawler: str, datasrc: str):
+        super().__init__(theme)
         self.__validated: bool = self.__validate(crawler, datasrc)
         self.__form_selected_field: RequirementsFormField = RequirementsFormField.DATASRC
         self.__form_selected_index: int = 0
@@ -64,36 +51,32 @@ class RequirementsView(BaseCursesView):
     def validated(self) -> bool:
         return self.__validated
 
-    def handle_input(self, key: int) -> bool:
+    def handle_input(self, key: int) -> Optional[Action]:
         """
-        Handle keyboard input for requirements form navigation and validation.
-        
-        Args:
-            key: The curses key code from user input
-            
-        Returns:
-            bool: True if the input was handled, False otherwise
+        Navigate the form and edit fields. Submitting a valid datasrc returns an
+        ApplyConfig action; everything else is consumed locally. ESC (quit) is
+        handled by the owning screen.
         """
+        if key in (ord('\n'), ord('\r')):
+            return self.__handle_enter()
 
         handlers: dict[int, callable] = {
             curses.KEY_UP: self.__navigate_form_selection_up,
             curses.KEY_DOWN: self.__navigate_form_selection_down,
             ord('\t'): self.__handle_tab,
             ord(' '): self.__handle_spacebar,
-            ord('\n'): self.__handle_enter,
-            ord('\r'): self.__handle_enter,
         }
 
         handler = handlers.get(key)
         if handler:
             handler()
-            return True
+            return None
 
         if (self.__form_selected_field == RequirementsFormField.DATASRC and
             self.__form_selected_index == 0):
-            return self.__datasrc_input.handle_input(key)
+            self.__datasrc_input.handle_input(key)
 
-        return False
+        return None
 
     def render(self, stdscr: curses.window) -> None:
         """
@@ -119,7 +102,7 @@ class RequirementsView(BaseCursesView):
         if is_datasrc_selected:
             field_style = curses.A_REVERSE
         else:
-            field_style = self.session.get_theme_color_pair(ThemeDefinition.INACTIVE_QUERY)
+            field_style = self.theme.color(ThemeDefinition.INACTIVE_QUERY)
 
         self.__datasrc_input.render(stdscr, y_current, xb + 4, box_width,
                 focused=is_datasrc_selected, style=field_style)
@@ -149,7 +132,7 @@ class RequirementsView(BaseCursesView):
         if crawler_valid:
             crawler_style = curses.A_NORMAL
         else:
-            crawler_style = self.session.get_theme_color_pair(ThemeDefinition.UI_ERROR)
+            crawler_style = self.theme.color(ThemeDefinition.UI_ERROR)
 
         datasrc_path: str = self.__datasrc_input.value
         datasrc_path_obj: Path = Path(datasrc_path)
@@ -174,7 +157,7 @@ class RequirementsView(BaseCursesView):
         if datasrc_valid:
             datasrc_style = curses.A_NORMAL
         else:
-            datasrc_style = self.session.get_theme_color_pair(ThemeDefinition.UI_ERROR)
+            datasrc_style = self.theme.color(ThemeDefinition.UI_ERROR)
 
         validation_header: str = "Validation Status:"
         header_x: int = xb + VALIDATION_HEADER_X_OFFSET
@@ -241,20 +224,24 @@ class RequirementsView(BaseCursesView):
         """
         return str(Path(os.getcwd()).absolute())
 
-    def __handle_enter(self) -> None:
+    def __handle_enter(self) -> Optional[Action]:
         """
-        Handle ENTER key to revalidate in datasrc field or toggle in crawler field.
+        In the datasrc field, build a config from the form and, if the crawler loads,
+        emit ApplyConfig for the session to adopt. In the crawler field, toggle the
+        highlighted radio.
         """
         if self.__form_selected_field == RequirementsFormField.DATASRC:
             selected_crawler: str = self.__crawler_group.value
-            self.__validated = self.__validate(selected_crawler, self.__datasrc_input.value)
-            self.__update_session()
-            if self.__validated:
-                self.session.set_ui_state(UiState.SEARCH_INIT)
+            config: AppConfig = AppConfig.load(selected_crawler, self.__datasrc_input.value)
+            self.__validated = config.ready
+            if config.ready:
+                return ApplyConfig(config)
+            return None
         elif self.__form_selected_field == RequirementsFormField.CRAWLER:
             crawler_index: int = self.__form_selected_index - 1
             if 0 <= crawler_index < len(self.__crawler_group.radios):
                 self.__crawler_group.radios[crawler_index].next_state()
+        return None
 
     def __handle_spacebar(self) -> None:
         """
@@ -317,29 +304,6 @@ class RequirementsView(BaseCursesView):
             crawler_index: int = VALID_CRAWLER_CHOICES.index(initial_crawler)
             if 0 <= crawler_index < len(self.__crawler_group.radios):
                 self.__crawler_group.radios[crawler_index].next_state()
-
-    def __update_session(self) -> None:
-        """
-        Update the session with current form values.
-        """
-        # push a new app  configuration into the ui
-        selected_crawler: str = self.__crawler_group.value
-        self.session.set_init_input_args(selected_crawler, self.__datasrc_input.value)
-        if self.__validated:
-            try:
-                crawl_model: BaseCrawler = get_crawler(selected_crawler)
-                crawler: BaseCrawler = crawl_model(Path(self.__datasrc_input.value))
-                self.session.set_init_crawler(crawler)
-                sites_api: BaseJsonApi = self.session.crawler.get_sites_api()
-                self.session.set_init_sites(sites_api.get_results())
-                searchform: SearchFormView = SearchFormView(
-                    self.session,
-                    self.session.sites
-                )
-                self.session.set_init_searchform(searchform)
-            except Exception as ex:
-                self.session.debug_add(f"Error initializing crawler: {ex}\n{traceback.format_exc()}")
-                self.__validated = False
 
     def __validate(self, crawler: str, datasrc: str) -> bool:
         """

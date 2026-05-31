@@ -6,6 +6,11 @@ from typing import List
 
 from mcp_server_webcrawl.interactive.ui import safe_addstr
 
+REGEX_QUOTED_PHRASE = re.compile(r'"([^"]+)"')
+REGEX_WORD = re.compile(r"\b\w+\b")
+REGEX_SNIPPET_MARKER = re.compile(r"\*\*([a-zA-Z\-_' ]+)\*\*")
+IGNORE_WORDS = {"AND", "OR", "NOT", "and", "or", "not", "type", "status", "size", "url", "id"}
+
 @dataclass
 class HighlightSpan:
     """
@@ -24,11 +29,6 @@ class HighlightProcessor:
     Shared highlight processing utilities
     """
 
-    QUOTED_PHRASE_PATTERN = re.compile(r'"([^"]+)"')
-    WORD_PATTERN = re.compile(r"\b\w+\b")
-    SNIPPET_MARKER_PATTERN = re.compile(r"\*\*([a-zA-Z\-_' ]+)\*\*")
-    IGNORE_WORDS = {"AND", "OR", "NOT", "and", "or", "not", "type", "status", "size", "url", "id"}
-
     @staticmethod
     def extract_search_terms(query: str) -> List[str]:
         """
@@ -38,17 +38,17 @@ class HighlightProcessor:
             return []
 
         search_terms = []
-        for match in HighlightProcessor.QUOTED_PHRASE_PATTERN.finditer(query):
+        for match in REGEX_QUOTED_PHRASE.finditer(query):
             phrase = match.group(1).strip()
             if phrase:
                 search_terms.append(phrase)
 
-        remaining_query = HighlightProcessor.QUOTED_PHRASE_PATTERN.sub('', query)
+        remaining_query = REGEX_QUOTED_PHRASE.sub('', query)
 
         # extract individual words
-        for match in HighlightProcessor.WORD_PATTERN.finditer(remaining_query):
+        for match in REGEX_WORD.finditer(remaining_query):
             word = match.group().strip()
-            if word and word not in HighlightProcessor.IGNORE_WORDS and len(word) > 2:
+            if word and word not in IGNORE_WORDS and len(word) > 2:
                 search_terms.append(word)
 
         return search_terms
@@ -80,64 +80,51 @@ class HighlightProcessor:
         """
         Extract highlights from snippet text with **markers**, returning clean text and highlights.
         """
+
         if not snippet_text:
             return "", []
 
         normalized_text = re.sub(r"\s+", " ", snippet_text.strip())
 
-        clean_text = ""
-        highlights = []
+        parts: List[str] = []
+        highlights: List[HighlightSpan] = []
+        clean_len = 0
         last_end = 0
 
-        for match in HighlightProcessor.SNIPPET_MARKER_PATTERN.finditer(normalized_text):
-            # text before this match
-            clean_text += normalized_text[last_end:match.start()]
+        for match in REGEX_SNIPPET_MARKER.finditer(normalized_text):
+            before = normalized_text[last_end:match.start()]
+            parts.append(before)
+            clean_len += len(before)
 
-            # highlighted text (without markers)
             highlight_text = match.group(1)
-            highlight_start = len(clean_text)
-            clean_text += highlight_text
-            highlight_end = len(clean_text)
-
-            span: HighlightSpan = HighlightSpan(
-                start=highlight_start,
-                end=highlight_end,
-                text=highlight_text
-            )
-            highlights.append(span)
+            highlights.append(HighlightSpan(
+                start=clean_len,
+                end=clean_len + len(highlight_text),
+                text=highlight_text,
+            ))
+            parts.append(highlight_text)
+            clean_len += len(highlight_text)
             last_end = match.end()
 
-        # remaining text
-        clean_text += normalized_text[last_end:]
-
-        return clean_text.strip(), highlights
+        parts.append(normalized_text[last_end:])
+        return "".join(parts).strip(), highlights
 
     @staticmethod
     def merge_overlapping_highlights(highlights: List[HighlightSpan], text: str) -> List[HighlightSpan]:
-        """Merge overlapping or adjacent highlight spans."""
-        if not highlights:
-            return []
 
-        # sort by start position
-        sorted_highlights = sorted(highlights, key=lambda h: h.start)
-        merged = []
+        """
+        Merge overlapping or adjacent highlight spans.
+        """
 
-        for highlight in sorted_highlights:
-            if not merged:
-                merged.append(highlight)
-            else:
+        merged: List[HighlightSpan] = []
+
+        for h in sorted(highlights, key=lambda h: h.start):
+            if merged and h.start <= merged[-1].end:
                 last = merged[-1]
-                if highlight.start <= last.end:
-                    # overlapping/adjacent - merge them
-                    end = max(last.end, highlight.end)
-                    merged_text = text[last.start:end]
-                    merged[-1] = HighlightSpan(
-                        start=last.start,
-                        end=end,
-                        text=merged_text
-                    )
-                else:
-                    merged.append(highlight)
+                end = max(last.end, h.end)
+                merged[-1] = HighlightSpan(start=last.start, end=end, text=text[last.start:end])
+            else:
+                merged.append(h)
 
         return merged
 
@@ -150,42 +137,32 @@ class HighlightProcessor:
         y: int,
         max_width: int,
         normal_style: int,
-        hit_style: int
+        hit_style: int,
     ) -> None:
-        """
-        Render text with highlights applied.
-        """
+        """Render text with highlights applied."""
         if not text.strip():
             return
 
-        display_text: str = text[:max_width] if len(text) > max_width else text
-        visible_highlights: list[str] = [h for h in highlights if h.start < len(display_text)]
-        current_x: int = x
-        pos: int = 0
+        display_text = text[:max_width]
+        current_x = x
+        pos = 0
+
+        def emit(segment: str, style: int) -> None:
+            nonlocal current_x
+            segment = segment[: x + max_width - current_x]
+            if segment:
+                safe_addstr(stdscr, y, current_x, segment, style)
+                current_x += len(segment)
 
         try:
-            for highlight in visible_highlights:
-                # text before highlight
-                if highlight.start > pos:
-                    text_before: str = display_text[pos:highlight.start]
-                    safe_addstr(stdscr, y, current_x, text_before, normal_style)
-                    current_x += len(text_before)
-                    pos = highlight.start
+            for h in highlights:
+                if h.start >= len(display_text):
+                    continue
+                emit(display_text[pos:h.start], normal_style)
+                end = min(h.end, len(display_text))
+                emit(display_text[h.start:end], hit_style)
+                pos = max(pos, end)
 
-                # highlighted text
-                highlight_end: int = min(highlight.end, len(display_text))
-                highlighted_text: str = display_text[highlight.start:highlight_end]
-                if current_x + len(highlighted_text) <= x + max_width:
-                    safe_addstr(stdscr, y, current_x, highlighted_text, hit_style)
-                    current_x += len(highlighted_text)
-                pos = highlight_end
-
-            # remaining text
-            if pos < len(display_text):
-                remaining_text: str = display_text[pos:]
-                remaining_width: int = max_width - (current_x - x)
-                if remaining_width > 0:
-                    safe_addstr(stdscr, y, current_x, remaining_text[:remaining_width], normal_style)
-
+            emit(display_text[pos:], normal_style)
         except curses.error:
             pass

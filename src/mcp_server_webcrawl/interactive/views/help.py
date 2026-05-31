@@ -1,14 +1,13 @@
 import curses
 import textwrap
 
-from typing import TYPE_CHECKING
+from typing import Optional
 
+from mcp_server_webcrawl.interactive.actions import Action
 from mcp_server_webcrawl.interactive.views.base import CONTENT_MARGIN
 from mcp_server_webcrawl.interactive.views.base import BaseCursesView
-from mcp_server_webcrawl.interactive.ui import ThemeDefinition
+from mcp_server_webcrawl.interactive.ui import Theme, ThemeDefinition
 from mcp_server_webcrawl.interactive.ui import safe_addstr
-if TYPE_CHECKING:
-    from mcp_server_webcrawl.interactive.session import InteractiveSession
 
 INTERROBOT_LINK: str = "<https://interro.bot>"
 HELP_CONTENT: str = """Boolean Search Syntax
@@ -108,14 +107,8 @@ class HelpView(BaseCursesView):
     Interactive help view displaying scrollable documentation.
     """
 
-    def __init__(self, session: 'InteractiveSession'):
-        """
-        Initialize the help view.
-        
-        Args:
-            session: The interactive session instance
-        """
-        super().__init__(session)
+    def __init__(self, theme: Theme):
+        super().__init__(theme)
         self._focused = True
         self.__scroll_offset: int = 0
         self.__cached_content_lines: list[str] | None = None
@@ -153,18 +146,13 @@ class HelpView(BaseCursesView):
         except curses.error:
             pass
 
-    def handle_input(self, key: int) -> bool:
+    def handle_input(self, key: int) -> Optional[Action]:
         """
-        Handle document navigation input.
-        
-        Args:
-            key: The curses key code from user input
-            
-        Returns:
-            bool: True if the input was handled, False otherwise
+        Scroll and page through the help content. All keys are consumed locally;
+        ESC is handled by the owning screen.
         """
         if not self._focused:
-            return False
+            return None
 
         handlers: dict[int, callable] = {
             curses.KEY_UP: self.__scroll_up,
@@ -178,9 +166,8 @@ class HelpView(BaseCursesView):
         handler = handlers.get(key)
         if handler:
             handler()
-            return True
 
-        return False
+        return None
 
     def render(self, stdscr: curses.window) -> None:
         """
@@ -211,7 +198,7 @@ class HelpView(BaseCursesView):
             if INTERROBOT_LINK in line:
                 link_index = line.index(INTERROBOT_LINK)
                 safe_addstr(stdscr, line_y, 2, display_line, curses.A_NORMAL)
-                safe_addstr(stdscr, line_y, 2 + link_index, INTERROBOT_LINK, self.session.get_theme_color_pair(ThemeDefinition.HELP_LINK))
+                safe_addstr(stdscr, line_y, 2 + link_index, INTERROBOT_LINK, self.theme.color(ThemeDefinition.HELP_LINK))
             else:
                 safe_addstr(stdscr, line_y, 2, display_line, default_line_style)
 

@@ -1,21 +1,19 @@
 import curses
 import textwrap
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
 
-from mcp_server_webcrawl.interactive.ui import ThemeDefinition, UiState, ViewBounds
-from mcp_server_webcrawl.interactive.views.base import BaseCursesView
+from dataclasses import dataclass, field
+from typing import Optional
+
+from mcp_server_webcrawl.interactive.actions import Action, OpenDocument
 from mcp_server_webcrawl.interactive.highlights import HighlightProcessor, HighlightSpan
+from mcp_server_webcrawl.interactive.search import SearchResults
+from mcp_server_webcrawl.interactive.ui import Theme, ThemeDefinition, ViewBounds, safe_addstr, truncate
+from mcp_server_webcrawl.interactive.views.base import BaseCursesView, humanized_bytes
 from mcp_server_webcrawl.models.resources import ResourceResult
-from mcp_server_webcrawl.interactive.ui import safe_addstr
-
-if TYPE_CHECKING:
-    from mcp_server_webcrawl.interactive.session import InteractiveSession
 
 SEARCH_RESULT_SNIPPET_MARGIN: int = 6
 SEARCH_RESULT_SNIPPET_MAX_LINES: int = 6
 
-LAYOUT_ZERO_PAD_THRESHOLD = 10
 LAYOUT_RESULT_METADATA_SPACING = 2
 LAYOUT_RESULT_LINE_MARGIN = 2
 LAYOUT_RESULT_WIDTH_BUFFER = 4
@@ -31,47 +29,59 @@ TYPE_FIELD_WIDTH = 7
 SIZE_FIELD_WIDTH = 7
 URL_PADDING_BUFFER = 3
 
+
 @dataclass
 class SnippetData:
     """
-    Container for processed snippet data.
+    A snippet processed once: clean text, highlight spans, and the wrapped lines
+    paired with their start offset into clean_text. The offsets are recorded at wrap
+    time so highlight mapping is exact rather than inferred from whitespace probing.
     """
     clean_text: str
     highlights: list[HighlightSpan]
     wrapped_lines: list[str]
+    line_offsets: list[int]
 
-    def get_capped_line_count(self) -> int:
-        """
-        Get the line count capped at maximum allowed snippet lines.
-        
-        Returns:
-            int: The minimum of wrapped lines count and maximum snippet lines
-        """
+    @property
+    def visible_line_count(self) -> int:
+        """Wrapped lines, capped at the snippet display limit."""
         return min(len(self.wrapped_lines), SEARCH_RESULT_SNIPPET_MAX_LINES)
+
+
+@dataclass
+class ResultRow:
+    """One result's place in the virtual line space: its starting line and height."""
+    result: ResourceResult
+    index: int
+    start_line: int
+    snippet: Optional[SnippetData]
+
+    @property
+    def height(self) -> int:
+        """One line for the URL, plus any visible snippet lines."""
+        return 1 + (self.snippet.visible_line_count if self.snippet else 0)
 
 
 class SearchResultsView(BaseCursesView):
     """
-    A renderable curses view, but takes cues from searchform, which will handle 
-    all input on this screen.
+    Renders a page of search results with snippets.
+
+    Holds only what it draws: the results page, the offset they were fetched at, and
+    a `searching` flag the owning screen sets each frame. Selecting a result yields an
+    OpenDocument action rather than fetching the document itself.
     """
 
-    def __init__(self, session: 'InteractiveSession'):
-        """
-        Initialize the search results view.
-        
-        Args:
-            session: The interactive session instance
-        """
-        super().__init__(session)
+    def __init__(self, theme: Theme):
+        super().__init__(theme)
+        self.searching: bool = False
         self.__results: list[ResourceResult] = []
         self.__results_total: int = 0
+        self.__offset: int = 0
         self.__results_indexer_status: str = ""
         self.__results_indexer_processed: int = 0
         self.__results_indexer_duration: float = 0
         self.__scroll_offset: int = 0
-        self._focused: bool = False
-        self.__displayed_results: int = 0
+        self.__snippet_cache: dict[tuple[int, int], SnippetData] = {}
 
     @property
     def indexing_time(self) -> float:
@@ -91,498 +101,323 @@ class SearchResultsView(BaseCursesView):
         """
         self.__results = []
         self.__results_total = 0
+        self.__offset = 0
         self._selected_index = 0
         self.__scroll_offset = 0
+        self.__snippet_cache.clear()
+
+    def update(self, payload: SearchResults) -> None:
+        """
+        Replace the displayed results from a finished search and reset selection.
+        """
+        self.__results = payload.results
+        self.__results_total = payload.total
+        self.__offset = payload.offset
+        self.__results_indexer_status = payload.index_status
+        self.__results_indexer_processed = payload.index_processed
+        self.__results_indexer_duration = payload.index_duration
+        self._selected_index = 0
+        self.__scroll_offset = 0
+        self.__snippet_cache.clear()
 
     def draw_inner_footer(self, stdscr: curses.window, bounds: ViewBounds, text: str) -> None:
         """
-        Draw footer with pagination on left and indexing info on right.
-        
-        Args:
-            stdscr: The curses window to draw on
-            bounds: The view bounds defining the drawing area
-            text: The footer text to display
+        Footer: page range on the left, indexing info on the right.
         """
-        footer_y: int = bounds.y + bounds.height - 1
-        safe_addstr(stdscr, footer_y, bounds.x, self._get_bounded_line(), self._get_inner_header_style())
+        footer_y = bounds.y + bounds.height - 1
+        style = self._get_inner_header_style()
+        safe_addstr(stdscr, footer_y, bounds.x, self._get_bounded_line(), style)
 
-        if not self.__results:
-            left_text: str = ""
-        else:
-            searchform_offset: int = self.session.searchform.offset
-            index_start: int = searchform_offset + 1  # 1-based indexing for display
-            index_end: int = searchform_offset + len(self.__results)
-            left_text = f"Displaying {index_start:,}-{index_end:,} of {self.__results_total:,}"
+        max_width = bounds.width - LAYOUT_FOOTER_MARGIN
+
+        left_text = ""
+        if self.__results:
+            start = self.__offset + 1
+            end = self.__offset + len(self.__results)
+            left_text = truncate(f"Displaying {start:,}-{end:,} of {self.__results_total:,}", max_width // 2)
+            safe_addstr(stdscr, footer_y, bounds.x + 1, left_text, style)
 
         if self.__results_indexer_processed > 0:
-            duration_seconds: float = self.__results_indexer_duration
-            right_text: str = f"{self.__results_indexer_processed:,} Indexed ({duration_seconds:.2f}s)"
-        else:
-            right_text = ""
-
-        max_width: int = bounds.width - LAYOUT_FOOTER_MARGIN
-
-        if left_text:
-            if len(left_text) > max_width // 2:
-                left_text = f"{left_text[:max_width // 2 - 1]}…"
-            safe_addstr(stdscr, footer_y, bounds.x + 1, left_text, self._get_inner_header_style())
-
-        if right_text:
-            right_text_len: int = len(right_text)
-            if right_text_len <= max_width:
-
-                # right text doesn't overlap with left text
-                min_right_x: int = bounds.x + 1 + len(left_text) + LAYOUT_FOOTER_TEXT_SPACING if left_text else bounds.x + 1
-                right_x: int = max(min_right_x, bounds.x + bounds.width - right_text_len - 1)
-
-                # draw if enough space
-                if right_x + right_text_len < bounds.x + bounds.width:
-                    safe_addstr(stdscr, footer_y, right_x, right_text, self._get_inner_header_style())
+            right_text = f"{self.__results_indexer_processed:,} Indexed ({self.__results_indexer_duration:.2f}s)"
+            if len(right_text) <= max_width:
+                min_x = bounds.x + 1 + (len(left_text) + LAYOUT_FOOTER_TEXT_SPACING if left_text else 0)
+                right_x = max(min_x, bounds.x + bounds.width - len(right_text) - 1)
+                if right_x + len(right_text) < bounds.x + bounds.width:
+                    safe_addstr(stdscr, footer_y, right_x, right_text, style)
 
     def draw_inner_header(self, stdscr: curses.window, bounds: ViewBounds, text: str) -> None:
         """
-        Draw the application header with results count on left and search time on right.
-        
-        Args:
-            stdscr: The curses window to draw on
-            bounds: The view bounds defining the drawing area
-            text: The header text to display
+        Header: results count on the left.
         """
-        header_y: int = bounds.y
+        style = self._get_inner_header_style()
+        safe_addstr(stdscr, bounds.y, bounds.x, self._get_bounded_line(), style)
 
-        # write out a line, then update it
-        safe_addstr(stdscr, header_y, bounds.x, self._get_bounded_line(), self._get_inner_header_style())
-
-        # results count
-        if self.__results and not (self.session.searchman.is_searching()):
-            left_text: str = f"Results ({self.__results_total:,} Found)"
+        if self.__results and not self.searching:
+            left_text = f"Results ({self.__results_total:,} Found)"
         else:
             left_text = "Results:"
 
-         # 1 char margin on each side
-        max_width: int = bounds.width - LAYOUT_FOOTER_MARGIN
-
-        if left_text:
-            if len(left_text) > max_width // 2:  # no more than half
-                left_text = f"{left_text[:max_width // 2 - 1]}…"
-            safe_addstr(stdscr, header_y, bounds.x + 1, left_text, self._get_inner_header_style())
+        left_text = truncate(left_text, (bounds.width - LAYOUT_FOOTER_MARGIN) // 2)
+        safe_addstr(stdscr, bounds.y, bounds.x + 1, left_text, style)
 
     def get_selected_result(self) -> Optional[ResourceResult]:
         """
-        Get the currently selected search result.
-        
-        Returns:
-            Optional[ResourceResult]: The selected result or None if no valid selection
+        The currently selected result, or None.
         """
         if 0 <= self._selected_index < len(self.__results):
             return self.__results[self._selected_index]
         return None
 
-    def handle_input(self, key: int) -> bool:
+    def handle_input(self, key: int) -> Optional[Action]:
         """
-        Handle keyboard input for results navigation and selection.
-        
-        Args:
-            key: The curses key code from user input
-            
-        Returns:
-            bool: True if the input was handled, False otherwise
+        UP/DOWN select; ENTER opens the selected document. Paging (LEFT/RIGHT) is
+        handled by the owning screen, which holds the form's pagination.
         """
         if not self._focused or not self.__results:
-            return False
+            return None
 
-        def handle_page_previous() -> None:
-            if self.session.searchform.page_previous():
-                self.session.searchman.autosearch()
+        if key in (ord('\n'), ord('\r')):
+            return self.__open_selected()
+        if key == curses.KEY_UP:
+            self.__move_selection(-1)
+        elif key == curses.KEY_DOWN:
+            self.__move_selection(1)
 
-        def handle_page_next() -> None:
-            if self.session.searchform.page_next(self.__results_total):
-                self.session.searchman.autosearch()
-
-        handlers: dict[int, callable] = {
-            curses.KEY_LEFT: handle_page_previous,
-            curses.KEY_RIGHT: handle_page_next,
-            curses.KEY_UP: self.__select_previous,
-            curses.KEY_DOWN: self.__select_next,
-            ord('\n'): self.__handle_document_selection,
-            ord('\r'): self.__handle_document_selection,
-        }
-
-        handler: Optional[callable] = handlers.get(key)
-        if handler:
-            handler()
-            return True
-
-        return False
+        return None
 
     def render(self, stdscr: curses.window) -> None:
         """
-        Render only the results content - headers/footers handled by session.
-        
-        Args:
-            stdscr: The curses window to draw on
+        Render the results content (header/footer are drawn by the screen).
         """
-        if not self._renderable(stdscr):
+        if not self._renderable(stdscr) or self.bounds.height <= LAYOUT_HEADER_FOOTER_HEIGHT:
             return
 
-        xb: int = self.bounds.x
-        yb: int = self.bounds.y
-        y_current: int = yb + 1
+        y_current = self.bounds.y + 1
 
-        # create content area excluding header/footer rows
-        # header takes row 0, footer takes row height-1, content gets the middle
-        if self.bounds.height <= LAYOUT_HEADER_FOOTER_HEIGHT:
-            return
-
-        # check if search is in progress
-        is_searching: bool = self.session.searchman.is_searching()
-
-        message: str = ""
-        if is_searching:
-            message = "Searching…"
-        elif not self.__results:
-            if self.__results_indexer_status in ("idle", "indexing", ""):
-                message = "Indexing…"
-            else:
-                message = "No results found."
-
-        if message != "":
+        message = self.__status_message()
+        if message:
             safe_addstr(stdscr, y_current, LAYOUT_STATUS_MESSAGE_X_OFFSET, message, curses.A_DIM)
         else:
-            self.__render_results_list(stdscr, y_current, 0)
+            self.__render_results_list(stdscr, y_current)
 
-    def update(self, results: list[ResourceResult], total: int, indexer_status: str, indexer_processed: int, indexer_duration: float) -> None:
+    def __status_message(self) -> str:
         """
-        Update the search results view with new data and reset selection.
-        
-        Args:
-            results: List of search result resources for current page
-            total: Total number of results across all pages
-            indexer_processed: Number of resources processed during indexing
-            indexer_duration: Time taken for indexing in seconds
+        The placeholder line to show in place of results, or "" when results exist.
         """
-        self.__results = results
-        self.__results_total = total
-        self.__results_indexer_status = indexer_status
-        self.__results_indexer_processed = indexer_processed
-        self.__results_indexer_duration = indexer_duration
-        self._selected_index = 0
-        self.__scroll_offset = 0
+        if self.searching:
+            return "Searching…"
+        if not self.__results:
+            indexing = self.__results_indexer_status in ("idle", "indexing", "")
+            return "Indexing…" if indexing else "No results found."
+        return ""
 
-    def __ensure_visible(self) -> None:
+    def __open_selected(self) -> Optional[Action]:
         """
-        Ensure selected item is completely visible in viewport with line-by-line scrolling.
+        Request the document view for the selected result.
         """
-        if not self.__results or self._selected_index >= len(self.__results):
-            return
+        result = self.get_selected_result()
+        if not result or not result.id:
+            return None
+        return OpenDocument(result)
 
-        result_line_positions: list[int] = []
-        result_line_counts: list[int] = []
-        current_line: int = 0
-
-        for result in self.__results:
-            result_line_positions.append(current_line)
-            lines_for_this_result: int = 1
-            current_line += 1
-
-            snippet: Optional[str] = result.get_extra("snippets")
-            if snippet and snippet.strip():
-                snippet_data: SnippetData = self.__process_snippet(snippet)
-                snippet_lines: int = min(len(snippet_data.wrapped_lines), SEARCH_RESULT_SNIPPET_MAX_LINES)
-                lines_for_this_result += snippet_lines
-                current_line += snippet_lines
-
-            result_line_counts.append(lines_for_this_result)
-
-        selected_start_line: int = result_line_positions[self._selected_index]
-        selected_total_lines: int = result_line_counts[self._selected_index]
-        selected_end_line: int = selected_start_line + selected_total_lines - 1
-        visible_height: int = self.bounds.height - LAYOUT_HEADER_FOOTER_HEIGHT  # account for header/footer
-
-        if selected_start_line < self.__scroll_offset:
-            self.__scroll_offset = selected_start_line
-        elif selected_end_line >= self.__scroll_offset + visible_height:
-            self.__scroll_offset = max(0, selected_end_line - visible_height + 1)
-            if self._selected_index + 1 < len(result_line_positions):
-                next_result_line: int = result_line_positions[self._selected_index + 1]
-                if next_result_line < self.__scroll_offset + visible_height:
-                    self.__scroll_offset = min(self.__scroll_offset, next_result_line - visible_height + 1)
-
-    def __handle_document_selection(self) -> None:
+    def __snippet_for(self, result: ResourceResult) -> Optional[SnippetData]:
         """
-        Handle document viewing when ENTER is pressed on a result.
+        Processed snippet for a result, or None if it has none. Cached per (result id,
+        snippet width) so textwrap runs once per result until the pane resizes.
         """
-        selected_result: Optional[ResourceResult] = self.get_selected_result()
-        if not selected_result or not selected_result.id:
-            return
+        raw = result.get_extra("snippets")
+        if not raw or not raw.strip():
+            return None
 
-        selected_sites = self.session.searchform.get_selected_sites()
-        site_ids: list[int] = [site.id for site in selected_sites] if selected_sites else []
+        key = (id(result), self.bounds.width)
+        cached = self.__snippet_cache.get(key)
+        if cached is None:
+            cached = self.__process_snippet(raw)
+            self.__snippet_cache[key] = cached
+        return cached
 
-        try:
-            query: str = f"id: {selected_result.id}"
-            query_api = self.session.crawler.get_resources_api(
-                sites=site_ids if site_ids else None,
-                query=query,
-                offset=0,
-                limit=1,
-                fields=["headers", "content", "status", "size"],
-                extras=["markdown"]
-            )
-            document_results: list[ResourceResult] = query_api.get_results()
-
-            if document_results:
-                self.session.document.update(document_results[0])
-                self.session.set_ui_state(UiState.DOCUMENT)
-
-        except Exception:
-            pass
+    def __layout(self) -> list[ResultRow]:
+        """
+        The single source of truth for vertical layout: every result paired with the
+        virtual line it starts on and its processed snippet. Both scrolling and drawing
+        read from this, so they cannot disagree about where a result sits.
+        """
+        rows: list[ResultRow] = []
+        line = 0
+        for index, result in enumerate(self.__results):
+            row = ResultRow(result, index, line, self.__snippet_for(result))
+            rows.append(row)
+            line += row.height
+        return rows
 
     def __process_snippet(self, snippet_text: str) -> SnippetData:
         """
-        Process raw snippet text using shared highlight utility.
-        
-        Args:
-            snippet_text: Raw snippet text with highlight markers
-            
-        Returns:
-            SnippetData: Processed data with clean text, highlight positions, and wrapped lines
+        Process raw snippet text into clean text, highlight spans, wrapped lines, and
+        the start offset of each wrapped line within clean_text.
         """
-
         clean_text, highlights = HighlightProcessor.extract_snippet_highlights(snippet_text)
 
-        snippet_width: int = self.bounds.width - (SEARCH_RESULT_SNIPPET_MARGIN * 2)
-        wrapped_text: str = textwrap.fill(
+        snippet_width = self.bounds.width - (SEARCH_RESULT_SNIPPET_MARGIN * 2)
+        wrapped_lines = textwrap.fill(
             clean_text,
             width=snippet_width,
             expand_tabs=True,
             replace_whitespace=True,
             break_long_words=True,
             break_on_hyphens=True,
-        )
-        wrapped_lines: list[str] = wrapped_text.split("\n")
+        ).split("\n")
 
-        return SnippetData(
-            clean_text=clean_text,
-            highlights=highlights,
-            wrapped_lines=wrapped_lines
-        )
+        # Recover each line's offset by walking clean_text forward; this is exact
+        # regardless of how much whitespace textwrap collapsed at each break.
+        line_offsets: list[int] = []
+        cursor = 0
+        for line_text in wrapped_lines:
+            stripped = line_text.strip()
+            found = clean_text.find(stripped, cursor) if stripped else cursor
+            offset = found if found != -1 else cursor
+            line_offsets.append(offset)
+            cursor = offset + len(stripped)
 
-    def __render_results_list(self, stdscr: curses.window, start_y: int, margin_x: int) -> None:
+        return SnippetData(clean_text, highlights, wrapped_lines, line_offsets)
+
+    def __render_results_list(self, stdscr: curses.window, start_y: int) -> None:
         """
-        Render results with metadata and snippets, respecting scroll offset.
-        
-        Args:
-            stdscr: The curses window to draw on
-            start_y: Starting Y position for rendering
-            margin_x: Left margin for content
+        Draw the visible slice of the layout, respecting the scroll offset.
         """
+        y_max = self.bounds.y + self.bounds.height
 
-        xb: int = self.bounds.x
-        yb: int = self.bounds.y
-        y_current: int = start_y
-        y_max: int = yb + self.bounds.height
-        y_available: int = y_max - start_y
-        searchform_offset: int = self.session.searchform.offset
-        displayed_results: int = 0
-
-        # for scrolling
-        current_line: int = 0
-
-        for result_index in range(len(self.__results)):
-            if y_current >= start_y + y_available:
+        for row in self.__layout():
+            if row.start_line + row.height <= self.__scroll_offset:
+                continue  # entirely scrolled past
+            y = start_y + (row.start_line - self.__scroll_offset)
+            if y >= y_max:
                 break
 
-            result: ResourceResult = self.__results[result_index]
-            is_selected: bool = self._focused and result_index == self._selected_index
-            global_result_num: int = searchform_offset + result_index + 1
+            if y >= start_y:
+                self.__render_result_line(stdscr, row, y)
 
-            # check if skip due to scrolling
-            if current_line < self.__scroll_offset:
-                current_line += 1
-                snippet: Optional[str] = result.get_extra("snippets")
-                if snippet and snippet.strip():
-                    snippet_data: SnippetData = self.__process_snippet(snippet)
-                    current_line += snippet_data.get_capped_line_count()
+            if row.snippet:
+                self.__render_snippet(stdscr, row, start_y, y_max)
+
+    def __render_result_line(self, stdscr: curses.window, row: ResultRow, y: int) -> None:
+        """
+        Draw a single result's header line: number, URL, and right-aligned metadata.
+        """
+        result = row.result
+        is_selected = self._focused and row.index == self._selected_index
+        selected_style = curses.A_REVERSE if is_selected else curses.A_NORMAL
+        result_num = f"{self.__offset + row.index + 1:02d}. "
+
+        metadata_parts: list[tuple[str, int]] = []
+        if result.type.value:
+            metadata_parts.append((f"{f'[{result.type.value}]':>{TYPE_FIELD_WIDTH}}", curses.A_NORMAL))
+        size_text = humanized_bytes(result.size)
+        if size_text and size_text != "0B":
+            metadata_parts.append((f"{size_text:>{SIZE_FIELD_WIDTH}}", curses.A_NORMAL))
+        metadata_parts.append((str(result.status), self.__status_style(result.status)))
+
+        line_x = LAYOUT_RESULT_LINE_MARGIN
+        available_width = min(self.bounds.width - LAYOUT_RESULT_WIDTH_BUFFER, self.bounds.width - line_x)
+        metadata_text = "  ".join(text for text, _ in metadata_parts)
+        url = result.url or "No URL"
+
+        if metadata_parts:
+            url = truncate(url, available_width - len(result_num) - len(metadata_text) - URL_PADDING_BUFFER)
+            head = f"{result_num}{url}"
+            safe_addstr(stdscr, y, line_x, head, selected_style)
+
+            x = line_x + len(head)
+            line_end = line_x + available_width
+            padding = available_width - len(head) - len(metadata_text)
+            if padding > 0 and x < line_end:
+                safe_addstr(stdscr, y, x, " " * padding, curses.A_NORMAL)
+                x += padding
+
+            for part_text, part_style in metadata_parts:
+                if x < line_end:
+                    safe_addstr(stdscr, y, x, part_text, part_style)
+                    x += len(part_text) + LAYOUT_RESULT_METADATA_SPACING
+        else:
+            url = truncate(url, available_width - len(result_num))
+            safe_addstr(stdscr, y, line_x, f"{result_num}{url}"[:available_width], selected_style)
+
+    def __render_snippet(self, stdscr: curses.window, row: ResultRow, start_y: int, y_max: int) -> None:
+        """
+        Draw a result's wrapped snippet lines with highlighting, clipping any lines
+        that fall above the scroll window or below the pane.
+        """
+        snippet = row.snippet
+        default_style = self.theme.color(ThemeDefinition.SNIPPET_DEFAULT)
+        highlight_style = self.theme.color(ThemeDefinition.SNIPPET_HIGHLIGHT)
+        max_width = self.bounds.width - SEARCH_RESULT_SNIPPET_MARGIN - LAYOUT_RESULT_WIDTH_BUFFER
+
+        for i in range(snippet.visible_line_count):
+            # +1: the snippet's first line sits one below the result's header line.
+            y = start_y + (row.start_line + 1 + i - self.__scroll_offset)
+            if y < start_y:
                 continue
-
-            # leading zero for 01-09, natural 10+
-            result_num: str
-            if global_result_num < LAYOUT_ZERO_PAD_THRESHOLD:
-                result_num = f"{global_result_num:02d}. "
-            else:
-                result_num = f"{global_result_num}. "
-
-            url: str = result.url or "No URL"
-            metadata_parts: list[tuple[str, int]] = []
-
-            # resource type
-            if result.type.value:
-                type_str: str = f"[{result.type.value}]"
-                type_str = f"{type_str:>{TYPE_FIELD_WIDTH}}"
-                metadata_parts.append((type_str, curses.A_NORMAL))
-
-            # file size
-            humanized_bytes: str = BaseCursesView.humanized_bytes(result)
-            if humanized_bytes and humanized_bytes != "0B":
-                metadata_parts.append((f"{humanized_bytes:>{SIZE_FIELD_WIDTH}}", curses.A_NORMAL))
-
-            # HTTP status
-            status_style = curses.A_NORMAL
-            if result.status >= HTTP_ERROR_THRESHOLD:
-                status_style = self.session.get_theme_color_pair(ThemeDefinition.HTTP_ERROR)
-            elif result.status >= HTTP_WARN_THRESHOLD:
-                status_style = self.session.get_theme_color_pair(ThemeDefinition.HTTP_WARN)
-            metadata_parts.append((str(result.status), status_style))
-
-            metadata_text: str = "  ".join(part[0] for part in metadata_parts)
-
-            line_x: int = margin_x + LAYOUT_RESULT_LINE_MARGIN
-            available_width: int = min(self.bounds.width - LAYOUT_RESULT_WIDTH_BUFFER, self.bounds.width - line_x)
-            selected_style: int = curses.A_REVERSE if is_selected else curses.A_NORMAL
-
-            if metadata_parts:
-                url_space: int = available_width - len(result_num) - len(metadata_text) - URL_PADDING_BUFFER
-                if len(url) > url_space:
-                    url = url[:max(0, url_space - 1)] + "…"
-                padding: int = available_width - len(result_num) - len(url) - len(metadata_text)
-
-                result_url_part: str = f"{result_num}{url}"
-                safe_addstr(stdscr, y_current, line_x, result_url_part, selected_style)
-
-                metadata_start_x: int = line_x + len(result_url_part)
-                if padding > 0 and metadata_start_x < line_x + available_width:
-                    safe_addstr(stdscr, y_current, metadata_start_x, " " * padding, curses.A_NORMAL)
-                    metadata_start_x += padding
-
-                for part_text, part_style in metadata_parts:
-                    if metadata_start_x < line_x + available_width:
-                        safe_addstr(stdscr, y_current, metadata_start_x, part_text, part_style)
-                        metadata_start_x += len(part_text) + LAYOUT_RESULT_METADATA_SPACING
-            else:
-                url_space = available_width - len(result_num)
-                if len(url) > url_space:
-                    url = url[:max(0, url_space - 1)] + "…"
-                result_line: str = f"{result_num}{url}"
-                safe_addstr(stdscr, y_current, line_x, result_line[:available_width], selected_style)
-
-            y_current += 1
-            current_line += 1
-            displayed_results += 1
-
-            snippet = result.get_extra("snippets")
-            if snippet and snippet.strip():
-                if y_current < start_y + y_available and y_current < y_max:
-                    snippet_data = self.__process_snippet(snippet)
-                    snippet_lines: int = min(len(snippet_data.wrapped_lines), SEARCH_RESULT_SNIPPET_MAX_LINES)
-                    lines_to_skip: int = max(0, self.__scroll_offset - current_line)
-
-                    if lines_to_skip < snippet_lines:
-                        lines_rendered: int = self.__render_snippet_with_highlights(stdscr, snippet_data, y_current)
-                        y_current += lines_rendered
-                        current_line += snippet_lines
-                    else:
-                        current_line += snippet_lines
-
-        self.__displayed_results = displayed_results
-
-    def __render_snippet_with_highlights(self, stdscr: curses.window, snippet_data: SnippetData, y: int) -> int:
-        """
-        Render a snippet using the processed snippet data with proper highlighting.
-        
-        Args:
-            stdscr: The curses window to draw on
-            snippet_data: Processed snippet data with highlights
-            y: Starting Y position for rendering
-            
-        Returns:
-            int: The number of lines actually rendered
-        """
-        lines_to_render: int = min(len(snippet_data.wrapped_lines), SEARCH_RESULT_SNIPPET_MAX_LINES)
-        lines_rendered: int = 0
-
-        snippet_default_pair: int = self.session.get_theme_color_pair(ThemeDefinition.SNIPPET_DEFAULT)
-        snippet_highlight_pair: int = self.session.get_theme_color_pair(ThemeDefinition.SNIPPET_HIGHLIGHT)
-
-        # track character position in the original clean text
-        # this allows replacing ** highlights with natural text wrapping
-        char_position: int = 0
-
-        for i in range(lines_to_render):
-            if i >= len(snippet_data.wrapped_lines):
+            if y >= y_max:
                 break
 
-            line_text: str = snippet_data.wrapped_lines[i]
+            line_text = snippet.wrapped_lines[i]
             if not line_text.strip():
-                char_position += len(line_text) + 1  # +1 for newline
                 continue
 
-            current_y: int = y + i
-            current_x: int = SEARCH_RESULT_SNIPPET_MARGIN
-            line_highlights: list[dict[str, int]] = []
-            line_end_pos: int = char_position + len(line_text)
+            line_start = snippet.line_offsets[i]
+            line_end = line_start + len(line_text)
+            local_highlights = [
+                HighlightSpan(
+                    start=max(0, h.start - line_start),
+                    end=min(len(line_text), h.end - line_start),
+                    text=line_text[max(0, h.start - line_start):min(len(line_text), h.end - line_start)],
+                )
+                for h in snippet.highlights
+                if h.start < line_end and h.end > line_start
+            ]
 
-            for highlight in snippet_data.highlights:
-                if (highlight.start < line_end_pos and highlight.end > char_position):
-                    # highlight intersects with current line
-                    highlight_start_in_line: int = max(0, highlight.start - char_position)
-                    highlight_end_in_line: int = min(len(line_text), highlight.end - char_position)
-                    line_highlights.append({
-                        "start": highlight_start_in_line,
-                        "end": highlight_end_in_line
-                    })
+            HighlightProcessor.render_text_with_highlights(
+                stdscr, line_text, local_highlights,
+                SEARCH_RESULT_SNIPPET_MARGIN, y, max_width,
+                default_style, highlight_style,
+            )
 
-            line_highlights.sort(key=lambda x: x["start"])
-            pos: int = 0
-            max_width: int = self.bounds.width - current_x - LAYOUT_RESULT_WIDTH_BUFFER
+    @staticmethod
+    def __status_style_for(status: int) -> Optional[ThemeDefinition]:
+        if status >= HTTP_ERROR_THRESHOLD:
+            return ThemeDefinition.HTTP_ERROR
+        if status >= HTTP_WARN_THRESHOLD:
+            return ThemeDefinition.HTTP_WARN
+        return None
 
-            for highlight in line_highlights:
-                # text before highlight
-                if highlight["start"] > pos:
-                    text_before: str = line_text[pos:highlight["start"]]
-                    if current_x - SEARCH_RESULT_SNIPPET_MARGIN + len(text_before) <= max_width:
-                        safe_addstr(stdscr, current_y, current_x, text_before, snippet_default_pair)
-                        current_x += len(text_before)
-                    pos = highlight["start"]
-
-                # highlighted text
-                highlighted_text: str = line_text[highlight["start"]:highlight["end"]]
-                if current_x - SEARCH_RESULT_SNIPPET_MARGIN + len(highlighted_text) <= max_width:
-                    safe_addstr(stdscr, current_y, current_x, highlighted_text, snippet_highlight_pair)
-                    current_x += len(highlighted_text)
-                pos = highlight["end"]
-
-            # remaining
-            if pos < len(line_text):
-                remaining_text: str = line_text[pos:]
-                remaining_width: int = max_width - (current_x - SEARCH_RESULT_SNIPPET_MARGIN)
-                if remaining_width > 0:
-                    safe_addstr(stdscr, current_y, current_x, remaining_text[:remaining_width], snippet_default_pair)
-
-            # advance by the actual line length
-            char_position += len(line_text)
-
-            # add space if there's actually a space in the original text (otherwise hyphen off by one)
-            if (char_position < len(snippet_data.clean_text) and
-                snippet_data.clean_text[char_position].isspace()):
-                char_position += 1
-
-            lines_rendered += 1
-
-        return lines_rendered
-
-    def __select_next(self) -> None:
+    def __status_style(self, status: int) -> int:
         """
-        Move selection to the next result.
+        Curses style for an HTTP status code (error/warn themed, else normal).
         """
-        if self._selected_index < len(self.__results) - 1:
-            self._selected_index += 1
+        definition = self.__status_style_for(status)
+        return self.theme.color(definition) if definition is not None else curses.A_NORMAL
+
+    def __move_selection(self, delta: int) -> None:
+        """
+        Move the selection by delta, clamped to the result list, then rescroll.
+        """
+        new_index = self._selected_index + delta
+        if 0 <= new_index < len(self.__results):
+            self._selected_index = new_index
             self.__ensure_visible()
 
-    def __select_previous(self) -> None:
+    def __ensure_visible(self) -> None:
         """
-        Move selection to the previous result.
+        Scroll the minimum amount needed to bring the selected result fully into view.
         """
-        if self._selected_index > 0:
-            self._selected_index -= 1
-            self.__ensure_visible()
+        layout = self.__layout()
+        if not (0 <= self._selected_index < len(layout)):
+            return
+
+        row = layout[self._selected_index]
+        visible_height = self.bounds.height - LAYOUT_HEADER_FOOTER_HEIGHT
+        selected_end = row.start_line + row.height - 1
+
+        if row.start_line < self.__scroll_offset:
+            self.__scroll_offset = row.start_line
+        elif selected_end >= self.__scroll_offset + visible_height:
+            self.__scroll_offset = max(0, selected_end - visible_height + 1)

@@ -2,15 +2,13 @@ import curses
 import textwrap
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
-from mcp_server_webcrawl.interactive.ui import DocumentMode, ThemeDefinition, ViewBounds
+from mcp_server_webcrawl.interactive.actions import Action
+from mcp_server_webcrawl.interactive.ui import DocumentMode, Theme, ThemeDefinition, ViewBounds, safe_addstr
 from mcp_server_webcrawl.interactive.views.base import BaseCursesView, CONTENT_MARGIN
 from mcp_server_webcrawl.interactive.highlights import HighlightProcessor, HighlightSpan
 from mcp_server_webcrawl.models.resources import ResourceResult
-from mcp_server_webcrawl.interactive.ui import safe_addstr
-if TYPE_CHECKING:
-    from mcp_server_webcrawl.interactive.session import InteractiveSession
 
 DOCUMENT_MODE_NEXT: dict[DocumentMode, DocumentMode] = {
     DocumentMode.MARKDOWN: DocumentMode.RAW,
@@ -18,32 +16,17 @@ DOCUMENT_MODE_NEXT: dict[DocumentMode, DocumentMode] = {
     DocumentMode.HEADERS: DocumentMode.MARKDOWN
 }
 
-@dataclass
-class DocumentLineData:
-    """
-    Container for processed document line data with highlights.
-    """
-    original_line: str
-    clean_text: str
-    highlights: list[HighlightSpan]
-
-
 class SearchDocumentView(BaseCursesView):
     """
     Document viewer with markdown/raw/headers modes, scrolling support, and search highlighting.
     """
 
-    def __init__(self, session: 'InteractiveSession'):
-        """
-        Initialize the document view.
-        
-        Args:
-            session: The interactive session instance
-        """
-        super().__init__(session)
+    def __init__(self, theme: Theme):
+        super().__init__(theme)
         self.__document: Optional[ResourceResult] = None
-        self.__scroll_offset: int = 0
         self.__document_mode: DocumentMode = DocumentMode.MARKDOWN
+        self.__query: str = ""
+        self.__scroll_offset: int = 0
         self.__cached_content_lines: Optional[list[str]] = None
         self.__cached_mode: Optional[DocumentMode] = None
         self.__cached_query: Optional[str] = None
@@ -105,7 +88,7 @@ class SearchDocumentView(BaseCursesView):
         mode_buttons_width: int = sum(len(mode_name) for mode_name, _ in modes)
 
         mode_start_x: int = bounds.width - mode_buttons_width - 1
-        document_mode_style: int = self.session.get_theme_color_pair(ThemeDefinition.DOCUMENT_MODE)
+        document_mode_style: int = self.theme.color(ThemeDefinition.DOCUMENT_MODE)
         safe_addstr(stdscr, footer_y, 0, self._get_bounded_line(), style)
         safe_addstr(stdscr, footer_y, 1, left_info, style)
         if mode_start_x > len(left_info) + 3:
@@ -117,18 +100,13 @@ class SearchDocumentView(BaseCursesView):
                     safe_addstr(stdscr, footer_y, current_x, mode_name, mode_style)
                 current_x += len(mode_name)
 
-    def handle_input(self, key: int) -> bool:
+    def handle_input(self, key: int) -> Optional[Action]:
         """
-        Handle document navigation input.
-        
-        Args:
-            key: The curses key code from user input
-            
-        Returns:
-            bool: True if the input was handled, False otherwise
+        Scroll, page, jump between highlights, and cycle modes. All keys are consumed
+        locally with no app-level effect; ESC is handled by the owning screen.
         """
         if not self._focused or not self.__document:
-            return False
+            return None
 
         handlers: dict[int, callable] = {
             curses.KEY_UP: self.__scroll_up,
@@ -145,9 +123,8 @@ class SearchDocumentView(BaseCursesView):
         handler = handlers.get(key)
         if handler:
             handler()
-            return True
 
-        return False
+        return None
 
     def render(self, stdscr: curses.window) -> None:
         """
@@ -162,11 +139,8 @@ class SearchDocumentView(BaseCursesView):
             self.__render_no_document(stdscr)
             return
 
-        xb: int = self.bounds.x
         yb: int = self.bounds.y
         y_current: int = yb + 2
-        y_max: int = yb + self.bounds.height
-
         content_height: int = max(0, self.bounds.height - 4)
         content_width: int = self.bounds.width - 4
         content_lines: list[str] = self.__get_content_lines()
@@ -185,14 +159,12 @@ class SearchDocumentView(BaseCursesView):
                 display_line: str = line[:content_width] if len(line) > content_width else line
                 safe_addstr(stdscr, line_y, 2, display_line)
 
-    def update(self, document: ResourceResult) -> None:
+    def update(self, document: ResourceResult, query: str) -> None:
         """
-        Update the document and reset scroll position.
-        
-        Args:
-            document: The resource result document to display
+        Load a document and the query whose terms to highlight, resetting scroll.
         """
         self.__document = document
+        self.__query = query or ""
         self.__scroll_offset = 0
         self.__invalidate_cache()
 
@@ -229,7 +201,7 @@ class SearchDocumentView(BaseCursesView):
         Returns:
             list[str]: The content lines for the current document mode
         """
-        current_query: str = self.session.searchform.query if hasattr(self.session, 'searchform') else ""
+        current_query: str = self.__query
 
         if (self.__cached_content_lines is not None and
             self.__cached_mode == self.__document_mode and
@@ -372,7 +344,7 @@ class SearchDocumentView(BaseCursesView):
 
         highlights: list[HighlightSpan] = HighlightProcessor.find_highlights_in_text(line, self.__search_terms)
         normal_style: int = curses.A_NORMAL
-        highlight_style: int = self.session.get_theme_color_pair(ThemeDefinition.SNIPPET_HIGHLIGHT)
+        highlight_style: int = self.theme.color(ThemeDefinition.SNIPPET_HIGHLIGHT)
         HighlightProcessor.render_text_with_highlights(
             stdscr, line, highlights, x, y, max_width, normal_style, highlight_style
         )
@@ -443,13 +415,9 @@ class SearchDocumentView(BaseCursesView):
 
     def __update_search_terms(self) -> None:
         """
-        Update search terms from current search form query using shared utility.
+        Refresh search terms from the query supplied at update time.
         """
-        if hasattr(self.session, 'searchform') and self.session.searchform:
-            query: str = self.session.searchform.query
-            self.__search_terms = HighlightProcessor.extract_search_terms(query)
-        else:
-            self.__search_terms = []
+        self.__search_terms = HighlightProcessor.extract_search_terms(self.__query)
 
     def __wrap_text_content(self, raw_text: str) -> list[str]:
         """

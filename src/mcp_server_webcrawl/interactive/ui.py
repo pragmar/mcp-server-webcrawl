@@ -1,4 +1,5 @@
 import curses
+import threading
 
 from enum import Enum, auto
 from typing import NamedTuple, Optional, Tuple
@@ -15,6 +16,24 @@ DEFAULT_GROUP_WIDTH = 12
 
 INPUT_BOX_BRACKET_WIDTH = 2
 CURSOR_SCROLL_THRESHOLD = 5
+
+# screen geometry (was split between session.py and views/base.py)
+OUTER_WIDTH_RIGHT_MARGIN = 1
+LAYOUT_CONTENT_START_Y_OFFSET = 1
+LAYOUT_CONTENT_END_Y_OFFSET = 1
+LAYOUT_SPLIT_PANE_MAX_HEIGHT = 10
+
+# debug overlay sizing
+DEBUG_MAX_LINES = 8
+DEBUG_COMPACT_WIDTH_RATIO = 0.4
+DEBUG_MIN_COMPACT_WIDTH = 30
+DEBUG_COMPACT_THRESHOLD = 5
+DEBUG_EXPANDED_MARGIN = 6
+DEBUG_EXPANDED_START_X = 3
+DEBUG_EXPANDED_BOTTOM_MARGIN = 3
+DEBUG_COMPACT_BOTTOM_MARGIN = 2
+DEBUG_MIN_START_Y = 1
+DEBUG_MIN_START_Y_EXPANDED = 2
 
 class DocumentMode(Enum):
     MARKDOWN = auto()
@@ -70,6 +89,9 @@ def safe_addstr(stdscr: curses.window, y: int, x: int, text: str, style: int = c
         stdscr.addstr(y, x, text, style)
     except curses.error:
         pass
+
+def truncate(s: str, space: int) -> str:
+    return s if len(s) <= space else s[:max(0, space - 1)] + "…"
 
 class InputRadio:
     def __init__(self, group, name: str, label: str, index: int, states: list = None):
@@ -144,16 +166,12 @@ class InputRadio:
 
         radio_symbol = self.display_label
         display_text = self.label
-        if max_width and len(display_text) > max_width:
-            display_text = display_text[:max_width - 1] + "…"
+        if max_width:
+            display_text = truncate(display_text, max_width)
 
         line = f"({radio_symbol}) {display_text}"
         style = curses.A_REVERSE if focused else curses.A_NORMAL
-
-        try:
-            safe_addstr(stdscr, y, x, line, style)
-        except curses.error:
-            pass  # screen edge
+        safe_addstr(stdscr, y, x, line, style)
 
     def set_state(self, index: int) -> None:
         """
@@ -455,9 +473,6 @@ class InputText:
         self.max_length: int = max_length
         self.label: str = label
 
-        self._last_display_cache: Optional[tuple] = None
-        self._last_value_hash: int = 0
-
     def backspace(self) -> None:
         """
         Remove the character before the cursor.
@@ -616,18 +631,15 @@ class InputText:
             inner_width: Available width inside the box
         """
 
-        try:
-            if display_cursor_pos < len(display_text) and display_cursor_pos < inner_width:
-                cursor_x = x + 1 + display_cursor_pos
-                # highlight the character under cursor instead of just reversing
-                char_under_cursor = display_text[display_cursor_pos]
-                safe_addstr(stdscr, y, cursor_x, char_under_cursor, curses.A_REVERSE | curses.A_BOLD)
-            elif display_cursor_pos >= 0 and x + 1 + display_cursor_pos < x + 1 + inner_width:
-                # cursor at end - underscore
-                cursor_x = x + 1 + display_cursor_pos
-                safe_addstr(stdscr, y, cursor_x, '_', curses.A_REVERSE | curses.A_BOLD)
-        except curses.error:
-            pass
+        if display_cursor_pos < len(display_text) and display_cursor_pos < inner_width:
+            cursor_x = x + 1 + display_cursor_pos
+            # highlight the character under cursor instead of just reversing
+            char_under_cursor = display_text[display_cursor_pos]
+            safe_addstr(stdscr, y, cursor_x, char_under_cursor, curses.A_REVERSE | curses.A_BOLD)
+        elif display_cursor_pos >= 0 and x + 1 + display_cursor_pos < x + 1 + inner_width:
+            # cursor at end - underscore
+            cursor_x = x + 1 + display_cursor_pos
+            safe_addstr(stdscr, y, cursor_x, '_', curses.A_REVERSE | curses.A_BOLD)
 
 
     def __calculate_display_text_and_cursor(self, inner_width: int) -> tuple[str, int]:
@@ -641,10 +653,6 @@ class InputText:
         Returns:
             tuple: (display_text, display_cursor_position)
         """
-        current_hash = hash((self.value, self.cursor_pos, inner_width))
-        if current_hash == self._last_value_hash and self._last_display_cache:
-            return self._last_display_cache
-
         if len(self.value) <= inner_width:
             # text fits entirely
             return self.value, self.cursor_pos
@@ -666,3 +674,139 @@ class ViewBounds:
         self.y = y
         self.width = width
         self.height = height
+
+class Theme:
+    """
+    Owns curses color-pair initialization and lookup.
+
+    Views depend on this small object instead of reaching back through the session
+    for colors. Lookup falls back to A_NORMAL so a missing pair never crashes addstr.
+    """
+
+    def __init__(self):
+        self.__pairs: dict[str, tuple] = {}
+
+    def init_curses(self) -> None:
+        """
+        Register every ThemeDefinition as a curses color pair. Call once, after
+        curses.start_color().
+        """
+        for theme in ThemeDefinition:
+            self.__pairs[theme.name] = theme.value
+            curses.init_pair(*theme.value)
+
+    def color(self, theme: ThemeDefinition) -> int:
+        """
+        Get the curses attribute for a theme, or A_NORMAL if unregistered.
+        """
+        pair = self.__pairs.get(theme.name)
+        return curses.color_pair(pair[0]) if pair is not None else curses.A_NORMAL
+
+class Layout:
+    """
+    Pure geometry: turns a terminal size into the view bounds the screens draw into.
+
+    This used to live as a handful of __get_*_screen helpers on the session; pulling
+    it out keeps the session focused on coordination rather than arithmetic.
+    """
+
+    def __init__(self, width: int, height: int):
+        self.width = width
+        self.height = height
+
+    def outer(self) -> ViewBounds:
+        """
+        Full terminal, minus the right margin (header/footer chrome row band).
+        """
+        return ViewBounds(x=0, y=0, width=self.width - OUTER_WIDTH_RIGHT_MARGIN, height=self.height)
+
+    def inner(self) -> ViewBounds:
+        """
+        Single content pane below the outer header.
+        """
+        content_start_y = LAYOUT_CONTENT_START_Y_OFFSET
+        content_height = (self.height - LAYOUT_CONTENT_END_Y_OFFSET) - content_start_y
+        return ViewBounds(
+            x=0,
+            y=content_start_y,
+            width=self.width - OUTER_WIDTH_RIGHT_MARGIN,
+            height=content_height,
+        )
+
+    def __split_top_height(self) -> int:
+        content_height = self.height - 2
+        return min(LAYOUT_SPLIT_PANE_MAX_HEIGHT, content_height // 2)
+
+    def split_top(self) -> ViewBounds:
+        """
+        Upper pane of the dual-pane (search form over results) layout.
+        """
+        return ViewBounds(
+            x=0,
+            y=LAYOUT_CONTENT_START_Y_OFFSET,
+            width=self.width - OUTER_WIDTH_RIGHT_MARGIN,
+            height=self.__split_top_height(),
+        )
+
+    def split_bottom(self) -> ViewBounds:
+        """
+        Lower pane of the dual-pane layout.
+        """
+        top_height = self.__split_top_height()
+        return ViewBounds(
+            x=0,
+            y=LAYOUT_CONTENT_START_Y_OFFSET + top_height,
+            width=self.width - OUTER_WIDTH_RIGHT_MARGIN,
+            height=(self.height - 2) - top_height,
+        )
+
+class DebugLog:
+    """
+    Append-only on-screen debug overlay, sized compact for short lines and expanded
+    for long error traces. A single lock guards the buffer (the previous code created
+    a fresh, useless lock per call).
+    """
+
+    def __init__(self):
+        self.__lines: list[str] = []
+        self.__lock = threading.Lock()
+
+    def add(self, msg: str) -> None:
+        with self.__lock:
+            self.__lines.append(msg)
+
+    def clear(self) -> None:
+        with self.__lock:
+            self.__lines.clear()
+
+    def render(self, stdscr: "curses.window", theme: "Theme") -> None:
+        height, width = stdscr.getmaxyx()
+        with self.__lock:
+            debug_lines = self.__lines[-DEBUG_MAX_LINES:]
+
+        if not debug_lines:
+            return
+
+        max_line_length = max(len(line) for line in debug_lines)
+        compact_width = max(int(width * DEBUG_COMPACT_WIDTH_RATIO), DEBUG_MIN_COMPACT_WIDTH)
+        use_expanded = max_line_length > compact_width - DEBUG_COMPACT_THRESHOLD
+
+        if use_expanded:
+            debug_width = width - DEBUG_EXPANDED_MARGIN
+            debug_start_x = DEBUG_EXPANDED_START_X
+            debug_start_y = max(DEBUG_MIN_START_Y_EXPANDED, height - len(debug_lines) - DEBUG_EXPANDED_BOTTOM_MARGIN)
+        else:
+            debug_width = compact_width
+            debug_start_x = width - debug_width - DEBUG_EXPANDED_START_X
+            debug_start_y = height - len(debug_lines) - DEBUG_COMPACT_BOTTOM_MARGIN
+
+        debug_start_y = max(DEBUG_MIN_START_Y, debug_start_y)
+        debug_start_x = max(0, debug_start_x)
+
+        style = theme.color(ThemeDefinition.HEADER_ACTIVE)
+        for i, debug_line in enumerate(debug_lines):
+            y_pos = debug_start_y + i
+            if y_pos >= height - 1:
+                break
+            if y_pos > 0:
+                safe_addstr(stdscr, y_pos, debug_start_x, debug_line[:debug_width], style)

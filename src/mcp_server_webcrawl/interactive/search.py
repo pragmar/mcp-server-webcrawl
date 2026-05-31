@@ -1,254 +1,208 @@
 import hashlib
 import threading
+
 from concurrent.futures import ThreadPoolExecutor, Future
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional, TYPE_CHECKING
+from typing import Callable, Optional
 
-from mcp_server_webcrawl.crawlers.base.crawler import BaseJsonApi
-from mcp_server_webcrawl.interactive.ui import UiFocusable, UiState
+from mcp_server_webcrawl.crawlers.base.crawler import BaseCrawler, BaseJsonApi
 from mcp_server_webcrawl.models.resources import ResourceResult
-
-if TYPE_CHECKING:
-    from mcp_server_webcrawl.interactive.session import InteractiveSession
 
 SEARCH_DEBOUNCE_DELAY_SECONDS = 0.2
 SEARCH_RESULT_LIMIT: int = 10
 
+@dataclass(frozen=True)
+class SearchRequest:
+    """
+    An immutable snapshot of everything needed to run one search.
+
+    The search form builds this; the manager consumes it. Because it is frozen and
+    self-contained, the manager never has to reach back into form/session state, and
+    two requests can be compared for equality to debounce no-op re-searches.
+    """
+    query: str
+    site_ids: tuple[int, ...]
+    filter: str
+    sort: str
+    offset: int
+    limit: int
+
+    def cache_key(self) -> str:
+        """
+        Stable hash of the request, used to skip redundant searches.
+        """
+        raw = f"{self.query}|{list(self.site_ids)}|{self.filter}|{self.offset}|{self.limit}|{self.sort}"
+        return hashlib.md5(raw.encode()).hexdigest()
+
+    def to_query(self) -> str:
+        """
+        Apply the HTML filter to the user's query, producing the engine query string.
+        """
+        if self.filter == "html":
+            return f"(type: html) AND {self.query}" if self.query.strip() else "type: html"
+        return self.query
+
+@dataclass
+class SearchResults:
+    """
+    The outcome of a search: the page of results plus indexer metadata. Carries the
+    offset it was fetched at so the results view can render absolute positions
+    without reaching back into the form.
+    """
+    results: list[ResourceResult] = field(default_factory=list)
+    total: int = 0
+    offset: int = 0
+    index_status: str = ""
+    index_processed: int = -1
+    index_duration: float = -1.0
+
+    @classmethod
+    def empty(cls) -> "SearchResults":
+        return cls()
+
 class SearchManager:
     """
-    Manages search operations including async search and debouncing.
-    Works with session's controlled interface - never touches private state directly.
+    Runs searches against a single crawler, with debouncing and a background worker.
+
+    Collaborators are narrow and explicit: a crawler to query and an on_results
+    callback to deliver finished pages. It knows nothing about the session, the form,
+    or UI state. Results are buffered and handed back on the main thread via
+    check_pending so curses stays single-threaded.
     """
 
-    def __init__(self, session: 'InteractiveSession'):
-        self.__session: 'InteractiveSession' = session
-        self.__search_last_state_hash: str = ""
-        self.__search_timer: Optional[threading.Timer] = None
+    def __init__(self, crawler: BaseCrawler, on_results: Callable[[SearchResults], None]):
+        self.__crawler: BaseCrawler = crawler
+        self.__on_results: Callable[[SearchResults], None] = on_results
+        self.__last_key: str = ""
+        self.__timer: Optional[threading.Timer] = None
         self.__executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="SearchManager")
-        self.__search_lock: threading.RLock = threading.RLock()
-        self.__search_in_progress: bool = False
-        self.__active_search_future: Optional[Future] = None
-        self.__pending_results: Optional[list[ResourceResult]] = None
-        self.__pending_indexer_status: str = ""
-        self.__pending_indexer_processed: int = 0
-        self.__pending_indexer_duration: float = 0
-        self.__pending_total: int = 0
+        self.__lock: threading.RLock = threading.RLock()
+        self.__in_progress: bool = False
+        self.__future: Optional[Future] = None
+        self.__pending: Optional[SearchResults] = None
 
-    def autosearch(self, immediate: bool = False) -> None:
+    def search(self, request: SearchRequest, immediate: bool = False) -> None:
         """
-        Trigger search with optional immediate execution.
-        
-        Args:
-            immediate: If True, execute search synchronously without debouncing.
-                    If False, use debounced async execution (default).
+        Run a search. Immediate searches (ENTER) run synchronously; otherwise the
+        search is debounced and run on a worker thread. Redundant debounced searches
+        (same request as last time) are skipped.
         """
-        current_state_hash: str = self.__get_input_hash()
-
-        if not immediate and current_state_hash == self.__search_last_state_hash:
+        key = request.cache_key()
+        if not immediate and key == self.__last_key:
             return
 
-        self.__search_last_state_hash = current_state_hash
+        self.__last_key = key
         self.cancel_pending()
 
         if immediate:
-            self.__execute_search_immediate()
+            self.__run(request)
         else:
-            self.__search_timer = threading.Timer(SEARCH_DEBOUNCE_DELAY_SECONDS, self.__execute_debounced_search)
-            self.__search_timer.start()
+            self.__timer = threading.Timer(SEARCH_DEBOUNCE_DELAY_SECONDS, self.__run_debounced, args=(request, key))
+            self.__timer.start()
 
     def cancel_pending(self) -> None:
         """
-        Cancel any pending search timer.
+        Cancel any pending debounce timer and in-flight future.
         """
-        if self.__search_timer is not None:
-            self.__search_timer.cancel()
-            self.__search_timer = None
-
-        with self.__search_lock:
-            if self.__active_search_future is not None:
-                self.__active_search_future.cancel()
-                self.__active_search_future = None
+        if self.__timer is not None:
+            self.__timer.cancel()
+            self.__timer = None
+        with self.__lock:
+            if self.__future is not None:
+                self.__future.cancel()
+                self.__future = None
 
     def check_pending(self) -> None:
         """
-        Check if there are pending search results and update the UI.
+        Deliver any finished results to on_results. Call from the main loop.
         """
-        with self.__search_lock:
-            if self.__pending_results is not None:
-                self.__session.results.update(self.__pending_results, self.__pending_total, self.__pending_indexer_status,
-                        self.__pending_indexer_processed, self.__pending_indexer_duration)
-                self.__pending_results = None
-                self.__pending_total = 0
-                self.__pending_indexer_processed = 0
-                self.__pending_indexer_duration = 0
+        with self.__lock:
+            pending = self.__pending
+            self.__pending = None
+        if pending is not None:
+            self.__on_results(pending)
 
     def cleanup(self) -> None:
         """
-        Clean up any pending operations.
+        Cancel work and shut down the worker pool.
         """
         self.cancel_pending()
         self.__executor.shutdown(wait=True)
 
-    def has_pending(self) -> bool:
-        """
-        Check if there's a pending debounced search.
-        """
-        return self.__search_timer is not None
-
     def is_searching(self) -> bool:
         """
-        Check if a search is currently in progress or on a timer.
+        True while a search is debouncing or running.
         """
-        with self.__search_lock:
-            return self.__search_in_progress or self.__search_timer is not None
+        with self.__lock:
+            return self.__in_progress or self.__timer is not None
 
-    def __background_search(self) -> None:
-        """
-        Execute search in background thread and store results.
-        """
-        with self.__search_lock:
-            self.__search_in_progress = True
-
-        self.__session.searchform.set_search_attempted()
-        results, total_results, index_status, index_processed_count, index_duration_value = self.__execute_search_query()
-        self.__set_pending_results(results, total_results, index_status, index_processed_count, index_duration_value, False)
-
-    def __build_search_query(self, base_query: str) -> str:
-        """
-        Build the final search query with filter applied (if present).        
-        """
-        if self.__session.searchform.filter == "html":
-            if base_query.strip():
-                return f"(type: html) AND {base_query}"
-            else:
-                return "type: html"
-        else:
-            return base_query
-
-    def __execute_debounced_search(self) -> None:
-        """
-        Execute search after debounce delay in separate thread.
-        """
-        current_state_hash: str = self.__get_input_hash()
-        if current_state_hash != self.__search_last_state_hash:
+    def __run_debounced(self, request: SearchRequest, key: str) -> None:
+        if key != self.__last_key:
             return
+        self.__timer = None
+        with self.__lock:
+            self.__future = self.__executor.submit(self.__run, request)
 
-        # show split view on results
-        if self.__session.ui_focused == UiFocusable.SEARCH_RESULTS:
-            self.__session.set_ui_state(UiState.SEARCH_RESULTS, UiFocusable.SEARCH_RESULTS)
-        else:
-            self.__session.set_ui_state(UiState.SEARCH_RESULTS, UiFocusable.SEARCH_FORM)
+    def __run(self, request: SearchRequest) -> None:
+        with self.__lock:
+            self.__in_progress = True
+        results = self.__execute(request)
+        with self.__lock:
+            self.__pending = results
+            self.__in_progress = False
+            self.__future = None
 
-        self.__search_timer = None
-        with self.__search_lock:
-            self.__active_search_future = self.__executor.submit(self.__background_search)
-
-    def __execute_search_immediate(self) -> None:
+    def __execute(self, request: SearchRequest) -> SearchResults:
         """
-        Execute search immediately on main thread (for ENTER key).
+        Perform the API call and normalize the response into SearchResults.
         """
-        self.__session.searchform.set_search_attempted()
-
-        self.__set_pending_results(None, 0, "", -1, -1, False)
-        self.__session.results.clear()
-        results, total_results, index_status, index_processed_count, index_duration_value = self.__execute_search_query()
-        self.__set_pending_results(results, total_results, index_status, index_processed_count, index_duration_value, False)
-
-    def __execute_search_query(self) -> tuple[list[ResourceResult], int, str, int, float]:
-        """
-        Centralized search execution logic shared by both sync and async paths.
-        
-        Returns:
-            tuple: (results, total_results, index_status, index_processed_count, index_duration_value)
-        """
-        api: BaseJsonApi | None = self.__get_results(offset=self.__session.searchform.offset)
+        try:
+            api: Optional[BaseJsonApi] = self.__crawler.get_resources_api(
+                sites=list(request.site_ids) if request.site_ids else None,
+                query=request.to_query(),
+                fields=["size", "status"],
+                offset=request.offset,
+                limit=SEARCH_RESULT_LIMIT,
+                extras=["snippets"],
+                sort=request.sort,
+            )
+        except Exception:
+            return SearchResults.empty()
 
         if api is None:
-            return [], 0, 0, 0
+            return SearchResults.empty()
 
-        results: list[ResourceResult] = api.get_results()
-        total_results: int = api.total
-
-        index_status: str = ""
-        index_processed_count: int = -1
-        index_duration_value: float = -1
-
-        if api.meta_index is not None:
-            if "status" in api.meta_index:
-                index_status = api.meta_index["status"]
-            if "processed" in api.meta_index:
-                index_processed_count = api.meta_index["processed"]
-
-            if "duration" in api.meta_index:
-                index_duration_string: str = api.meta_index["duration"] or ""
-                if index_duration_string:
-                    try:
-                        dt: datetime = datetime.strptime(index_duration_string, "%H:%M:%S.%f")
-                        index_duration_value = dt.hour * 3600 + dt.minute * 60 + dt.second + dt.microsecond / 1000000
-                    except ValueError:
-                        index_duration_value = 0
-
-        return results, total_results, index_status, index_processed_count, index_duration_value
-
-    def __get_input_hash(self) -> str:
-        """
-        Generate a hash representing the complete current search state.
-        """
-        query: str = self.__session.searchform.query.strip()
-        selected_sites = self.__session.searchform.get_selected_sites()
-        selected_sites_ids: list[int] = [s.id for s in selected_sites]
-        filter: str = str(self.__session.searchform.filter)
-        sort: str = str(self.__session.searchform.sort)
-        offset: int = self.__session.searchform.offset
-        limit: int = self.__session.searchform.limit
-        search_state: str = f"{query}|{selected_sites_ids}|{filter}|{offset}|{limit}|{sort}"
-        return hashlib.md5(search_state.encode()).hexdigest()
-
-    def __get_results(self, offset: int = 0) -> BaseJsonApi | None:
-        """
-        Execute search with given offset and return API response object.
-        Centralizes the API call logic used by both sync and async search paths.
-        
-        Args:
-            offset: Starting position for search results pagination
-            
-        Returns:
-            BaseJsonApi: API response object containing search results and metadata
-        """
-        selected_site_ids: list[int] = self.__get_selected_site_ids()
-
-        query: str = self.__build_search_query(self.__session.searchform.query)
-        sort: str = self.__session.searchform.sort
-        query_api: BaseJsonApi = self.__session.crawler.get_resources_api(
-            sites=selected_site_ids if selected_site_ids else None,
-            query=query,
-            fields=["size", "status"],
-            offset=offset,
-            limit=SEARCH_RESULT_LIMIT,
-            extras=["snippets"],
-            sort=sort
+        return SearchResults(
+            results=api.get_results(),
+            total=api.total,
+            offset=request.offset,
+            index_status=self.__index_status(api),
+            index_processed=self.__index_processed(api),
+            index_duration=self.__index_duration(api),
         )
 
-        return query_api
+    @staticmethod
+    def __index_status(api: BaseJsonApi) -> str:
+        if api.meta_index is not None and "status" in api.meta_index:
+            return api.meta_index["status"]
+        return ""
 
-    def __get_selected_site_ids(self) -> list[int]:
-        """
-        Get list of selected site IDs using property access.
-        """
-        selected_sites = self.__session.searchform.get_selected_sites()
-        return [site.id for site in selected_sites]
+    @staticmethod
+    def __index_processed(api: BaseJsonApi) -> int:
+        if api.meta_index is not None and "processed" in api.meta_index:
+            return api.meta_index["processed"]
+        return -1
 
-    def __set_pending_results(self, results, total_results, index_status, index_processed_count, index_duration_value, search_in_progress) -> None:
+    @staticmethod
+    def __index_duration(api: BaseJsonApi) -> float:
+        if api.meta_index is None or "duration" not in api.meta_index:
+            return -1.0
+        raw = api.meta_index["duration"] or ""
+        if not raw:
+            return -1.0
         try:
-            with self.__search_lock:
-                self.__pending_results = results
-                self.__pending_total = total_results
-                self.__pending_indexer_status = index_status
-                self.__pending_indexer_processed = index_processed_count
-                self.__pending_indexer_duration = index_duration_value
-                self.__search_in_progress = search_in_progress
-
-        except Exception as ex:
-            with self.__search_lock:
-                self.__session.results.clear()
-                self.__search_in_progress = False
+            dt = datetime.strptime(raw, "%H:%M:%S.%f")
+            return dt.hour * 3600 + dt.minute * 60 + dt.second + dt.microsecond / 1000000
+        except ValueError:
+            return 0.0
