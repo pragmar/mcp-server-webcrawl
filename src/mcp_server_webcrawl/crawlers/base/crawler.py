@@ -12,14 +12,14 @@ from mcp.server.models import InitializationOptions
 from mcp.types import EmbeddedResource, ImageContent, TextContent, Tool
 
 from mcp_server_webcrawl.crawlers.base.api import BaseJsonApi
-from mcp_server_webcrawl.crawlers.base.adapter import IndexState
+from mcp_server_webcrawl.crawlers.base.adapter import IndexState, IndexStatus
 from mcp_server_webcrawl.models.base import METADATA_VALUE_TYPE
 from mcp_server_webcrawl.models.sites import SITES_TOOL_NAME
 from mcp_server_webcrawl.models.resources import (
     ResourceResult,
     ResourceResultType,
     RESOURCES_DEFAULT_FIELD_MAPPING,
-    RESOURCE_EXTRAS_ALLOWED,
+    RESOURCES_EXTRAS_ALLOWED,
     RESOURCES_TOOL_NAME,
 )
 from mcp_server_webcrawl.extras.thumbnails import ThumbnailManager
@@ -213,15 +213,21 @@ class BaseCrawler:
         if add_headers and "headers" not in fields:
             fields_extras_override.append("headers")
 
-        results, total, index_state = self._adapter_get_resources(
-            self._datasrc,
-            sites=sites,
-            query=query,
-            fields=fields_extras_override,
-            sort=sort,
-            limit=limit,
-            offset=offset,
-        )
+        try:
+            results, total, index_state = self._adapter_get_resources(
+                self._datasrc,
+                sites=sites,
+                query=query,
+                fields=fields_extras_override,
+                sort=sort,
+                limit=limit,
+                offset=offset,
+            )
+        except (ValueError, sqlite3.Error) as ex:
+            # unparseable query, or one fts5 rejects. report it, silence reads as no matches
+            api_result = no_results()
+            api_result.append_error(f"query failed ({ex})")
+            return api_result
 
         if "markdown" in extras:
             result: ResourceResult
@@ -256,9 +262,13 @@ class BaseCrawler:
                     if hasattr(result, field):
                         setattr(result, field, None)
 
-        # note: thumbnails extra a special case, handled in mcp_call_tool
+        # note: thumbnails extra a special case, handled in call_tool
         api_result = BaseJsonApi("GetResources", resources_kwargs, index_state=index_state)
         api_result.set_results(results, total, offset, limit)
+        if index_state is not None and index_state.status == IndexStatus.INDEXING:
+            # another call is building this index, no results is not no matches
+            api_result.append_error(f"index is building ({index_state.processed} resources "
+                    "processed so far), results unavailable until complete, retry shortly")
         return api_result
 
     async def mcp_list_tools(self) -> list[Tool]:
@@ -277,8 +287,27 @@ class BaseCrawler:
     async def mcp_call_tool(self, name: str, arguments: dict[str, Any] | None
         ) -> list[TextContent | ImageContent | EmbeddedResource]:
         """
-        Handle tool execution requests. You can override this or super(), then tweak.
-        Basically, it is a passthrough.
+        Handle tool execution requests, off the event loop. The work is blocking
+        (indexing can run minutes, sqlite, thumbnail fetches), on a worker thread the
+        server keeps answering other requests, pings, and cancellation meanwhile.
+
+        A cancelled call returns immediately, its thread is abandoned to run its course,
+        so an index build still completes and caches for the next call.
+
+        Args:
+            name: name of the tool to call
+            arguments: arguments to pass to the tool
+
+        Returns:
+            List of content objects resulting from the tool execution
+        """
+        return await anyio.to_thread.run_sync(self.call_tool, name, arguments, abandon_on_cancel=True)
+
+    def call_tool(self, name: str, arguments: dict[str, Any] | None
+        ) -> list[TextContent | ImageContent | EmbeddedResource]:
+        """
+        Handle tool execution requests (blocking). You can override this or super(),
+        then tweak. Basically, it is a passthrough.
 
         Args:
             name: name of the tool to call
@@ -315,10 +344,10 @@ class BaseCrawler:
                 extrasXpath: list[str] = [] if not arguments or "extrasXpath" not in arguments else arguments["extrasXpath"]
 
                 extras_set: set[str] = set(extras)
-                extras_removed: set[str] = extras_set - RESOURCE_EXTRAS_ALLOWED
+                extras_removed: set[str] = extras_set - RESOURCES_EXTRAS_ALLOWED
                 if extras_removed:
                     # only allow known extras
-                    extras = list(RESOURCE_EXTRAS_ALLOWED.intersection(extras))
+                    extras = list(RESOURCES_EXTRAS_ALLOWED.intersection(extras))
 
                 # regular args pass through to the result
                 query: str = "" if not arguments or "query" not in arguments else arguments["query"]

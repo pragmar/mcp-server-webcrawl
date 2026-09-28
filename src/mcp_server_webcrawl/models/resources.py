@@ -6,7 +6,7 @@ from mcp_server_webcrawl.models.base import BaseModel, METADATA_VALUE_TYPE
 from mcp_server_webcrawl.utils import to_isoformat_zulu
 
 RESOURCES_TOOL_NAME: Final[str] = "webcrawl_search"
-RESOURCE_EXTRAS_ALLOWED: Final[set[str]] = {"markdown", "snippets", "regex", "thumbnails", "xpath"}
+RESOURCES_EXTRAS_ALLOWED: Final[set[str]] = {"markdown", "snippets", "regex", "thumbnails", "xpath"}
 RESOURCES_LIMIT_DEFAULT: Final[int] = 20
 RESOURCES_LIMIT_MAX: Final[int] = 100
 
@@ -181,11 +181,11 @@ class ResourceResult(BaseModel):
         return {k: v for k, v in result.items() if v is not None and not (k == "metadata" and v == {})}
 
     def set_extra(self, extra_name: str, extra_value: str | None | list[str] | list[dict[str, str | int | float]]) -> None:
-        assert extra_name in RESOURCE_EXTRAS_ALLOWED, f"Unexpected extra requested. {extra_name}"
+        assert extra_name in RESOURCES_EXTRAS_ALLOWED, f"Unexpected extra requested. {extra_name}"
         self.__extras[extra_name] = extra_value
 
     def get_extra(self, extra_name: str) -> str | None | list[str] | list[dict[str, str | int | float]]:
-        assert extra_name in RESOURCE_EXTRAS_ALLOWED, f"Unexpected extra requested. {extra_name}"
+        assert extra_name in RESOURCES_EXTRAS_ALLOWED, f"Unexpected extra requested. {extra_name}"
         if extra_name in self.__extras:
             return self.__extras[extra_name]
         else:

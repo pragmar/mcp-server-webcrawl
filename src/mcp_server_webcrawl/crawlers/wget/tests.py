@@ -56,6 +56,12 @@ class WgetTests(BaseCrawlerTests):
         crawler = WgetCrawler(self._datasrc)
         self.run_sites_resources_tests(crawler, PRAGMAR_SITE_ID, EXAMPLE_SITE_ID)
 
+    def test_wget_images(self):
+        """
+        Test binary files (images) are indexed, as records without content.
+        """
+        crawler = WgetCrawler(self._datasrc)
+        self.run_pragmar_image_tests(crawler, PRAGMAR_SITE_ID)
 
     def test_wget_sorts(self):
         """

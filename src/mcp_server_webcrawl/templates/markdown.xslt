@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-
+	<!-- (c) 2024-26, Ben Caulfield (pragmar.com)
+	origninal source: https://github.com/interrobot/interrobot-plugin/ (src/ts/lib/markdown/markdown.ts)
+    Subject to the terms of the Mozilla Public License 2.0. If a copy of the MPL was not distributed 
+	with this file, you can obtain one at https://mozilla.org/MPL/2.0/. -->
     <xsl:output method="text"/>
 
     <xsl:template match="/">

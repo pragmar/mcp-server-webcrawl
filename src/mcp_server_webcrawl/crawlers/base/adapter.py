@@ -5,6 +5,7 @@ import re
 import sqlite3
 import traceback
 
+from collections import deque
 from contextlib import closing
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
@@ -23,6 +24,7 @@ from mcp_server_webcrawl.models.resources import (
     RESOURCES_ENUMERATED_TYPE_MAPPING,
     RESOURCES_LIMIT_MAX,
 )
+from mcp_server_webcrawl.models.sites import SiteResult
 
 from mcp_server_webcrawl.utils import to_isoformat_zulu, from_isoformat_zulu
 from mcp_server_webcrawl.utils.search import SearchQueryParser, SearchSubquery
@@ -105,6 +107,9 @@ INDEXED_IGNORE_DIRECTORIES: Final[list[str]] = ["http-client-cache", "result-sto
 
 # maximum indexes held in cache, an index is a unique list[site-ids] argument
 INDEXED_MANAGER_CACHE_MAX: Final[int] = 20
+
+# SitesStat bookkeeping (dev troubleshooting) is one entry per search, FIFO beyond this
+INDEXED_MANAGER_STATS_MAX: Final[int] = 10000
 
 # 2MB max HTTP content, anything larger passed over by fulltext indexer
 INDEXED_MAX_FILE_SIZE: Final[int] = 2000000
@@ -271,6 +276,17 @@ class SitesGroup:
         self.paths: list[Path] = site_paths
         self.cache_key = frozenset(map(str, site_ids))
 
+    @classmethod
+    def from_sites(cls, datasrc: Path, sites_results: list[SiteResult]) -> "SitesGroup":
+        """
+        Build a SitesGroup from resolved SiteResult objects. Ids come from the results,
+        not the caller's request, keeping each id paired with its path (sorted, validated).
+        """
+        assert sites_results, "At least one site is required to search"
+        site_paths: list[Path] = [site.path for site in sites_results]
+        site_ids: list[int] = [site.id for site in sites_results]
+        return cls(datasrc, site_ids, site_paths)
+
     def __str__(self) -> str:
         return f"[SitesGroup {self.cache_key}]"
 
@@ -298,8 +314,10 @@ class BaseManager:
     """
 
     def __init__(self) -> None:
-        """Initialize the manager with statistics."""
-        self._stats: list[SitesStat] = []
+        """
+        Initialize stats with generous limit, but a limit nonetheless
+        """
+        self._stats: deque[SitesStat] = deque(maxlen=INDEXED_MANAGER_STATS_MAX)
 
     @staticmethod
     def string_to_id(value: str) -> int:
@@ -322,6 +340,22 @@ class BaseManager:
         """
         hash_obj = hashlib.sha1(value.encode())
         return int(hash_obj.hexdigest()[:12], 16)
+
+    @staticmethod
+    def get_resource_id(site_id: int, url: str) -> int:
+        """
+        Resource ID for a URL within a site. The site is part of the hash, two
+        crawls of the same website will share URLs, indexed together in multi-site 
+        searches.
+
+        Args:
+            site_id: ID of the site the resource belongs to
+            url: resource URL
+
+        Returns:
+            Integer ID unique to the (site, url) pair
+        """
+        return BaseManager.string_to_id(f"{site_id}:{url}")
 
     @staticmethod
     def get_basic_headers(file_size: int, resource_type: ResourceResultType, path: Path) -> str:
@@ -476,7 +510,7 @@ class BaseManager:
         return decruftified
 
     def get_stats(self) -> list[SitesStat]:
-        return self._stats.copy()
+        return list(self._stats)
 
 
     def get_resources_for_sites_group(
@@ -533,21 +567,17 @@ class BaseManager:
         connection, connection_index_state = self.get_connection(sites_group)
 
         if connection is None:
-            # database is currently being built
+            # database is currently being built, the state says so (indexing, processed)
             logger.info(f"Database for sites {sites} is currently being built, try again later")
-            return null_result
+            return [], 0, connection_index_state
 
         parser: SearchQueryParser = SearchQueryParser()
         parsed_query: list[SearchSubquery] = []
 
+        # a query that fails to parse raises (ValueError), there is no safe fallback,
+        # an unfiltered search presents the whole site as matching
         if query.strip():
-            try:
-                parsed_query = parser.parse(query.strip())
-            except Exception as ex:
-                logger.error(f"Error parsing query: {ex}")
-                # fall back to simple text search
-
-        parsed_query = parsed_query or []
+            parsed_query = parser.parse(query.strip())
 
         # if status not explicitly in query, add status >=100
         status_applied: bool = False
@@ -555,10 +585,6 @@ class BaseManager:
             if squery.field == "status":
                 status_applied = True
                 break
-        if not status_applied:
-            # add default status constraint ANDed at end
-            http_status_received = SearchSubquery("status", 100, "term", [], "AND", comparator=">=")
-            parsed_query.append(http_status_received)
 
         # determine fields to be retrieved
         selected_fields: set[str] = set(RESOURCES_FIELDS_BASE)
@@ -591,6 +617,12 @@ class BaseManager:
                     where_clauses.append(f"({fts_where})")
                     for param_name, param_value in fts_params.items():
                         params[param_name] = param_value
+
+        # default status constraint, its own clause ANDed against the whole query. appended
+        # to the parsed query instead, it inherits whatever operator the query ends on
+        if not status_applied:
+            where_clauses.append(f"{RESOURCES_DEFAULT_FIELD_MAPPING['status']} >= :status_default")
+            params["status_default"] = 100
 
         where_clause: str = f" WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
@@ -664,8 +696,9 @@ class BaseManager:
                     total_count = count_row[0] if count_row else 0
 
         except sqlite3.Error as ex:
+            # raise, an empty result reads as no matches
             logger.error(f"SQLite error in structured query: {ex}\n{statement}\n{traceback.format_exc()}")
-            return null_result
+            raise
 
         return results, total_count, connection_index_state
 

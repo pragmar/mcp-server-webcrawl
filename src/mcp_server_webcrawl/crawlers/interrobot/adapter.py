@@ -217,9 +217,7 @@ def get_resources(
         Tuple of (list of ResourceResult objects, total count)
     """
     sites_results: list[SiteResult] = get_sites(datasrc=datasrc, ids=sites)
-    assert sites_results, "At least one site is required to search"
-    site_paths = [site.path for site in sites_results]
-    sites_group = SitesGroup(datasrc, sites, site_paths)
+    sites_group: SitesGroup = SitesGroup.from_sites(datasrc, sites_results)
 
     # InterroBot uses ints in place of strings
     swap_values = {

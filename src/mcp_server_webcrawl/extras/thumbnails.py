@@ -18,8 +18,11 @@ from mcp_server_webcrawl.settings import DATA_DIRECTORY
 from mcp_server_webcrawl.utils.logger import get_logger
 
 HTTP_THREADS: int = 8
-ALLOWED_THUMBNAIL_TYPES = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
-MAX_THUMBNAIL_BYTES = 2 * 1024 * 1024  # 2MB cap
+
+# total wait for a thumbnails request, what finishes in time is returned
+THUMBNAIL_TIMEOUT_SECONDS: float = 5.0
+THUMBNAIL_ALLOWED_TYPES = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
+THUMBNAIL_MAX_BYTES = 2 * 1024 * 1024  # 2MB cap
 
 logger = get_logger()
 
@@ -70,12 +73,13 @@ class ThumbnailManager:
 
     def __is_allowed_type(self, path: str) -> bool:
         ext = self.__get_extension(path)
-        return ext in ALLOWED_THUMBNAIL_TYPES if ext else False
+        return ext in THUMBNAIL_ALLOWED_TYPES if ext else False
 
     def __clean_thumbs_directory(self):
         try:
-            md5_pattern: re.Pattern = re.compile(r"^[0-9a-f]{32}$")
-            cutoff_time: timedelta = datetime.now() - timedelta(hours=4)
+            # match what __get_temp_file writes, {md5}.webp, and nothing else
+            md5_pattern: re.Pattern = re.compile(r"^[0-9a-f]{32}\.webp$")
+            cutoff_time: datetime = datetime.now() - timedelta(hours=4)
             deleted_count: int = 0
             for file_path in self.__temp_directory.glob("*"):
                 if not file_path.is_file():
@@ -96,10 +100,10 @@ class ThumbnailManager:
         """Helper to check if content length is acceptable"""
         if "Content-Length" in headers:
             content_length = int(headers["Content-Length"])
-            if content_length > MAX_THUMBNAIL_BYTES:
+            if content_length > THUMBNAIL_MAX_BYTES:
                 logger.info(
                     f"Skipping large file ({content_length} bytes > "
-                    f"{MAX_THUMBNAIL_BYTES} bytes)"
+                    f"{THUMBNAIL_MAX_BYTES} bytes)"
                 )
                 return False
         return True
@@ -128,9 +132,9 @@ class ThumbnailManager:
 
                 async for chunk in response.content.iter_chunked(chunk_size):
                     total_size += len(chunk)
-                    if total_size > MAX_THUMBNAIL_BYTES:
+                    if total_size > THUMBNAIL_MAX_BYTES:
                         logger.info(
-                            f"Download exceeded size limit of {MAX_THUMBNAIL_BYTES} bytes "
+                            f"Download exceeded size limit of {THUMBNAIL_MAX_BYTES} bytes "
                             f"while streaming"
                         )
                         return None
@@ -190,28 +194,40 @@ class ThumbnailManager:
         else:
             metrics["total_returned"] += 1
 
-    async def __get_blobs_async(self, paths: list[str]) -> dict[str, str | None]:
+    async def __get_blobs_async(self, paths: list[str], timeout_seconds: float) -> dict[str, str | None]:
+        """
+        Fetch thumbnails, HTTP_THREADS at a time, until done or the deadline. Whatever
+        finished by the deadline is returned, the rest are cancelled (None).
+        """
         results = {path: None for path in paths}
         metrics = {
             "total_requested": len(paths),
             "total_returned": 0,
             "total_errors": 0,
-            "total_cached": 0
+            "total_cached": 0,
+            "total_timeouts": 0,
         }
 
+        semaphore: asyncio.Semaphore = asyncio.Semaphore(HTTP_THREADS)
+
+        async def process_bounded(session: aiohttp.ClientSession, path: str) -> None:
+            async with semaphore:
+                await self.__process_path(session, path, results, metrics)
+
         async with aiohttp.ClientSession() as session:
-            # Process tasks in batches of HTTP_THREADS
-            for i in range(0, len(paths), HTTP_THREADS):
-                batch_paths = paths[i:i + HTTP_THREADS]
-                batch_tasks = [
-                    self.__process_path(session, path, results, metrics)
-                    for path in batch_paths
-                ]
-                await asyncio.gather(*batch_tasks)
+            tasks: list[asyncio.Task] = [asyncio.create_task(process_bounded(session, path)) for path in paths]
+            if tasks:
+                _, pending = await asyncio.wait(tasks, timeout=timeout_seconds)
+                for task in pending:
+                    task.cancel()
+                # let cancellations complete before session closes
+                await asyncio.gather(*pending, return_exceptions=True)
+                metrics["total_timeouts"] = len(pending)
 
         logger.info(
             f"Found {metrics['total_requested']}, fetched {metrics['total_returned']} "
-            f"({metrics['total_errors']} errors, {metrics['total_cached']} cached)"
+            f"({metrics['total_errors']} errors, {metrics['total_cached']} cached, "
+            f"{metrics['total_timeouts']} past the {timeout_seconds}s deadline)"
         )
 
         return results
@@ -260,18 +276,22 @@ class ThumbnailManager:
         """
         assert paths is not None, "paths must be a list[str]"
 
+        # own loop on its own thread, callers may or may not be inside a running loop
         def run_in_thread():
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
-                return loop.run_until_complete(self.__get_blobs_async(paths))
+                return loop.run_until_complete(self.__get_blobs_async(paths, THUMBNAIL_TIMEOUT_SECONDS))
             finally:
                 loop.close()
 
         try:
+            # no timeout here, the timeout is enforced inside, where partial results
+            # survive it. (a timeout here waited out the work on executor exit anyway,
+            # then discarded everything)
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 future = executor.submit(run_in_thread)
-                results = future.result(timeout=5)
+                results = future.result()
 
             # start cleanup in a background thread
             cleanup_thread = threading.Thread(target=self.__clean_thumbs_directory)

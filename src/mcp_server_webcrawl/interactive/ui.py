@@ -164,13 +164,13 @@ class InputRadio:
         Render a single radio option.
         """
 
-        radio_symbol = self.display_label
-        display_text = self.label
+        radio_symbol: str = self.display_label
+        display_text: str = self.label
         if max_width:
             display_text = truncate(display_text, max_width)
 
-        line = f"({radio_symbol}) {display_text}"
-        style = curses.A_REVERSE if focused else curses.A_NORMAL
+        line: str = f"({radio_symbol}) {display_text}"
+        style: int = curses.A_REVERSE if focused else curses.A_NORMAL
         safe_addstr(stdscr, y, x, line, style)
 
     def set_state(self, index: int) -> None:
@@ -203,7 +203,7 @@ class InputRadioGroup:
             name: The form radio group name ("filter", "sort", "site", or "crawler")
             sites: List of SiteResult objects, required only for "site" group type
         """
-        sites = sites if sites is not None else []
+        sites: list = sites if sites is not None else []
         self.name: str = name
         self.label: str = name
         self.__selected_index: int = 0

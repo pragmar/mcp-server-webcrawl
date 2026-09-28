@@ -42,3 +42,4 @@ soho.nascom.nasa.com/
 *.diff
 *instructions.txt
 README_pypi.md
+/.vs

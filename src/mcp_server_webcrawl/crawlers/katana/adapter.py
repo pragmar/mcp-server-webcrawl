@@ -74,7 +74,8 @@ class KatanaManager(IndexedManager):
                 batch_file_paths: list[Path] = file_paths[i:i+INDEXED_BATCH_SIZE]
                 batch_file_contents = BaseManager.read_files(batch_file_paths)
                 batch_insert_resource_results: list[ResourceResult] = []
-                for file_path, content in batch_file_contents.items():
+                for file_path in batch_file_paths:
+                    content: str | None = batch_file_contents.get(file_path)
                     # avoid readme in repo, katana crawl files should be named 9080ef8...
                     if file_path.name.lower().endswith("readme.txt"):
                         continue
@@ -139,7 +140,7 @@ class KatanaManager(IndexedManager):
             content_type = content_type_match.group(1).strip() if content_type_match else ""
             resource_type = self._determine_resource_type(content_type)
             content_size = len(body)
-            resource_id = BaseManager.string_to_id(url)
+            resource_id = BaseManager.get_resource_id(site_id, url)
 
             return ResourceResult(
                 id=resource_id,
@@ -213,7 +214,5 @@ def get_resources(
         Tuple of (list of ResourceResult objects, total count)
     """
     sites_results: list[SiteResult] = get_sites(datasrc=datasrc, ids=sites)
-    assert sites_results, "At least one site is required to search"
-    site_paths = [site.path for site in sites_results]
-    sites_group = SitesGroup(datasrc, sites, site_paths)
+    sites_group: SitesGroup = SitesGroup.from_sites(datasrc, sites_results)
     return manager.get_resources_for_sites_group(sites_group, query, fields, sort, limit, offset)

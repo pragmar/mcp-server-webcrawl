@@ -25,6 +25,8 @@ class SearchSubquery:
         operator: str | None,
         comparator: str = "=",
         group: int | None = None,
+        groups: tuple[int, ...] | None = None,
+        negated_groups: frozenset[int] | None = None,
     ):
         """
         Initialize a SearchSubquery instance.
@@ -36,6 +38,9 @@ class SearchSubquery:
             modifiers: list of modifiers applied to the query (e.g., 'NOT')
             operator: boolean operator connecting to the next subquery ('AND', 'OR', or None)
             comparator: comparison operator for numerics ('=', '>', '>=', '<', '<=', '!=')
+            group: outermost parentheses group, shorthand for groups=(group,)
+            groups: parentheses groups containing this subquery, outermost first
+            negated_groups: the ids in groups that a prefix NOT applies to, NOT (A OR B)
         """
         self.field: str | None = field
         self.value: str | int = value
@@ -43,7 +48,18 @@ class SearchSubquery:
         self.modifiers: list[str] = modifiers or []
         self.operator: str | None = operator or None
         self.comparator: str = comparator
-        self.group: int | None = group
+        if groups:
+            self.groups: tuple[int, ...] = tuple(groups)
+        else:
+            self.groups: tuple[int, ...] = (group,) if group is not None else ()
+        self.negated_groups: frozenset[int] = frozenset(negated_groups or ())
+
+    @property
+    def group(self) -> int | None:
+        """
+        Outermost parentheses group, None if not in parentheses.
+        """
+        return self.groups[0] if self.groups else None
 
     def get_safe_sql_field(self, field: str) -> str:
         if field in RESOURCES_DEFAULT_FIELD_MAPPING:
@@ -70,6 +86,8 @@ class SearchSubquery:
             "operator": self.operator,
             "comparator": self.comparator,
             "group": self.group,
+            "groups": list(self.groups),
+            "negated_groups": sorted(self.negated_groups),
         }
 
 class SearchLexer:
@@ -140,40 +158,50 @@ class SearchLexer:
         r"NOT\b"
         return token
 
+    # precedence matters, ahead of TERM so !=404 isn't read as a term
+    def t_COMP_OP(self, token: lex.LexToken) -> lex.LexToken:
+        r">=|>|<=|<|!=|="
+        return token
+
+    # terms are anything short of query syntax, unicode included (café, 東京),
+    # punctuation (example.com, c++) is left to fts5 quoting in search.py
     def t_WILDCARD(self, token: lex.LexToken) -> lex.LexToken:
-        r"[a-zA-Z0-9_\.\-\/\+]+\*"
+        r"[^\s()\"*:<>=]+\*"
         token.value = token.value[:-1]
         return token
 
     def t_TERM(self, token: lex.LexToken) -> lex.LexToken:
-        r"[a-zA-Z0-9_\.\-\/\+]+"
+        r"[^\s()\"*:<>=]+"
         # dedicated t_AND, t_OR, t_NOT to handle those
         # this is fts5 workaround, -_ are tokenizer preserves
         if re.match(r"^[\w]+[\-_][\-_\w]+$", token.value, re.UNICODE):
             token.type = "QUOTED_STRING"
         return token
 
-    def t_COMP_OP(self, token: lex.LexToken) -> lex.LexToken:
-        r">=|>|<=|<|!=|="
-        return token
-
     def t_error(self, token: lex.LexToken) -> None:
-        logger.error(f"Illegal character '{token.value[0]}'")
-        token.lexer.skip(1)
+        # skipping the character would quietly search for something else
+        raise ValueError(f"Illegal character '{token.value[0]}' at position {token.lexpos}")
 
 class SearchParser:
     tokens = SearchLexer.tokens
 
+    # the parse tree is flattened into query order, so AND/OR here only shape the list,
+    # search.py rebuilds the tree with standard precedence (NOT > AND > OR). what this
+    # table does decide is NOT's reach, prefix NOT must take one operand, not the rest
+    # of the query (NOT a AND b was NOT (a AND b), and negated b)
     precedence = (
-        ('right', 'NOT'),
         ('left', 'AND'),
         ('left', 'OR'),
+        ('left', 'NOT'),
+        ('right', 'UNOT'),
     )
 
     numeric_fields: list[str] = ["id", "status", "size", "time"]
 
     def __init__(self, lexer):
         self.lexer = lexer
+        # group ids only need to be unique, not global, a counter will do
+        self.group_sequence: int = 0
         self.parser = yacc.yacc(module=self, debug=False)
 
     def p_query(self, production: yacc.YaccProduction) -> None:
@@ -230,7 +258,10 @@ class SearchParser:
             elif isinstance(left, list):
                 if left:
                     left[-1].operator = operator
-                production[0] = left + [self.__create_subquery(right, operator)]
+                # right is the last term, connects to nothing. carrying the
+                # operator here leaves A OR B OR C with a dangling OR on C, which the
+                # adapter reads as C OR <next clause> and returns the whole site
+                production[0] = left + [self.__create_subquery(right, None)]
             elif isinstance(right, list):
                 production[0] = [self.__create_subquery(left, operator)] + right
             else:
@@ -241,13 +272,19 @@ class SearchParser:
 
     def p_expression_not(self, production: yacc.YaccProduction) -> None:
         """
-        expression : NOT expression
+        expression : NOT expression %prec UNOT
         """
         # handle unary NOT (prefix NOT)
         expr = production[2]
         if isinstance(expr, list):
+            # NOT over several terms negates them as one group, NOT (A OR B). putting
+            # NOT on each term instead makes it NOT A OR NOT B, which De Morgan says is
+            # a different query
+            self.group_sequence += 1
+            group_id = self.group_sequence
             for item in expr:
-                item.modifiers.append("NOT")
+                item.groups = (group_id,) + item.groups
+                item.negated_groups = item.negated_groups | {group_id}
             production[0] = expr
         else:
             subquery = self.__create_subquery(expr, None)
@@ -260,14 +297,19 @@ class SearchParser:
         """
         # production[0] = production[2]
         expr = production[2]
-        group_id = id(production)  # Unique ID for this parentheses group
 
-        # Mark all subqueries in this expression with the group
+        # not id(production), ply reuses the production object for every
+        # reduction in a parse, so each group in a query would otherwise share 
+        # an id
+        self.group_sequence += 1
+        group_id = self.group_sequence
+
+        # prepend, the group path runs outermost first (inner groups reduce first)
         if isinstance(expr, list):
             for subquery in expr:
-                subquery.group = group_id
+                subquery.groups = (group_id,) + subquery.groups
         else:
-            expr.group = group_id
+            expr.groups = (group_id,) + expr.groups
 
         production[0] = expr
 
@@ -376,7 +418,8 @@ class SearchParser:
             modifiers=term.modifiers.copy(),
             operator=operator,
             comparator=term.comparator,
-            group=term.group,
+            groups=term.groups,
+            negated_groups=term.negated_groups,
         )
 
     def __process_field_value(
@@ -432,7 +475,9 @@ class SearchParser:
             raise ValueError(f"Comparison operator '{comparator}' can only be used with numeric fields")
 
     def p_error(self, production: yacc.YaccProduction | None) -> None:
+        # raise, don't recover. a recovered parse drops terms, and an empty one
+        # reads as no query at all, which returns the whole site
         if production:
-            logger.info(f"Syntax error at '{production.value}'")
+            raise ValueError(f"Syntax error at '{production.value}' (position {production.lexpos})")
         else:
-            logger.info("Syntax error at EOF")
+            raise ValueError("Syntax error at end of query (unbalanced parentheses or dangling operator?)")

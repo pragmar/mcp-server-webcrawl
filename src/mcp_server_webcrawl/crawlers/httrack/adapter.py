@@ -170,7 +170,7 @@ class HtTrackManager(IndexedManager):
                 file_content = BaseManager.read_file_contents(file_path, resource_type)
 
             return ResourceResult(
-                id=BaseManager.string_to_id(url),
+                id=BaseManager.get_resource_id(site_id, url),
                 site=site_id,
                 created=file_created,
                 modified=file_modified,
@@ -346,7 +346,5 @@ def get_resources(
         Tuple of (list of ResourceResult objects, total count, IndexState)
     """
     sites_results: list[SiteResult] = get_sites(datasrc=datasrc, ids=sites)
-    assert sites_results, "At least one site is required to search"
-    site_paths = [site.path for site in sites_results]
-    sites_group = SitesGroup(datasrc, sites, site_paths)
+    sites_group: SitesGroup = SitesGroup.from_sites(datasrc, sites_results)
     return manager.get_resources_for_sites_group(sites_group, query, fields, sort, limit, offset)

@@ -6,9 +6,9 @@ _tabversion = '3.10'
 
 _lr_method = 'LALR'
 
-_lr_signature = 'rightNOTleftANDleftORAND COLON COMPARATOR COMP_OP FIELD LPAREN NOT OR QUOTED_STRING RPAREN TERM URL_FIELD WILDCARD\n        query : expression\n        \n        expression : expression AND expression\n                    | expression OR expression\n                    | expression NOT expression\n        \n        expression : NOT expression\n        \n        expression : LPAREN expression RPAREN\n        \n        expression : URL_FIELD\n        \n        value : TERM\n              | WILDCARD\n              | QUOTED_STRING\n        \n        expression : value\n        \n        expression : FIELD COLON COMP_OP value\n                | FIELD COLON value\n                | FIELD COMPARATOR value\n        '
+_lr_signature = 'leftANDleftORleftNOTrightUNOTAND COLON COMPARATOR COMP_OP FIELD LPAREN NOT OR QUOTED_STRING RPAREN TERM URL_FIELD WILDCARD\n        query : expression\n        \n        expression : expression AND expression\n                    | expression OR expression\n                    | expression NOT expression\n        \n        expression : NOT expression %prec UNOT\n        \n        expression : LPAREN expression RPAREN\n        \n        expression : URL_FIELD\n        \n        value : TERM\n              | WILDCARD\n              | QUOTED_STRING\n        \n        expression : value\n        \n        expression : FIELD COLON COMP_OP value\n                | FIELD COLON value\n                | FIELD COMPARATOR value\n        '
     
-_lr_action_items = {'NOT':([0,2,3,4,5,6,8,9,10,11,12,13,14,15,18,19,20,21,23,24,25,],[3,13,3,3,-7,-11,-8,-9,-10,3,3,3,13,13,-2,-3,13,-6,-13,-14,-12,]),'LPAREN':([0,3,4,11,12,13,],[4,4,4,4,4,4,]),'URL_FIELD':([0,3,4,11,12,13,],[5,5,5,5,5,5,]),'FIELD':([0,3,4,11,12,13,],[7,7,7,7,7,7,]),'TERM':([0,3,4,11,12,13,16,17,22,],[8,8,8,8,8,8,8,8,8,]),'WILDCARD':([0,3,4,11,12,13,16,17,22,],[9,9,9,9,9,9,9,9,9,]),'QUOTED_STRING':([0,3,4,11,12,13,16,17,22,],[10,10,10,10,10,10,10,10,10,]),'$end':([1,2,5,6,8,9,10,14,18,19,20,21,23,24,25,],[0,-1,-7,-11,-8,-9,-10,-5,-2,-3,-4,-6,-13,-14,-12,]),'AND':([2,5,6,8,9,10,14,15,18,19,20,21,23,24,25,],[11,-7,-11,-8,-9,-10,11,11,-2,-3,11,-6,-13,-14,-12,]),'OR':([2,5,6,8,9,10,14,15,18,19,20,21,23,24,25,],[12,-7,-11,-8,-9,-10,12,12,12,-3,12,-6,-13,-14,-12,]),'RPAREN':([5,6,8,9,10,14,15,18,19,20,21,23,24,25,],[-7,-11,-8,-9,-10,-5,21,-2,-3,-4,-6,-13,-14,-12,]),'COLON':([7,],[16,]),'COMPARATOR':([7,],[17,]),'COMP_OP':([16,],[22,]),}
+_lr_action_items = {'NOT':([0,2,3,4,5,6,8,9,10,11,12,13,14,15,18,19,20,21,23,24,25,],[3,13,3,3,-7,-11,-8,-9,-10,3,3,3,-5,13,13,13,-4,-6,-13,-14,-12,]),'LPAREN':([0,3,4,11,12,13,],[4,4,4,4,4,4,]),'URL_FIELD':([0,3,4,11,12,13,],[5,5,5,5,5,5,]),'FIELD':([0,3,4,11,12,13,],[7,7,7,7,7,7,]),'TERM':([0,3,4,11,12,13,16,17,22,],[8,8,8,8,8,8,8,8,8,]),'WILDCARD':([0,3,4,11,12,13,16,17,22,],[9,9,9,9,9,9,9,9,9,]),'QUOTED_STRING':([0,3,4,11,12,13,16,17,22,],[10,10,10,10,10,10,10,10,10,]),'$end':([1,2,5,6,8,9,10,14,18,19,20,21,23,24,25,],[0,-1,-7,-11,-8,-9,-10,-5,-2,-3,-4,-6,-13,-14,-12,]),'AND':([2,5,6,8,9,10,14,15,18,19,20,21,23,24,25,],[11,-7,-11,-8,-9,-10,-5,11,-2,-3,-4,-6,-13,-14,-12,]),'OR':([2,5,6,8,9,10,14,15,18,19,20,21,23,24,25,],[12,-7,-11,-8,-9,-10,-5,12,12,-3,-4,-6,-13,-14,-12,]),'RPAREN':([5,6,8,9,10,14,15,18,19,20,21,23,24,25,],[-7,-11,-8,-9,-10,-5,21,-2,-3,-4,-6,-13,-14,-12,]),'COLON':([7,],[16,]),'COMPARATOR':([7,],[17,]),'COMP_OP':([16,],[22,]),}
 
 _lr_action = {}
 for _k, _v in _lr_action_items.items():
@@ -27,18 +27,18 @@ for _k, _v in _lr_goto_items.items():
 del _lr_goto_items
 _lr_productions = [
   ("S' -> query","S'",1,None,None,None),
-  ('query -> expression','query',1,'p_query','search.py',317),
-  ('expression -> expression AND expression','expression',3,'p_expression_binary','search.py',403),
-  ('expression -> expression OR expression','expression',3,'p_expression_binary','search.py',404),
-  ('expression -> expression NOT expression','expression',3,'p_expression_binary','search.py',405),
-  ('expression -> NOT expression','expression',2,'p_expression_not','search.py',462),
-  ('expression -> LPAREN expression RPAREN','expression',3,'p_expression_group','search.py',477),
-  ('expression -> URL_FIELD','expression',1,'p_expression_url_field','search.py',483),
-  ('value -> TERM','value',1,'p_value','search.py',503),
-  ('value -> WILDCARD','value',1,'p_value','search.py',504),
-  ('value -> QUOTED_STRING','value',1,'p_value','search.py',505),
-  ('expression -> value','expression',1,'p_expression_term','search.py',519),
-  ('expression -> FIELD COLON COMP_OP value','expression',4,'p_expression_field_search','search.py',532),
-  ('expression -> FIELD COLON value','expression',3,'p_expression_field_search','search.py',533),
-  ('expression -> FIELD COMPARATOR value','expression',3,'p_expression_field_search','search.py',534),
+  ('query -> expression','query',1,'p_query','parser.py',206),
+  ('expression -> expression AND expression','expression',3,'p_expression_binary','parser.py',212),
+  ('expression -> expression OR expression','expression',3,'p_expression_binary','parser.py',213),
+  ('expression -> expression NOT expression','expression',3,'p_expression_binary','parser.py',214),
+  ('expression -> NOT expression','expression',2,'p_expression_not','parser.py',272),
+  ('expression -> LPAREN expression RPAREN','expression',3,'p_expression_group','parser.py',293),
+  ('expression -> URL_FIELD','expression',1,'p_expression_url_field','parser.py',314),
+  ('value -> TERM','value',1,'p_value','parser.py',335),
+  ('value -> WILDCARD','value',1,'p_value','parser.py',336),
+  ('value -> QUOTED_STRING','value',1,'p_value','parser.py',337),
+  ('expression -> value','expression',1,'p_expression_term','parser.py',351),
+  ('expression -> FIELD COLON COMP_OP value','expression',4,'p_expression_field_search','parser.py',365),
+  ('expression -> FIELD COLON value','expression',3,'p_expression_field_search','parser.py',366),
+  ('expression -> FIELD COMPARATOR value','expression',3,'p_expression_field_search','parser.py',367),
 ]

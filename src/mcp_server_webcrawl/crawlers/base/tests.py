@@ -1,14 +1,23 @@
 import sys
 import unittest
 import asyncio
+import json
+import tempfile
+import threading
+import time
+import uuid
 
 from typing import Final
 from datetime import datetime
 from logging import Logger
+from pathlib import Path
+from unittest.mock import patch
 
+from mcp_server_webcrawl.crawlers.base.adapter import SitesGroup, SitesStat, INDEXED_MANAGER_STATS_MAX
 from mcp_server_webcrawl.crawlers.base.crawler import BaseCrawler
+from mcp_server_webcrawl.crawlers.wget.adapter import WgetManager, manager as wget_manager
 from mcp_server_webcrawl.crawlers.wget.crawler import WgetCrawler
-from mcp_server_webcrawl.models.resources import ResourceResultType
+from mcp_server_webcrawl.models.resources import ResourceResultType, RESOURCES_TOOL_NAME
 from mcp_server_webcrawl.crawlers.base.api import BaseJsonApi
 from mcp_server_webcrawl.utils.logger import get_logger
 
@@ -59,6 +68,8 @@ class BaseCrawlerTests(unittest.TestCase):
         self.__run_pragmar_search_tests_field_headers(crawler, site_id)
         self.__run_pragmar_search_tests_field_content(crawler, site_id)
         self.__run_pragmar_search_tests_field_type(crawler, site_id, site_resources)
+        self.__run_pragmar_search_tests_grouping(crawler, site_id, site_resources)
+        self.__run_pragmar_search_tests_negation(crawler, site_id)
         self.__run_pragmar_search_tests_extras(crawler, site_id, site_resources, primary_resources, secondary_resources)
 
 
@@ -73,7 +84,41 @@ class BaseCrawlerTests(unittest.TestCase):
             "All filtered resources should have type 'img'"
         )
 
+    def run_sites_attribution_tests(self, crawler: BaseCrawler, pragmar_site_id: int, example_site_id: int):
+        """
+        Multi-site results carry the right site, whatever order the ids arrive in,
+        and ids that don't exist are dropped rather than paired with another's data.
+        """
+        for site_ids in ([pragmar_site_id, example_site_id], [example_site_id, pragmar_site_id]):
+            multi_results = crawler.get_resources_api(sites=site_ids, sort="?", limit=20).get_results()
+            self.assertTrue(len(multi_results) > 0, f"multi-site search {site_ids} should return results")
+            for result in multi_results:
+                owned = crawler.get_resources_api(sites=[result.site], query=f"id: {result.id}", limit=1)
+                self.assertEqual(owned.total, 1, f"{result.url} labeled site {result.site}, not found there ({site_ids})")
+
+        bogus_results = crawler.get_resources_api(sites=[pragmar_site_id, 987654321], limit=20).get_results()
+        self.assertTrue(len(bogus_results) > 0, "a bogus site id should not sink the valid one")
+        self.assertTrue(all(r.site == pragmar_site_id for r in bogus_results), "a bogus site id must not label results")
+
+    def run_query_error_tests(self, crawler: BaseCrawler, pragmar_site_id: int):
+        """
+        A query that can't run reports an error, rather than returning the whole site
+        (unfiltered) or nothing (no matches) in silence.
+        """
+        for query in ["(privacy OR", "privacy AND", "title: privacy", "privacy \"", "status: >= "]:
+            api = crawler.get_resources_api(sites=[pragmar_site_id], query=query)
+            self.assertEqual(api.total, 0, f"broken query {query!r} should return nothing")
+            self.assertTrue(len(api._errors) > 0, f"broken query {query!r} should report an error")
+
+        # punctuated terms are quoted for fts5, not a syntax error
+        for query in ["pragmar.com", "index.html", "c++", "AT&T", "don't", "café"]:
+            api = crawler.get_resources_api(sites=[pragmar_site_id], query=query)
+            self.assertEqual(api._errors, [], f"term {query!r} should run without error")
+
     def run_sites_resources_tests(self, crawler: BaseCrawler, pragmar_site_id: int, example_site_id: int):
+
+        self.run_sites_attribution_tests(crawler, pragmar_site_id, example_site_id)
+        self.run_query_error_tests(crawler, pragmar_site_id)
 
         resources_json = crawler.get_resources_api()
         self.assertTrue(resources_json.total > 0, "Should have some resources in database")
@@ -862,6 +907,183 @@ class BaseCrawlerTests(unittest.TestCase):
             f"AND constraint should not increase results")
         self.assertTrue(url_or_with_type.total <= html_total.total,
             f"URL filter should not exceed HTML total")
+        # the two asserts above pass on 0, which is what a sqlite error returns
+        self.assertEqual(url_or_with_type.total, html_total.total,
+            f"Every pragmar HTML url contains pragmar.com, (url OR url) should keep all of them")
+
+    def __get_search_ids(self, crawler: BaseCrawler, site_id: int, query: str, **kwargs) -> set[int]:
+        """
+        Complete id set for a query, for set-logic assertions (fixture queries stay under a page).
+        """
+        resources = crawler.get_resources_api(sites=[site_id], query=query, limit=100, **kwargs)
+        self.assertLessEqual(resources.total, 100, f"Set assertions need the complete result, narrow: {query}")
+        return {resource.id for resource in resources._results}
+
+    def __run_pragmar_search_tests_grouping(self, crawler: BaseCrawler, site_id: int, site_resources:BaseJsonApi) -> None:
+        """
+        Parentheses and chained operators, asserted as set logic so they hold on every
+        fixture. Every count here is checked against the sets it is built from, never
+        just against a ceiling, because a query sqlite refuses comes back as 0 results.
+        """
+
+        # chained id ORs, the last term used to carry a dangling OR, which joined the
+        # default status clause as OR status >= 100 and returned the whole site
+        html_page = crawler.get_resources_api(sites=[site_id], query="type: html", sort="+url", limit=4)
+        html_ids: list[int] = [resource.id for resource in html_page._results]
+        self.assertEqual(len(html_ids), 4, "Need 4 HTML resources to chain")
+        for chain_length in (2, 3, 4):
+            chained_query: str = " OR ".join(f"id: {resource_id}" for resource_id in html_ids[:chain_length])
+            chained_ids: set[int] = self.__get_search_ids(crawler, site_id, chained_query)
+            self.assertEqual(chained_ids, set(html_ids[:chain_length]),
+                f"{chain_length} ORed ids should return exactly those ids, not the site")
+
+        id_a, id_b, id_c, id_d = html_ids
+        chained_regex = crawler.get_resources_api(
+            sites=[site_id],
+            query=f"id: {id_a} OR id: {id_b} OR id: {id_c} OR id: {id_d}",
+            extras=["regex"],
+            extrasRegex=["pragmar"],
+            limit=4,
+        )
+        self.assertEqual(chained_regex.total, 4, "Chained id ORs with the regex extra should return exactly 4")
+        self.assertLess(chained_regex.total, site_resources.total, "Chained id ORs should not return all results")
+
+        self.assertEqual(
+            self.__get_search_ids(crawler, site_id, f"id: {id_a} OR (id: {id_b} OR id: {id_c})"),
+            {id_a, id_b, id_c},
+            "A OR (B OR C) over ids should return exactly A, B, C"
+        )
+        self.assertEqual(
+            self.__get_search_ids(crawler, site_id, f"(id: {id_a} OR id: {id_b}) AND (id: {id_b} OR id: {id_c})"),
+            {id_b},
+            "(A OR B) AND (B OR C) over ids should return only B, adjacent groups must not merge"
+        )
+        self.assertEqual(
+            self.__get_search_ids(crawler, site_id, f"(id: {id_a} OR id: {id_b}) NOT id: {id_a}"),
+            {id_b},
+            "(A OR B) NOT A over ids should return only B"
+        )
+
+        # grouped url ORs ANDed with a fulltext group, SQL precedence used to run it as
+        # url OR url OR (url AND MATCH), which sqlite refuses (MATCH under an OR)
+        url_group: str = "url: pragmar.com/appstat* OR url: pragmar.com/mcp-server-webcrawl*"
+        keyword_group: str = f"{self.__PRAGMAR_PRIMARY_KEYWORD} OR {self.__PRAGMAR_SECONDARY_KEYWORD}"
+        url_ids: set[int] = self.__get_search_ids(crawler, site_id, url_group)
+        keyword_ids: set[int] = self.__get_search_ids(crawler, site_id, keyword_group)
+        primary_ids: set[int] = self.__get_search_ids(crawler, site_id, self.__PRAGMAR_PRIMARY_KEYWORD)
+        self.assertGreater(len(url_ids & keyword_ids), 0, "Fixture should have url group and keyword group overlap")
+
+        self.assertEqual(
+            self.__get_search_ids(crawler, site_id, f"({url_group}) AND ({keyword_group})"),
+            url_ids & keyword_ids,
+            "(url OR url) AND (kw OR kw) should be the intersection of its groups"
+        )
+        self.assertEqual(
+            self.__get_search_ids(crawler, site_id, f"({keyword_group}) AND ({url_group})"),
+            url_ids & keyword_ids,
+            "(kw OR kw) AND (url OR url) should match the reverse order"
+        )
+        self.assertEqual(
+            self.__get_search_ids(crawler, site_id, f"({url_group}) AND {self.__PRAGMAR_PRIMARY_KEYWORD}"),
+            url_ids & primary_ids,
+            "(url OR url) AND kw should be the intersection"
+        )
+        self.assertEqual(
+            self.__get_search_ids(crawler, site_id, f"{self.__PRAGMAR_PRIMARY_KEYWORD} AND ({url_group})"),
+            url_ids & primary_ids,
+            "kw AND (url OR url) should be the intersection"
+        )
+
+        html_ids_all: set[int] = self.__get_search_ids(crawler, site_id, "type: html")
+        self.assertEqual(
+            self.__get_search_ids(crawler, site_id, f"type: html AND ({url_group})"),
+            html_ids_all & url_ids,
+            "type: html AND (url OR url) should be the intersection"
+        )
+
+        appstat_url_ids: set[int] = self.__get_search_ids(crawler, site_id, "url: pragmar.com/appstat*")
+        url_not_appstat: set[int] = self.__get_search_ids(crawler, site_id, f"({url_group}) NOT url: pragmar.com/appstat*")
+        self.assertGreater(len(url_not_appstat), 0, "(url OR url) NOT url should leave the other url")
+        self.assertEqual(url_not_appstat, url_ids - appstat_url_ids,
+            "(url OR url) NOT url should be the difference")
+
+        # fulltext groups, compressed into one fts5 querystring where AND also outranks
+        # OR, so adjacent and nested groups each need their own parentheses
+        secondary_ids: set[int] = self.__get_search_ids(crawler, site_id, self.__PRAGMAR_SECONDARY_KEYWORD)
+        appstat_ids: set[int] = self.__get_search_ids(crawler, site_id, "appstat")
+        mcp_ids: set[int] = self.__get_search_ids(crawler, site_id, "mcp")
+        self.assertEqual(
+            self.__get_search_ids(crawler, site_id,
+                f"({self.__PRAGMAR_PRIMARY_KEYWORD} OR {self.__PRAGMAR_SECONDARY_KEYWORD}) AND (appstat OR mcp)"),
+            (primary_ids | secondary_ids) & (appstat_ids | mcp_ids),
+            "(A OR B) AND (C OR D) fulltext should keep both groups"
+        )
+        self.assertEqual(
+            self.__get_search_ids(crawler, site_id,
+                f"({self.__PRAGMAR_PRIMARY_KEYWORD} AND ({self.__PRAGMAR_SECONDARY_KEYWORD} OR appstat))"),
+            primary_ids & (secondary_ids | appstat_ids),
+            "(A AND (B OR C)) fulltext should keep the inner group"
+        )
+        self.assertEqual(
+            self.__get_search_ids(crawler, site_id,
+                f"(({self.__PRAGMAR_SECONDARY_KEYWORD} OR appstat) AND {self.__PRAGMAR_PRIMARY_KEYWORD}) OR mcp"),
+            ((secondary_ids | appstat_ids) & primary_ids) | mcp_ids,
+            "((A OR B) AND C) OR D fulltext should keep both levels"
+        )
+
+    def __run_pragmar_search_tests_negation(self, crawler: BaseCrawler, site_id: int) -> None:
+        """
+        NOT and mixed OR, as set logic against the site's own universe (the empty
+        query, which carries the same default status floor). De Morgan, prefix NOT
+        taking one operand, and fulltext ORed with other fields, all as written with
+        standard precedence (NOT > AND > OR).
+        """
+        primary: str = self.__PRAGMAR_PRIMARY_KEYWORD
+        secondary: str = self.__PRAGMAR_SECONDARY_KEYWORD
+        appstat_url: str = "url: pragmar.com/appstat*"
+        mcp_url: str = "url: pragmar.com/mcp-server-webcrawl*"
+
+        all_ids: set[int] = self.__get_search_ids(crawler, site_id, "")
+        html_ids: set[int] = self.__get_search_ids(crawler, site_id, "type: html")
+        img_ids: set[int] = self.__get_search_ids(crawler, site_id, "type: img")
+        primary_ids: set[int] = self.__get_search_ids(crawler, site_id, primary)
+        secondary_ids: set[int] = self.__get_search_ids(crawler, site_id, secondary)
+        appstat_ids: set[int] = self.__get_search_ids(crawler, site_id, "appstat")
+        appstat_url_ids: set[int] = self.__get_search_ids(crawler, site_id, appstat_url)
+        mcp_url_ids: set[int] = self.__get_search_ids(crawler, site_id, mcp_url)
+
+        # the sets have to be partial, or the equalities below prove nothing
+        for label, ids in [("html", html_ids), (primary, primary_ids), (secondary, secondary_ids), ("appstat url", appstat_url_ids)]:
+            self.assertGreater(len(ids), 0, f"Fixture should have {label} resources")
+            self.assertLess(len(ids), len(all_ids), f"Fixture {label} resources should not be the whole site")
+
+        cases: list[tuple[str, set[int], str]] = [
+            # De Morgan
+            (f"NOT ({appstat_url} OR {mcp_url})", all_ids - (appstat_url_ids | mcp_url_ids), "NOT (A OR B) is everything but A and B"),
+            (f"NOT {appstat_url} AND NOT {mcp_url}", all_ids - (appstat_url_ids | mcp_url_ids), "NOT A AND NOT B equals NOT (A OR B)"),
+            (f"NOT ({primary} OR {secondary})", all_ids - (primary_ids | secondary_ids), "NOT (kw OR kw) is everything but either"),
+            (f"NOT ({primary} AND {secondary})", all_ids - (primary_ids & secondary_ids), "NOT (kw AND kw) is everything but both"),
+            # prefix NOT takes one operand
+            (f"NOT {appstat_url} AND type: html", html_ids - appstat_url_ids, "NOT A AND B negates only A"),
+            (f"type: html AND NOT {appstat_url}", html_ids - appstat_url_ids, "B AND NOT A negates only A"),
+            (f"NOT {primary} AND {secondary}", secondary_ids - primary_ids, "NOT kw AND kw negates only the first"),
+            # fulltext ORed with other fields, no longer quietly AND
+            (f"{primary} OR {mcp_url}", primary_ids | mcp_url_ids, "kw OR url is a union"),
+            (f"{mcp_url} OR {primary}", primary_ids | mcp_url_ids, "url OR kw is a union"),
+            (f"{primary} OR type: img", primary_ids | img_ids, "kw OR type is a union across fts columns"),
+            # fulltext OR NOT, fts5 has no unary NOT
+            (f"{primary} OR NOT {secondary}", primary_ids | (all_ids - secondary_ids), "kw OR NOT kw keeps the NOT"),
+            (f"NOT {primary} OR {secondary}", (all_ids - primary_ids) | secondary_ids, "NOT kw OR kw keeps the NOT"),
+            # standard precedence across fields
+            (f"type: html AND {primary} OR {secondary}", (html_ids & primary_ids) | secondary_ids, "A AND B OR C is (A AND B) OR C"),
+            (f"{secondary} OR {primary} AND type: html", secondary_ids | (primary_ids & html_ids), "C OR B AND A is C OR (B AND A)"),
+            # binary NOT on groups, double negation, nesting
+            (f"{primary} NOT ({secondary} OR appstat)", primary_ids - (secondary_ids | appstat_ids), "A NOT (B OR C) excludes the group"),
+            (f"NOT (NOT {primary})", primary_ids, "NOT NOT A is A"),
+            (f"type: html AND NOT ({primary} OR {mcp_url})", html_ids - (primary_ids | mcp_url_ids), "A AND NOT (kw OR url) excludes the mixed group"),
+        ]
+        for query, expected, message in cases:
+            self.assertEqual(self.__get_search_ids(crawler, site_id, query), expected, f"{message}: {query}")
 
     def __run_pragmar_search_tests_extras(
             self,
@@ -936,3 +1158,182 @@ class BaseCrawlerTests(unittest.TestCase):
                 "Search should return less than or equivalent results to site total")
         self.assertTrue(secondary_resources.total <= site_resources.total,
                 "Search should return less than or equivalent results to site total")
+
+
+class IndexedConcurrencyTests(unittest.TestCase):
+    """
+    Tool calls run off the event loop, and index builds are claimed once. A build
+    is held open by a gate on _load_site_data, so each state is observed on purpose,
+    not by timing luck. The gate releases itself after a few seconds, a regression
+    to blocking calls fails the assertions rather than hanging the suite.
+    """
+
+    GATE_TIMEOUT_SECONDS: Final[float] = 5.0
+
+    class BuildGate:
+        """
+        Stands in for a slow index build. Counts builds, announces the start of each,
+        and holds until released.
+        """
+        def __init__(self, load_site_data):
+            self.started: threading.Event = threading.Event()
+            self.release: threading.Event = threading.Event()
+            self.builds: int = 0
+            self.__load_site_data = load_site_data
+
+        def load_site_data(self, *args, **kwargs):
+            self.builds += 1
+            self.started.set()
+            self.release.wait(timeout=IndexedConcurrencyTests.GATE_TIMEOUT_SECONDS)
+            return self.__load_site_data(*args, **kwargs)
+
+    def setUp(self):
+        if sys.platform == "win32":
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        self.__temp_directory = tempfile.TemporaryDirectory()
+        # cleanups run LIFO after tearDown, anything a test registers (joining its
+        # threads) runs before the directory goes, even when an assertion fails
+        self.addCleanup(self.__temp_directory.cleanup)
+        datasrc: Path = Path(self.__temp_directory.name)
+        # unique site per test, the wget manager and its index cache are module globals
+        site_name: str = f"{uuid.uuid4().hex}.example"
+        site_directory: Path = datasrc / site_name
+        site_directory.mkdir()
+        (site_directory / "index.html").write_text("<html><body>concurrency home</body></html>", encoding="utf-8")
+        (site_directory / "about.html").write_text("<html><body>concurrency about</body></html>", encoding="utf-8")
+        self.site_id: int = WgetManager.string_to_id(site_name)
+        self.site_directory: Path = site_directory
+        self.crawler: WgetCrawler = WgetCrawler(datasrc)
+        self.gate = IndexedConcurrencyTests.BuildGate(wget_manager._load_site_data)
+        self.__load_patch = patch.object(wget_manager, "_load_site_data", self.gate.load_site_data)
+        self.__load_patch.start()
+
+    def tearDown(self):
+        self.gate.release.set()
+        self.__load_patch.stop()
+
+    def __call(self) -> dict:
+        """
+        One search tool call through the MCP handler, response JSON parsed.
+        """
+        return asyncio.run(self.__call_async())
+
+    async def __call_async(self) -> dict:
+        response = await self.crawler.mcp_call_tool(RESOURCES_TOOL_NAME, {"sites": [self.site_id]})
+        return json.loads(response[0].text)
+
+    def __await_complete(self) -> dict:
+        """
+        Poll until the (released) build has cached, a cancelled call's thread runs on
+        without anyone waiting on it.
+        """
+        timeout: float = time.monotonic() + self.GATE_TIMEOUT_SECONDS * 2
+        while time.monotonic() < timeout:
+            response: dict = self.__call()
+            if response["__meta__"]["index"]["status"] == "complete":
+                return response
+            time.sleep(0.05)
+        self.fail("index build never completed")
+
+    def test_tool_call_off_event_loop(self):
+        """
+        While one call is held mid-build, the event loop stays free: a second call for
+        the same index answers at once, reporting the build in progress (not an empty
+        result passed off as no matches), and the first completes on release.
+        """
+        async def scenario() -> tuple[dict, dict, bool]:
+            building_call = asyncio.create_task(self.__call_async())
+            started: bool = await asyncio.to_thread(self.gate.started.wait, self.GATE_TIMEOUT_SECONDS)
+            self.assertTrue(started, "build never started")
+
+            concurrent: dict = await asyncio.wait_for(self.__call_async(), timeout=self.GATE_TIMEOUT_SECONDS)
+            building_done_early: bool = building_call.done()
+            self.gate.release.set()
+            building: dict = await asyncio.wait_for(building_call, timeout=self.GATE_TIMEOUT_SECONDS * 2)
+            return concurrent, building, building_done_early
+
+        concurrent, building, building_done_early = asyncio.run(scenario())
+
+        self.assertFalse(building_done_early, "first call finished before release, the loop was blocked")
+        self.assertEqual(concurrent["__meta__"]["index"]["status"], "indexing")
+        self.assertEqual(concurrent["results"], [])
+        self.assertTrue(any("index is building" in error for error in concurrent["__meta__"].get("errors", [])),
+                "a concurrent call must say the index is building")
+
+        self.assertEqual(building["__meta__"]["index"]["status"], "complete")
+        self.assertEqual(len(building["results"]), 2)
+        self.assertNotIn("errors", building["__meta__"])
+        self.assertEqual(self.gate.builds, 1, "index built more than once")
+
+    def test_cancelled_call_returns_and_build_caches(self):
+        """
+        A cancelled call returns immediately, mid-build. The abandoned build runs on
+        and caches, the next call gets results without building again.
+        """
+        async def scenario() -> float:
+            building_call = asyncio.create_task(self.__call_async())
+            started: bool = await asyncio.to_thread(self.gate.started.wait, self.GATE_TIMEOUT_SECONDS)
+            self.assertTrue(started, "build never started")
+            cancelled_at: float = time.monotonic()
+            building_call.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await asyncio.wait_for(building_call, timeout=self.GATE_TIMEOUT_SECONDS * 2)
+            return time.monotonic() - cancelled_at
+
+        cancel_seconds: float = asyncio.run(scenario())
+        self.assertLess(cancel_seconds, 1.0, "cancellation waited on the build")
+        self.assertFalse(self.gate.release.is_set())
+
+        self.gate.release.set()
+        completed: dict = self.__await_complete()
+        self.assertEqual(len(completed["results"]), 2)
+        self.assertEqual(self.gate.builds, 1, "cancelled build did not cache, index built again")
+
+    def test_concurrent_builds_claim_once(self):
+        """
+        Many threads asking for one index at the same moment: one builds, the rest
+        are told it is building. The claim is atomic, not check-then-set.
+        """
+        thread_count: int = 8
+        barrier: threading.Barrier = threading.Barrier(thread_count)
+        statuses: list[str] = []
+        statuses_lock: threading.Lock = threading.Lock()
+
+        def search() -> None:
+            barrier.wait()
+            api: BaseJsonApi = self.crawler.get_resources_api(sites=[self.site_id])
+            with statuses_lock:
+                statuses.append(api.meta_index["status"])
+
+        threads: list[threading.Thread] = [threading.Thread(target=search) for _ in range(thread_count)]
+        for thread in threads:
+            thread.start()
+        self.addCleanup(lambda: [thread.join(self.GATE_TIMEOUT_SECONDS * 2) for thread in threads])
+        self.assertTrue(self.gate.started.wait(self.GATE_TIMEOUT_SECONDS), "build never started")
+        # all but the builder return while the build is held
+        timeout: float = time.monotonic() + self.GATE_TIMEOUT_SECONDS
+        while len(statuses) < thread_count - 1 and time.monotonic() < timeout:
+            time.sleep(0.01)
+        self.assertEqual(sorted(statuses), ["indexing"] * (thread_count - 1))
+
+        self.gate.release.set()
+        for thread in threads:
+            thread.join(self.GATE_TIMEOUT_SECONDS * 2)
+        self.assertEqual(statuses.count("complete"), 1)
+        self.assertEqual(self.gate.builds, 1, "index built more than once")
+
+    def test_stats_fifo_cap(self):
+        """
+        Stats keep the most recent INDEXED_MANAGER_STATS_MAX entries, oldest out first.
+        """
+        self.gate.release.set()
+        manager: WgetManager = WgetManager()
+        group: SitesGroup = SitesGroup(self.crawler.datasrc, [self.site_id], [self.site_directory])
+        for _ in range(INDEXED_MANAGER_STATS_MAX + 50):
+            manager.get_connection(group)
+
+        stats: list[SitesStat] = manager.get_stats()
+        self.assertEqual(len(stats), INDEXED_MANAGER_STATS_MAX)
+        # the first entry, the uncached build, is the one evicted
+        self.assertTrue(all(stat.cached for stat in stats), "oldest entry should be evicted first")
+        self.assertTrue(all(earlier.timestamp <= later.timestamp for earlier, later in zip(stats, stats[1:])))

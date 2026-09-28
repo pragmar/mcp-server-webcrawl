@@ -1,8 +1,9 @@
 import sqlite3
+import threading
 import traceback
 
 from datetime import datetime
-from contextlib import closing, contextmanager
+from contextlib import closing
 from pathlib import Path
 from typing import Callable
 from mcp.types import Tool
@@ -40,11 +41,16 @@ class IndexedManager(BaseManager):
     def __init__(self):
         super().__init__()
         self._db_cache: dict[frozenset, tuple[sqlite3.Connection, IndexState]] = {}
-        self._build_locks: dict[frozenset, tuple[datetime, str]] = {}
+        self._build_locks: dict[frozenset, tuple[datetime, IndexState]] = {}
+        # guards the cache and build claims, tool calls run on worker threads, as
+        # do interactive searches. never held across a build, only the claim
+        self._cache_lock: threading.Lock = threading.Lock()
 
     def get_connection(self, group: SitesGroup) -> tuple[sqlite3.Connection | None, IndexState]:
         """
-        Get database connection for sites in the group, creating if needed.
+        Get database connection for sites in the group, creating if needed. One caller
+        builds, concurrent callers for the same group return immediately, with the
+        build's own (live) IndexState.
 
         Args:
             group: group of sites to connect to
@@ -53,36 +59,51 @@ class IndexedManager(BaseManager):
             Tuple of (SQLite connection to in-memory database with data loaded or None if building,
                      IndexState associated with this database)
         """
-        if group.cache_key in self._build_locks:
-            build_time, status = self._build_locks[group.cache_key]
-            get_logger().info(f"Database for {group} is currently {status} (started at {build_time})")
-            return None, IndexState()  # Return empty IndexState for building databases
+        with self._cache_lock:
+            if group.cache_key in self._build_locks:
+                build_time, building_state = self._build_locks[group.cache_key]
+                logger.info(f"Database for {group} is currently building (started at {build_time})")
+                return None, building_state
 
-        if len(self._db_cache) >= INDEXED_MANAGER_CACHE_MAX:
-            logger.warning(f"Cache limit reached ({INDEXED_MANAGER_CACHE_MAX}), clearing all cached databases")
-            self._db_cache.clear()
+            is_cached: bool = group.cache_key in self._db_cache
+            self._stats.append(SitesStat(group, is_cached))
+            if is_cached:
+                return self._db_cache[group.cache_key]
 
-        is_cached: bool = group.cache_key in self._db_cache
-        self._stats.append(SitesStat(group, is_cached))
-
-        if not is_cached:
+            # claim the build
             index_state = IndexState()
             index_state.set_status(IndexStatus.INDEXING)
-            with self._building_lock(group):
-                connection: sqlite3.Connection = sqlite3.connect(":memory:", check_same_thread=False)
-                self._setup_database(connection)
-                for site_id, site_path in group.get_sites().items():
-                    self._load_site_data(connection, Path(site_path), site_id, index_state=index_state)
-                    if index_state.is_timeout():
-                        index_state.set_status(IndexStatus.PARTIAL)
-                        break
-                if index_state is not None and index_state.status == IndexStatus.INDEXING:
-                    index_state.set_status(IndexStatus.COMPLETE)
-                self._db_cache[group.cache_key] = (connection, index_state)
+            self._build_locks[group.cache_key] = (datetime.now(), index_state)
 
-        # returns cached or newly created connection with IndexState
-        connection, index_state = self._db_cache[group.cache_key]
-        return connection, index_state
+        try:
+            connection: sqlite3.Connection = sqlite3.connect(":memory:", check_same_thread=False)
+            self._setup_database(connection)
+            for site_id, site_path in group.get_sites().items():
+                self._load_site_data(connection, Path(site_path), site_id, index_state=index_state)
+                if index_state.is_timeout():
+                    index_state.set_status(IndexStatus.PARTIAL)
+                    break
+            if index_state.status == IndexStatus.INDEXING:
+                index_state.set_status(IndexStatus.COMPLETE)
+
+            with self._cache_lock:
+                if len(self._db_cache) >= INDEXED_MANAGER_CACHE_MAX:
+                    logger.warning(f"Cache limit reached ({INDEXED_MANAGER_CACHE_MAX}), clearing all cached databases")
+                    self._db_cache.clear()
+                self._db_cache[group.cache_key] = (connection, index_state)
+                # release the claim in the same critical section as the cache publish, otherwise a
+                # concurrent caller can still find the claim and be told "building" after status
+                # has already flipped to complete
+                self._build_locks.pop(group.cache_key, None)
+            return connection, index_state
+        except Exception:
+            index_state.set_status(IndexStatus.FAILED)
+            raise
+        finally:
+            # release the claim on failure too (no-op if already released above), so a failed
+            # build can be retried by the next caller
+            with self._cache_lock:
+                self._build_locks.pop(group.cache_key, None)
 
     def get_sites_for_directories(
         self,
@@ -171,25 +192,6 @@ class IndexedManager(BaseManager):
             results.append(site)
         return results
 
-    @contextmanager
-    def _building_lock(self, group: SitesGroup):
-        """
-        Context manager for database building operations.
-        Sets a lock during database building and releases it when done.
-
-        Args:
-            group: SitesGroup to set the build lock for
-        """
-        try:
-            self._build_locks[group.cache_key] = (datetime.now(), "building")
-            yield
-        except Exception as ex:
-            self._build_locks[group.cache_key] = (self._build_locks[group.cache_key][0], f"failed: {ex}")
-            raise # re-raise
-        finally:
-            # clean up the lock
-            self._build_locks.pop(group.cache_key, None)
-
     def _setup_database(self, connection: sqlite3.Connection) -> None:
         """
         Create the database schema for storing resource data.
@@ -239,6 +241,21 @@ class IndexedManager(BaseManager):
         """
         if not batch_records:
             return
+
+        # a duplicate Id (the same URL captured twice, as WARC does) fails the
+        # insert, and the rollback takes the whole batch with it. first capture wins
+        batch_ids: list[int] = list({resource.id for resource in batch_records})
+        placeholders: str = ",".join("?" * len(batch_ids))
+        existing_ids: set[int] = {row[0] for row in connection.execute(
+            f"SELECT Id FROM Resources WHERE Id IN ({placeholders})", batch_ids)}
+        unique_records: list[ResourceResult] = []
+        for resource in batch_records:
+            if resource.id not in existing_ids:
+                existing_ids.add(resource.id)
+                unique_records.append(resource)
+        if len(unique_records) < len(batch_records):
+            logger.debug(f"Skipped {len(batch_records) - len(unique_records)} duplicate resources in batch")
+        batch_records = unique_records
 
         resources_base_records = []
         resources_fts_records = []
